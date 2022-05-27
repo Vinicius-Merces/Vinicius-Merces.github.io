@@ -56,7 +56,7 @@ background-size: cover;
 }
 
 .imagetitle h1{
-    font-family: 'Indie Flower', cursive;
+    font-family: 'Merriweather Sans', sans-serif;
     font-size: 40px;
     color: rgb(253, 122, 0);
     background-color: rgba(0, 0, 0, 0.158);
@@ -66,20 +66,23 @@ background-size: cover;
 
 .imagetitle p{
     font-family: 'Baloo Tammudu 2', cursive;
-    padding-bottom: 85px;
-    font-size: 20px;
+    padding-bottom: 126px;
+    padding-top: 5px;
+    font-size: 24px;
+    font-weight:bolder;
     color: rgb(253, 122, 0);
     background-color: rgba(0, 0, 0, 0.158);
 
 }
 
 h1 {
-    padding-top: 28%;
-    padding-left: 16%;
+    padding-top: 24%;
+    padding-left: 13%;
 }
 
+
 .text{
-    padding-left: 15%;
+    padding-left: 13%;
 }
 
 /* imagem e texto do topo */
