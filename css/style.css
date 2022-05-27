@@ -281,14 +281,76 @@ footer a:visited{
 /* responsividade */
 
 @media screen and (max-width: 1100px){
-    body{
-        width: 1100px;
-        
-    }
+   body{
+     width: 800px;
+   }
 
-    .navbar{
-        width: 100%;
-    }
+   .imgworks{
+       width: 90%;
+       margin: 0;
 
+   }
+
+   .navbar{
+    width: 90%;
+       
+   }
+
+   .imagetitle h1{
+    padding-top: 204px;
+    padding-left: 85px;
+   }
+   .imagetitle p{
+    padding-left: 85px;
+    padding-bottom: 187px;
+}
+
+   }
+
+   .txtabout{
+    width: 335px;
+    
+   }
+
+   .imgabout{
+    width: 58%;
+    height: 300px;
+   }
+
+   .footer {
+       width: 800px;
+       height: 140px;
+       position: relative;
+
+   }
+
+   .footer ul{
+        height: 60px;
+
+
+   }
+   .footer ul li{
+       position: relative;
+       margin: 0;
+       padding: 0;
+   }
+  
+   .location{
+       position: absolute;
+       left: 15px;
+
+   }
+
+   .tel{
+       position: absolute;
+       left: 262px;
+   }
+
+   .social{
+       position:absolute;
+       left: 460px;
+
+   }
+    
 }
     
