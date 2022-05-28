@@ -354,14 +354,74 @@ footer a:visited, a:hover{
     }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 412px) {
     h1{
-        width: 520px;
+        display: block;
+        height: 161px;
+        width: 120px;
+        top: 185px;
+        left: 20px;
+        line-height: 23px;
+        font-size: 24px;
+    }
+    
+    div.txtabout{
+        width: 390px;
+        height: 153px;
     }
 
-    div.txtabout{
-        width: 250px;
+    div.aboutus{
+        height: 380px;
     }
+
+    h2{
+        font-size: 23px;
+    }
+
+    h3{
+        font-size: 15px;
+        margin-top: -7px;
+        margin-bottom: 7px;
+    }
+
+    div.imgabout{
+        width: 352px;
+        height: 170px;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    section.imgworks{
+        width: 390px;
+        height: 311px;
+    }
+
+    div.polaroid {
+        width: 30%;
+        background-color: white;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        display: inline-block;
+        margin-left: 6px;
+    }
+        div.container{
+            padding: 0;
+            font-size: 12px;
+
+        }
+
+        div.polaroid2 {
+            width: 40%;
+            background-color: white;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            display: inline-block;
+            margin-left: 25px;
+          }
+        
+        div.container2 {
+            text-align: center;
+            padding: 10px 20px;
+            width: 100%;
+          }
     
 
 }
