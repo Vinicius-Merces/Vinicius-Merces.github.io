@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="./css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- icons -->
     <!-- font style -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+Tammudu+2&family=Lobster&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Domine&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two&family=Prata&display=swap" rel="stylesheet">
     <!-- font style -->
     <title>Simone Mercês Hairs</title>
 </head>
@@ -20,24 +20,29 @@
     <!-- navbar  -->
     <div>
         <header>
-           
-            <nav class="navbar">
-                <div class="logo">
-                    <img src="./images/logo.jpeg" width="100px" height="80px" alt="logo do site">
-                </div>
+            <nav>
+                <!-- Icone do menu para cel -->
+                <input type="checkbox" id="check">
+                <label for="check" class="checkbtn">
+                    <i class="fas fa-bars"></i>
+                </label>
+                <!-- Icone do menu para cel -->
+                <div class="logo"></div>
+
                 <ul>
-                    <li><a href="" class="home">Home</a></li>
+                    <li><a href="./index.html" class="home">Home</a></li>
                     <li><a href="" class="gallery">Galeria</a></li>
-                    <li><a href="" class="locate">Como chegar</a></li>
+                    <li><a href="" class="service">Serviços</a></li>
                     <li><a href="https://wa.me/qr/TWL23OZITFKGB1" target="_blank" class="agendar">Agendar</a></li>
                 </ul>
             </nav>
         </header>
     </div>
 <!-- Top image with title -->
+ <div id="container">
     <section class="imagetitle">
-        <h1>REDESCUBRA SUA BELEZA</h1>
-        <p class="text">Realce e enalteça, a sua beleza exterior!</p>
+        <div></div>
+        <h1>Está preparada para uma nova e melhor versão sua?</h1>
     </section>
 
 <!-- About us -->
@@ -46,24 +51,59 @@
             <h2>Sobre Nós</h2>
             <h3>Conheça um pouco da nossa história e trajetória no ramo da beleza</h3>
             <p>lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsumlorem ipsumlorem ipsumlorem ipsumlorem ipsumlorem ipsumlorem ipsumlorem ipsum</p>
-        </div>   
-        <div class="imgabout"></div> 
+        </div>
+        <div class="imgabout"></div>
     </section>
     <!-- trabalhos do salão -->
     <div class="fade">
     <section class="imgworks">
-       <ul>
-           <li class="cabelo"><div>Cabelos</div></li>
-           <li class="unhas"><div>Unhas</div></li>
-       </ul>
+        <h2>Serviços do Salão</h2>
+
+        <div class="polaroid">
+          <img src="./images/Colorido.jpg" alt="cabelo colorido" style="width:100%">
+          <div class="container">
+          <p>Pinturas variadas, transforme seu look, se re-invente!</p>
+          </div>
+        </div>
+        
+        <div class="polaroid">
+          <img src="./images/Penteado 2.jpg" alt="penteado de cabelo" style="width:100%">
+          <div class="container">
+          <p>Penteados lindos e elegantes para suas festas e eventos!</p>
+          </div>
+        </div>
+
+        <div class="polaroid">
+            <img src="./images/corte.jpg" alt="corte de cabelo" style="width:100%">
+            <div class="container">
+            <p>Corte seu cabelo para que ele cresça lindo e saúdavel!</p>
+            </div>
+          </div>
+    </section>
+    <section class="imgworks2">
+        <div class="polaroid2">
+            <img src="./images/unhas.jpg" alt="Unhas pintadas" style="width:100%">
+            <div class="container2">
+            <p>Manicure e Pedicure</p>
+            </div>
+          </div>
+  
+          <div class="polaroid2">
+              <img src="./images/unhas 2.jpg" alt="Unhas personalizadas" style="width:100%">
+              <div class="container2">
+              <p>Alongamento de unhas</p>
+              </div>
+            </div>
     </section>
     </div>
+
+</div>
     <!-- informações para contato -->
     <footer>
         <div class="info">
-            <p>Informações De Contato</p>
+            <label class="footerlogo">Simone Mercês Hairs</label>    
             <ul>
-                <a href="https://goo.gl/maps/LpRpKFr6hW3BDuUn9" type="link do google maps" target="_blank"><li class="location">Av.Renata, 611 - Vila Formosa</li></a> 
+                <a href="https://goo.gl/maps/LpRpKFr6hW3BDuUn9" type="link do google maps" target="_blank"><li class="location">Av.Renata, 611 - Vila Formosa</li></a>
                 <a href="https://wa.me/qr/TWL23OZITFKGB1" target="_blank"><li class="tel">(11) 94569-4292</li></a>
                 <a href="https://www.instagram.com/simone_hairs_/" target="_blank"><li class="social">simone_hairs_</li></a>
             </ul>
@@ -78,6 +118,7 @@
    <a href="https://www.flaticon.com/br/icones-gratis/whatsapp" title="whatsapp ícones">Whatsapp ícones criados por Smashicons - Flaticon</a>
    <a href="https://www.flaticon.com/br/icones-gratis/geolocalizaco" title="geolocalizaco ícones">Geolocalizaco ícones criados por bukeicon - Flaticon</a>
     https://unsplash.com/photos/oM5YoMhTf8E?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink
+
 
 -->
 

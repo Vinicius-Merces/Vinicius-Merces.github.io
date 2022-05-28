@@ -1,356 +1,439 @@
 *{
     margin: 0;
     padding: 0;
+    text-decoration: none;
     box-sizing: border-box;
+    font-family: 'Prata', serif;
 }
+
+
+
 /* navbar do site */
-.navbar{
+
+nav{
+    background: white;
     width: 100%;
-    color: white;
-    background-color: rgb(243, 243, 243);
-    position: relative;
-    overflow: hidden;
     height: 80px;
-}
-
-.navbar ul{
-    position: absolute;
-    padding-top: 20px;
-    right: 10%;
-
-
-
-}
-
-.navbar li{
-    list-style: none;
-    display: inline-block;
-    font-family: 'Lobster', cursive;
-    font-size: 20px;
-    padding: 10px;
-    list-style: inside;
-
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    
 }
 
 .logo{
-float: left;
-background-size: 160px 80px;
-background-size: cover;
+    width: 206px;
+    height: 78px;
+   background-image: url(../images/logo\ \(2\).jpeg);
+   background-size: cover;
+   display: inline-block;
+   image-rendering: high-quality;
 }
 
-.navbar a{
-    text-decoration: none;
-    color: rgb(245, 141, 6);
-}
-/* navbar do site */
-
-/* imagem do topo */
-.imagetitle{
-    max-width: 1100px;
-    height: 500px;
-    background-image: url(../images/modelo\ de\ lado.jpg);
-    background-repeat: no-repeat;
-    background-size:cover;
-    margin: auto;
-    position: relative;
-}
-
-.imagetitle h1{
-    font-family: 'Merriweather Sans', sans-serif;
-    font-size: 40px;
-    color: rgb(253, 122, 0);
-    background-color: rgba(0, 0, 0, 0.158);
-
-
-}
-
-.imagetitle p{
-    font-family: 'Baloo Tammudu 2', cursive;
-    padding-bottom: 126px;
-    padding-top: 5px;
-    font-size: 24px;
-    font-weight:bolder;
-    color: rgb(253, 122, 0);
-    background-color: rgba(0, 0, 0, 0.158);
-
-}
-
-h1 {
-    padding-top: 24%;
-    padding-left: 13%;
-}
-
-
-.text{
-    padding-left: 13%;
-}
-
-/* imagem e texto do topo */
-
-/* sobre nós */
-
-.aboutus{
-    max-width: 1100px;
-    height: 300px;
-    margin: auto;
-    position: relative;
-    margin-top: 5px;
-}
-
-.txtabout{
-    width: 50%;
-    height: 250px;
-    padding: 20px;
-    display: inline-block;
-}
-
-.aboutus h2, .aboutus h3, .aboutus p{
-    font-family: 'Domine', serif;
-    padding-top: 10px;
-}
- 
-.aboutus h2{
-    font-size: 35px;
-    padding-bottom: 30px;
-}
-
-.aboutus h3{
-    font-size: 15px;
-    padding-bottom: 5px;
-    color: rgb(253, 122, 0);
-}
-
-.aboutus p{
-
-}
-
-.imgabout{
-    background-image: url(../images/itens.jpg);
-    background-size: contain;
-    background-repeat: no-repeat;
+nav ul{
     float: right;
-    width: 50%;
-    height: 300px;
-    margin-top: 5px;
-    margin-bottom: 5px;   
+    margin-right: 20px;
 }
 
-/* sobre nos */
-
-/* div com fotos cabelo e unha */
-
-.imgworks{
-    width: 1100px;
-    height: 320px;
-    position: relative;
-    margin: auto;
-    margin-top: 15px;
-    font-family: 'Domine', serif;
-
+nav ul li{
+    display: inline-block;
+    line-height: 80px;
+    margin: 0 5px;
     
 }
 
-.imgworks a{
-    text-decoration: none;
+nav ul li a{
+    color: rgb(245, 141, 6);
+    font-size: 23px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-family: 'Lobster Two', cursive;
 }
 
-.imgworks ul{
-    list-style: none;
-   text-decoration: none;
+nav a:active, a:hover{
+    background-color: rgba(245, 141, 6, 0.342);
+    transition: .5s;
+}
+
+#check{
+    display: none;
+}
+.checkbtn{
+    font-size: 15px;
+    color: rgb(245, 141, 6);
+    float: right;
+    line-height: 80px;
+    margin-right: 40px;
+    cursor: pointer;
+    display: none;
+
+}
+    
+
+/* navbar do site */
+
+#container{
+    width: 1000px;
+    margin: auto;
+}
+
+.imagetitle{
+    background-image: url(../images/cabelos\ ao\ vento\ grande.jpg);
+    background-position: right;
+    width: 100%;
+    height: 500px;
+    background-repeat: no-repeat;
+    background-size: 85%;
+    position: relative;
+    background-color: rgba(219, 129, 159, 0.842);
+}
+
+h1, .imagetitle p{
+    color: black;
    
 }
 
-.imgworks li{
-    display: inline-block;
+.imagetitle div{
+    width: 100%;
+    height: 500px;
+    
+}
+
+h1{
+    position: absolute;
+    left: 79px;
+    bottom: 145px;
+    width: 255px;
+    font-family: 'Prata', serif;
+    font-weight: lighter;
+    font-size: 40px;
+    line-height: 45px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 2px 1px 4px black;
+    
+}
+
+.aboutus{
+    width: 100%;
+    height: 340px;
+    position: relative;
+
+ }
+
+.txtabout{
+    width: 400px;
+    height: 300px;
+    position: relative;
+    padding: 20px;
+    display: inline-block
+    
+    
+
+}
+
+h2, h3{
+    text-shadow: 1px 1px 2px;
+}
+
+h2{
+    font-size: 30px;
+    line-height: 60px;
+    font-weight: bold;
+    
+}
+
+h3{
+    font-size: 18px;
+    color: rgb(245, 141, 6);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.imgabout{
+    background-image:url(../images/itens.jpg);
     width: 50%;
     height: 300px;
+    float: right;
+    margin: 20px;
+    background-size: cover;
+}
+
+.imgworks{
+    background-color: rgba(219, 129, 159, 0.842);
+    width: 100%;
+    height: 590px;
+    
+}
+.imgworks h2{
     text-align: center;
-    margin-top: 5px;    
-
 }
 
-.cabelo{
-    position: absolute;
-    left: 0;
-    top: 5px;
-    background-image: url(../images/cabelo.jpg);
-    background-repeat: no-repeat;
-    background-size: cover;
-
+.imgworks2{
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
-.cabelo div, .unhas div{
-    position: absolute;
-    bottom: 50%;
-    right: 50%;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.363);
-}
-.unhas{
-    position: absolute;
-    right: 0;
-    top: 5px;
-    background-image: url(../images/unhas.jpg);
-    background-repeat: no-repeat;
-    background-size: cover;
+div.polaroid {
+    width: 30%;
+    background-color: white;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    display: inline-block;
+    margin-left: 23px;
+  }
 
-}
+div.container {
+    text-align: center;
+    padding: 10px 20px;
+    width: 100%;
+    
+  }
 
-.fade{
-    background-color: rgba(0, 0, 0, 0.041);
-    max-width: 1100px;
-    margin: auto;
-}
+  div.polaroid2 {
+    width: 45%;
+    background-color: white;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    display: inline-block;
+    margin-left: 30px;
+  }
 
-/* footer */
+div.container2 {
+    text-align: center;
+    padding: 10px 20px;
+    width: 100%;
+  }
 
 footer{
     width: 100%;
-    height: 100px;
-    background-color: rgb(243, 243, 243);
-    margin-top: 5px;
-    font-family: 'Domine', serif;
-    font-weight: bold;
-    position: relative;
-
+    height: 300px;
+    background-color: rgba(219, 129, 159, 0.842);
+    overflow: hidden;
 }
 
-footer p{
-    font-size: 25px;
-    color: rgb(253, 122, 0);
-    padding-top: 10px;
-    text-align: center;
+.footerlogo{
+    font-size: 30px;
+    font-family: 'Lobster Two', cursive;
+    margin: 10%;
+    line-height: 100px;
+
 }
 
 footer ul{
-    padding: 5px;
-    width: 100%;
-    height: 50px;
-    position: relative;
-    font-size: 16px;
-    
-}
+    font-size: 20px;
+    float: right;
+    list-style: none;
+    padding: 20px;   
+    line-height: 50px;
+    margin-top: 30px;   
+    margin-right: 15%; 
 
-footer a{
-    text-decoration: none;
-    color: black;
 }
-
-footer li{ 
-    margin-right: 10px;
-    width: 300px;
-    height: 30px;
-    padding: 3px;
-    list-style: inside;
-    
-    
-}
-
-.tel, .social{
-    margin-left: 40px;
-}
-
+   
 .location{
-    list-style-image: url('../images/marcador-de-localizacao\ 16.png');
-    width: 261px;
-    position: absolute;
-    bottom: 5px;
-    left: 10%;
+    list-style-image: url(../images/marcador-de-localizacao\ 24.png);
 }
 
 .tel{
-    list-style-image: url(../images/whatsapp\ 16.png);
-    width: 155px;
-    position: absolute;
-    right: 45%;
-    bottom: 5px;
+    list-style-image: url(../images/whatsapp\ 24.png);
 }
 
 .social{
-    list-style-image: url(../images/instagram\ 16.png);
-    width: 150px;
-    position: absolute;
-    left: 75%;
-    bottom: 5px;
+    list-style-image: url(../images/instagram\ 24.png);
 }
-
-footer a:visited{
+footer a:visited, a:hover{
     color: black;
 }
 
-/* responsividade */
+@media (max-width: 952px){
+    .logo{
+        padding-left: 50px;
+    }
 
-@media screen and (max-width: 1100px){
-   body{
-     width: 800px;
-   }
+    #container{
+        max-width: 800px;
+    }
 
-   .imgworks{
-       width: 90%;
-       margin: 0;
+    div.txtabout{
+        width: 340px;
+        height: 260px;
+        position: relative;
+        padding: 20px;
+        display: inline-block;
+        overflow-y: scroll;
+    }
 
-   }
+    div.polaroid {
+        width: 30%;
+        background-color: white;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        display: inline-block;
+        margin-left: 17px;
+      }
 
-   .navbar{
-    width: 90%;
-       
-   }
 
-   .imagetitle h1{
-    padding-top: 204px;
-    padding-left: 85px;
-   }
-   .imagetitle p{
-    padding-left: 85px;
-    padding-bottom: 187px;
 }
 
-   }
 
-   .txtabout{
-    width: 335px;
-    
-   }
+@media (max-width: 858px){
+    .checkbtn{
+        display: block;
+    }
+    nav ul{
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+        top: 80px;
+        left: -100%;
+        text-align: center;
+        transition: all .5s;
+        background-color: white;
+    }
+    nav ul li{
+        display: block;
+        margin: 50px;
+        line-height: 30px;
+    }
 
-   .imgabout{
-    width: 58%;
-    height: 300px;
-   }
+    nav ul li a{
+        font-size: 20px;
 
-   .footer {
-       width: 800px;
-       height: 140px;
-       position: relative;
+    }
 
-   }
+    a:active, a:hover{
+        background: none;
 
-   .footer ul{
-        height: 60px;
+    }
 
+    #check:checked ~ ul {
+        left: 0;
+    }
 
-   }
-   .footer ul li{
-       position: relative;
-       margin: 0;
-       padding: 0;
-   }
-  
-   .location{
-       position: absolute;
-       left: 15px;
+     #container{
+        max-width: 100%;
+    }
 
-   }
+    div.txtabout{
+        width: 340px;
+        height: 260px;
+        position: relative;
+        padding: 20px;
+        display: inline-block;
+        overflow-y: scroll;
+    }
 
-   .tel{
-       position: absolute;
-       left: 262px;
-   }
+    div.polaroid {
+        width: 30%;
+        background-color: white;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        display: inline-block;
+        margin-left: 17px;
+      }
 
-   .social{
-       position:absolute;
-       left: 460px;
-
-   }
-    
+      footer ul {
+        font-size: 20px;
+        float: right;
+        list-style: none;
+        padding: 20px;
+        line-height: 50px;
+        margin-top: 30px;
+        margin-right: 16px;
 }
+
+}
+
+@media (max-width: 770px){
+    h1{
+        width: 630px;
+        height: 90px;
+        top: 366px;
+        left: 72px;
+    }
     
+    div.txtabout{
+        width: 260px;
+    }
+}
+
+@media (max-width: 650px) {
+    h1{
+        width: 520px;
+    }
+
+    div.txtabout{
+        width: 250px;
+    }
+    
+
+}
+
+@media (max-width:390px) {
+    h1{
+        display: block;
+        height: 161px;
+        width: 120px;
+        top: 185px;
+        left: 20px;
+        line-height: 23px;
+        font-size: 24px;
+    }
+    
+    div.txtabout{
+        width: 390px;
+        height: 153px;
+    }
+
+    div.aboutus{
+        height: 380px;
+    }
+
+    h2{
+        font-size: 23px;
+    }
+
+    h3{
+        font-size: 15px;
+        margin-top: -7px;
+        margin-bottom: 7px;
+    }
+
+    div.imgabout{
+        width: 352px;
+        height: 170px;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    section.imgworks{
+        width: 390px;
+        height: 311px;
+    }
+
+    div.polaroid {
+        width: 30%;
+        background-color: white;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        display: inline-block;
+        margin-left: 6px;
+    }
+        div.container{
+            padding: 0;
+            font-size: 12px;
+
+        }
+
+        div.polaroid2 {
+            width: 40%;
+            background-color: white;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            display: inline-block;
+            margin-left: 25px;
+          }
+        
+        div.container2 {
+            text-align: center;
+            padding: 10px 20px;
+            width: 100%;
+          }
+
+
+}
