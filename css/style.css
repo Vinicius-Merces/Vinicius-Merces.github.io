@@ -354,7 +354,7 @@ footer a:visited, a:hover{
     }
 }
 
-@media (max-width: 412px) {
+@media (max-width: 700px) {
     h1{
         display: block;
         height: 161px;
