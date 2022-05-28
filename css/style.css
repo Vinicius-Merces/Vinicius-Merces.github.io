@@ -366,7 +366,7 @@ footer a:visited, a:hover{
     }
     
     div.txtabout{
-        width: 390px;
+        width: 100%;
         height: 153px;
     }
 
@@ -385,14 +385,14 @@ footer a:visited, a:hover{
     }
 
     div.imgabout{
-        width: 352px;
+        width: 100%;
         height: 170px;
         margin-top: 0;
         margin-bottom: 0;
     }
 
     section.imgworks{
-        width: 390px;
+        width: 100%;
         height: 311px;
     }
 
@@ -438,7 +438,7 @@ footer a:visited, a:hover{
     }
     
     div.txtabout{
-        width: 390px;
+        width: 100%;
         height: 153px;
     }
 
@@ -457,14 +457,14 @@ footer a:visited, a:hover{
     }
 
     div.imgabout{
-        width: 352px;
+        width: 100%;
         height: 170px;
         margin-top: 0;
         margin-bottom: 0;
     }
 
     section.imgworks{
-        width: 390px;
+        width: 100%;
         height: 311px;
     }
 
@@ -494,6 +494,6 @@ footer a:visited, a:hover{
             padding: 10px 20px;
             width: 100%;
           }
-
+    
 
 }
