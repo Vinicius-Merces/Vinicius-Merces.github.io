@@ -277,6 +277,7 @@ footer a:visited, a:hover{
 @media (max-width: 858px){
     .checkbtn{
         display: block;
+        z-index: 1;
     }
     nav ul{
         position: fixed;
@@ -287,6 +288,7 @@ footer a:visited, a:hover{
         text-align: center;
         transition: all .5s;
         background-color: white;
+        z-index; 1;
     }
     nav ul li{
         display: block;
@@ -306,12 +308,13 @@ footer a:visited, a:hover{
 
     #check:checked ~ ul {
         left: 0;
+        z-index: 1;
     }
 
      #container{
         max-width: 100%;
     }
-
+    
     div.txtabout{
         width: 340px;
         height: 260px;
