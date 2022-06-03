@@ -1,0 +1,28 @@
+.body{
+    width: 1000px;
+    margin: auto;
+
+}
+
+.services{
+    width: 100%;
+    margin: auto;
+    position: relative;
+    padding: 3em;
+}
+
+.prices{
+    margin: auto;
+    width: 100%;
+    
+    
+}
+
+table, th, td{
+    padding: 0.5em;
+    line-height: 3em;
+    border: 1px solid rgba(219, 129, 159, 0.842);
+    font-size: 1.2em;
+    border-radius: 5px;
+}
+
