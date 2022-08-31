@@ -31,8 +31,6 @@ function calcular(){
     resultado.style.lineHeight = "0.6em";
 }
 
-
-
 function carnepp(duracao){
     let carne = 400;
     if(duracao >= 6) {
