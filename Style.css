@@ -1,0 +1,138 @@
+body {
+    position: relative;
+    width: 1000px;
+    height: 880px;
+    margin-left: 15%;
+    
+}
+
+.container {
+    font-family: Arial, Helvetica, sans-serif;
+    width: 650px;
+    height: 100%;
+    position: absolute;
+    margin:auto;
+    background-color: rgb(132, 194, 223);
+    padding: 20px;
+    border-radius: 0 44% 24% 0;
+    left: 10px;
+    top: 10px;
+}
+
+.logo img {
+    position: relative;
+    border-radius: 100%;
+    padding-bottom: 20px;
+    left: 80px;
+    top: 60px;
+
+}
+
+.btn {
+    font-size: 3rem;
+    position: relative;
+    height: 90px;
+    width: 80%;
+    bottom: 0%;
+    left: 10%;
+    border-radius: 10%;
+    background-color: white;
+
+}
+
+.btn img{
+    padding-left: 25px;
+}
+
+
+input{
+    font-size: 2rem;
+    width: 30%;
+    height: 80px;
+    display: inline-block;
+    padding: 25px;
+    box-sizing: border-box;
+    border-radius: 30%;
+    margin-bottom: 8px;
+       
+}
+
+#adultos{
+    margin-left: 35px;
+    margin-top: 70px;
+
+}
+
+.backgroundimg {
+    position: absolute;
+    left: 110%;
+    top: 50%;
+}
+
+#resultado{
+    background: rgb(132, 194, 223);
+    font-size: 2rem;
+    line-height: 1.6em;
+    border-radius: 15px;
+    width: 300px;
+    height: auto;
+    color: #fff;
+    position: absolute;
+    margin-top: 30px;
+    left: 1138px;
+    top: 250px;
+    width: 475px;
+    
+}
+#resultado:after{ /*Triangulo*/
+    content: "";
+    width: 0px;
+    height: 0;
+    position: absolute;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 20px solid rgb(132, 194, 223);/*Faz seta "apontar para baixo*/
+    bottom: -20px; /*localização.*/
+    left: 30%;
+}
+
+#resultado p{
+    margin: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 5px;
+}
+
+
+.balao{
+    background: rgb(132, 194, 223);
+    font-size: 2rem;
+    line-height: 1.6em;
+    border-radius: 15px;
+    width: 300px;
+    height: auto;
+    color: #fff;
+    padding: 20px;
+    position: absolute;
+    margin-top: 30px;
+    top: 224px;
+    left: 850px;
+    display: block;
+    
+}
+.balao:after{ /*Triangulo*/
+    content: "";
+    width: 0px;
+    height: 0;
+    position: absolute;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 20px solid rgb(132, 194, 223);/*Faz seta "apontar para baixo*/
+    bottom: -20px; /*localização.*/
+    left: 30%;
+}
+
+    
+
+
+
+
