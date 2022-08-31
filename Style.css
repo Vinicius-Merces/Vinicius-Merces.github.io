@@ -1,15 +1,15 @@
 body {
     position: relative;
     width: 1000px;
-    height: 880px;
-    margin-left: 15%;
+    height: 860px;
+    
     
 }
 
 .container {
     font-family: Arial, Helvetica, sans-serif;
-    width: 650px;
-    height: 100%;
+    width: 428px;
+    height: 65%;
     position: absolute;
     margin:auto;
     background-color: rgb(132, 194, 223);
@@ -23,8 +23,11 @@ body {
     position: relative;
     border-radius: 100%;
     padding-bottom: 20px;
-    left: 80px;
-    top: 60px;
+    left: 25px;
+    top: 10px;
+    overflow-clip-margin: content-box;
+    overflow: clip;
+    width: 350px;
 
 }
 
@@ -34,39 +37,46 @@ body {
     height: 90px;
     width: 80%;
     bottom: 0%;
-    left: 10%;
-    border-radius: 10%;
+    left: 7%;
+    border-radius: 15px;
     background-color: white;
 
 }
 
 .btn img{
     padding-left: 25px;
+
 }
 
 
 input{
-    font-size: 2rem;
-    width: 30%;
-    height: 80px;
+    font-size: 0.8rem;
+    width: 28%;
+    height: 49px;
     display: inline-block;
     padding: 25px;
     box-sizing: border-box;
-    border-radius: 30%;
+    border-radius: 15px;
     margin-bottom: 8px;
+    
        
 }
 
 #adultos{
-    margin-left: 35px;
-    margin-top: 70px;
+    margin-left: 20px;
+    margin-top: 20px;
 
 }
 
-.backgroundimg {
+.backgroundimg img {
+
+    overflow-clip-margin: content-box;
+    overflow: clip;
+    width: 600px;
+    height: 400px;
     position: absolute;
-    left: 110%;
-    top: 50%;
+    left: 100%;
+    top: 35%;
 }
 
 #resultado{
@@ -79,10 +89,9 @@ input{
     color: #fff;
     position: absolute;
     margin-top: 30px;
-    left: 1138px;
-    top: 250px;
+    left: 745px;
+    top: -10px;
     width: 475px;
-    
 }
 #resultado:after{ /*Triangulo*/
     content: "";
