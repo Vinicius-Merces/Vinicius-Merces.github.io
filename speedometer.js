@@ -10,7 +10,6 @@ startBtn.addEventListener("click", () => {
     
 
     function handleSucess(position){
-        console.log(position);
         addPosition(currentRide, position)
         speedElement.innerText = position.coords.speed ? (position.coords.speed * 3,6).toFixed(1) :0
     };
@@ -27,7 +26,7 @@ startBtn.addEventListener("click", () => {
 })
 
 stopBtn.addEventListener("click", () => {
-    if (! watchID)
+    if (!watchID)
     return
     navigator.geolocation.clearWatch(watchID)
     watchID = null

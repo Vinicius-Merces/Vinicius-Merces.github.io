@@ -35,7 +35,6 @@ function addPosition(rideID, position) {
         longitude: position.coords.longitude,
         speed: position.coords.speed,
         timestamp: position.timestamp,
-
     }
     rideRecord.data.push(newData)
     saveRideRecord(rideID, rideRecord)
