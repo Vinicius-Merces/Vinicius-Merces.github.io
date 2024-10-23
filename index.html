@@ -1,31 +1,26 @@
 <!DOCTYPE html>
-<html id="01">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="./Style.css"/>
-    <link rel="icon" type="icon" href="./assets/skewer 16.png">
-    <title>Churrascômetro</title>
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <link rel="stylesheet" href="./global.css" type="text/css">
+
+    <title>Ride</title>
 </head>
-
 <body>
-  <div class="container">
-    <div class="logo"><img src="./assets/Churrascômetro.gif" alt="logo do Churrascometro"></div>
-    <input id="adultos" name="adultos" type="number" placeholder="Adultos">
-    <input id="criancas" name="criancas" type="number" placeholder="Crianças">
-    <input id="duracao" name="duracao" type="number" placeholder="Duração">
-    <button class="btn" onclick="calcular()">Calcular<img src="./assets/skewer 32.png"></button>
-    <div class="backgroundimg">
-      <img src="./assets/composicao-de-churrasco-com-churrasqueira-de-cenario-ao-ar-livre-e-dois-homens-adultos-com-seus-filhos-ilustracao-vetorial_1284-66226.jpg">
-    </div>
-  </div>
-  <div id="resultado">
-    <p>Com o churrascômetro, é facíl organizar um churras!</p>
-  </div>  
-  <script src="./script.js"></script>
-</body>
+    <ul id="ridelist">
 
+    </ul>
+
+
+
+    
+    <a class="btn btn-primary fw-bold fs-3" href="./speedometer.html">Speedometer</a>
+    
+
+    <script src="./storage.js"></script>
+    <script src="./index.js"></script>
+</body>
 </html>
