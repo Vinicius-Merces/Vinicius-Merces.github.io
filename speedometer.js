@@ -11,7 +11,6 @@ startBtn.addEventListener("click", () => {
 
     function handleSucess(position) {
         addPosition(currentRide, position);
-        console.log(position); // Adicione isso para ver os dados retornados
         speedElement.innerText = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) : 0;
     }
     
@@ -36,6 +35,8 @@ stopBtn.addEventListener("click", () => {
     currentRide = null
     startBtn.classList.remove("d-none")
     stopBtn.classList.add("d-none")
+    window.location.href = "./index.html";
     
 })
+
 
