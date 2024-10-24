@@ -39,4 +39,28 @@ dataElement.appendChild(dateDiv)
 
 document.querySelector("#data").appendChild(dataElement)
 
+const deleteButton = document.querySelector("#deleteBtn")
+deleteButton.addEventListener("click",()=>{
+    
+    deleteRide(rideID)
+    window.location.href = "./index.html";
+
+
+})
+
+const map = L.map("mapDetail")
+map.setView([firstPosition.latitude, firstPosition.longitude],15)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+}).addTo(map);
+
+const positionArray = ride.data.map((position=>{
+    return [position.latitude, position.longitude]
+}))
+
+const polyLine = L.polyline(positionArray, {color: "#F00"})
+polyLine.addTo(map)
+
+map.fitBounds(polyLine.getBounds())
+
 })
