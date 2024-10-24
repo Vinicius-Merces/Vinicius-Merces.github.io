@@ -2,11 +2,18 @@ const rideListElement = document.querySelector("#ridelist");
 const allRides = getAllRides ()
 
 allRides.forEach(async ([id, value]) => {
-    const ride = JSON.parse(value)
-    ride.id = id
+    const ride = JSON.parse(value);
+    ride.id = id;
 
-    const firstPosition = ride.data[0]
-    const fisrtLocationData = await getLocationData(firstPosition.latitude, firstPosition.longitude)
+    console.log(ride); // Adicione isso para ver a estrutura do objeto ride
+    if (!ride.data || ride.data.length === 0) {
+        console.error(`Viagem ${ride.id} não possui dados.`);
+        return; // Ignora se não houver dados
+    }
+
+    const firstPosition = ride.data[0];
+    const fisrtLocationData = await getLocationData(firstPosition.latitude, firstPosition.longitude);
+   
 
     const itemElement = document.createElement("li")
     itemElement.id = ride.id
@@ -43,15 +50,17 @@ function getMaxSpeed(positions){
     return (maxSpeed * 3.6).toFixed(0)
 }
 
-function getDistance(position){
-    const earthRadiusKm = 6371
-    let totalDistance = 0
-    for(let i = 0; i < position.length - 1; i++){
-        const p1 = {latitude:positions[i].latitude,
-                    longitude:positions[i].longitude
-        }
-        const p2 = {latitude:positions[i + 1].latitude,
-                    longitude:positions[i + 1].longitude
+function getDistance(position) {
+    const earthRadiusKm = 6371;
+    let totalDistance = 0;
+    for (let i = 0; i < position.length - 1; i++) {
+        const p1 = {
+            latitude: position[i].latitude,
+            longitude: position[i].longitude
+        };
+        const p2 = {
+            latitude: position[i + 1].latitude,
+            longitude: position[i + 1].longitude
         }
 
         const deltaLatitude = toRad (p2.latitude - p1.latitude)

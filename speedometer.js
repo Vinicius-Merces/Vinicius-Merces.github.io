@@ -9,18 +9,20 @@ startBtn.addEventListener("click", () => {
     return
     
 
-    function handleSucess(position){
-        addPosition(currentRide, position)
-        speedElement.innerText = position.coords.speed ? (position.coords.speed * 3,6).toFixed(1) :0
-    };
+    function handleSucess(position) {
+        addPosition(currentRide, position);
+        console.log(position); // Adicione isso para ver os dados retornados
+        speedElement.innerText = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) : 0;
+    }
+    
 
     function handleError(error){
 
-    };
+    }
 
     const options = { enableHighAccuracy: true }
     currentRide = createNewRide()
-    watchID = navigator.geolocation.watchPosition(handleSucess, handleError, options); 
+    watchID = navigator.geolocation.watchPosition(handleSucess, handleError, options)
     startBtn.classList.add("d-none")
     stopBtn.classList.remove("d-none")    
 })
