@@ -4,102 +4,58 @@ const allRides = getAllRides ()
 allRides.forEach(async ([id, value]) => {
     const ride = JSON.parse(value);
     ride.id = id;
-
-    console.log(ride); // Adicione isso para ver a estrutura do objeto ride
-    if (!ride.data || ride.data.length === 0) {
-        console.error(`Viagem ${ride.id} não possui dados.`);
-        return; // Ignora se não houver dados
-    }
+ 
+    const itemElement = document.createElement("li")
+    itemElement.id = ride.id
+    itemElement.className = "d-flex p-1 align-items-center justify-content-between shadow-sm gap-3"
+    rideListElement.appendChild(itemElement)
+    
+    itemElement.addEventListener("click", () =>{
+        window.location.href = `./detail.html?id=${ride.id}`
+    })
 
     const firstPosition = ride.data[0];
     const fisrtLocationData = await getLocationData(firstPosition.latitude, firstPosition.longitude);
-   
 
-    const itemElement = document.createElement("li")
-    itemElement.id = ride.id
+    const mapElement = document.createElement("div")
+    mapElement.style = "width: 100px; height: 100px"
+    mapElement.classList.add("bg-secondary")
+    mapElement.classList.add("rounded-4")
     
+    
+    const dataElement = document.createElement("div")
+    dataElement.className = "flex-fill d-flex flex-column"
 
     const cityDiv = document.createElement("div")
     cityDiv.innerText = `${fisrtLocationData.city}-${fisrtLocationData.countryCode}`
+    cityDiv.className = "text-primary mb-2"
+
 
     const maxSpeedDiv = document.createElement("div")
     maxSpeedDiv.innerText = `Vel. Máxima: ${getMaxSpeed(ride.data)} Km/H`
+    maxSpeedDiv.className = "h5"
+
 
     const distanceDiv = document.createElement("div")
     distanceDiv.innerText = `Distância: ${getDistance(ride.data)} Km`
 
     const durationDiv = document.createElement("div")
-    durationDiv.innerText = getDuration(ride)
+    durationDiv.innerText = `Duração: ${getDuration(ride)}`
+    
+    const dateDiv = document.createElement("div")
+    dateDiv.innerText = getStartDate(ride)
+    dateDiv.className = "text-secondary mt-2"
 
-    itemElement.appendChild(cityDiv)
-    itemElement.appendChild(maxSpeedDiv)
-    itemElement.appendChild(distanceDiv)
-    rideListElement.appendChild(itemElement)
-    itemElement.appendChild(durationDiv)
+    dataElement.appendChild(cityDiv)
+    dataElement.appendChild(maxSpeedDiv)
+    dataElement.appendChild(distanceDiv)
+    dataElement.appendChild(durationDiv)
+    dataElement.appendChild(dateDiv)
+
+    itemElement.appendChild(mapElement)
+    itemElement.appendChild(dataElement)
+
 })
 
-async function getLocationData (latitude, longitude) {
-    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-    const response = await fetch(url)
-    return await response.json()
-}
 
-function getMaxSpeed(positions){
-    let maxSpeed = 0
-    positions.forEach(position=>{
-        if(position.speed != null && position.speed > maxSpeed)
-        maxSpeed = position.speed
-    })
 
-    return (maxSpeed * 3.6).toFixed(0)
-}
-
-function getDistance(position) {
-    const earthRadiusKm = 6371;
-    let totalDistance = 0;
-
-    for (let i = 0; i < position.length - 1; i++) {
-        const p1 = {
-            latitude: position[i].latitude,
-            longitude: position[i].longitude
-        };
-        const p2 = {
-            latitude: position[i + 1].latitude,
-            longitude: position[i + 1].longitude
-        };
-
-        const deltaLatitude = toRad(p2.latitude - p1.latitude);
-        const deltaLongitude = toRad(p2.longitude - p1.longitude);
-
-        const a = Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
-                  Math.cos(toRad(p1.latitude)) * Math.cos(toRad(p2.latitude)) *
-                  Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        const distance = earthRadiusKm * c;
-        totalDistance += distance;
-
-        if (isNaN(p1.latitude) || isNaN(p1.longitude) || isNaN(p2.latitude) || isNaN(p2.longitude)) {
-            console.error("Coordenadas inválidas:", p1, p2);
-        }
-
-    }
-
-    function toRad(degree) {
-        return degree * Math.PI / 180;
-    }
-
-    return totalDistance.toFixed(1);
-}
-
-function getDuration(ride){ 
-
-    function format(number, digits) {
-        return String(number.toFixed(0)).padStart(2, '0')
-    }
-    
-    const interval = (ride.stopTime - ride.startTime) / 1000
-    const minutes = interval /60
-    const seconds = interval % 60
-    return `${format(minutes, 2)}:${format(seconds, 2)}`
-}
