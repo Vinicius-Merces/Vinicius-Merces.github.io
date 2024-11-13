@@ -200,21 +200,14 @@
             const userRef = db.collection("users").doc(user.uid);
             const despesaRef = userRef.collection("despesas").doc(despesaId);
 
-            despesaRef.update({
-                concluido: true
-            })
-            .then(() => {
-                despesaRef.get().then(doc => {
-                    const valor = doc.data().valor;
-                    userRef.update({
-                        planejamento: firebase.firestore.FieldValue.increment(-valor)
-                    });
-                    alert("Despesa concluída e valor debitado do planejamento!");
+            despesaRef.update({ concluido: true })
+                .then(() => {
+                    alert("Despesa concluída!");
+                    loadDespesas();
+                })
+                .catch(error => {
+                    alert(error.message);
                 });
-            })
-            .catch(error => {
-                alert(error.message);
-            });
         }
 
         // Função para remover despesa
@@ -223,113 +216,102 @@
             const userRef = db.collection("users").doc(user.uid);
             const despesaRef = userRef.collection("despesas").doc(despesaId);
 
-            despesaRef.get().then(doc => {
-                const valor = doc.data().valor;
-
-                despesaRef.delete()
-                    .then(() => {
-                        userRef.update({
-                            planejamento: firebase.firestore.FieldValue.increment(valor)
-                        });
-                        alert("Despesa removida e valor restituído ao planejamento!");
-                        loadDespesas();  // Atualiza a lista de despesas
-                    })
-                    .catch(error => {
-                        alert(error.message);
-                    });
-            });
+            despesaRef.delete()
+                .then(() => {
+                    alert("Despesa removida!");
+                    loadDespesas();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
         }
 
-        // Função para adicionar valor ao planejamento
+        // Função para adicionar valor de planejamento
         function addPlanejamento() {
             const user = auth.currentUser;
-            const valor = parseFloat(prompt("Informe o valor do planejamento:"));
+            const valorPlanejamento = parseFloat(prompt("Digite o valor do planejamento:"));
 
-            if (valor <= 0 || isNaN(valor)) {
+            if (isNaN(valorPlanejamento) || valorPlanejamento <= 0) {
                 alert("Por favor, insira um valor válido.");
                 return;
             }
 
             const userRef = db.collection("users").doc(user.uid);
-            userRef.update({
-                planejamento: firebase.firestore.FieldValue.increment(valor)
-            }).then(() => {
-                alert("Planejamento atualizado!");
-                loadDespesas();  // Atualiza o valor do planejamento
-            }).catch(error => {
-                alert(error.message);
-            });
-        }
-
-        // Função para carregar os relatórios
-        function loadRelatorios() {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesasRef = userRef.collection("despesas");
-
-            let totalGasto = 0;
-            let totalPlanejado = 0;
-
-            despesasRef.get().then(querySnapshot => {
-                querySnapshot.forEach(doc => {
-                    const despesa = doc.data();
-                    if (despesa.concluido) {
-                        totalGasto += despesa.valor;
-                    }
+            userRef.update({ planejamento: valorPlanejamento })
+                .then(() => {
+                    alert("Planejamento atualizado com sucesso!");
+                    loadDespesas();
+                })
+                .catch(error => {
+                    alert(error.message);
                 });
-
-                userRef.get().then(doc => {
-                    totalPlanejado = doc.data().planejamento || 0;
-                    renderChart(totalPlanejado, totalGasto);
-                });
-            });
-        }
-
-        // Função para exibir o gráfico
-        function renderChart(planejado, gasto) {
-            const ctx = document.getElementById('grafico').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Planejamento', 'Gasto'],
-                    datasets: [{
-                        label: 'Comparação',
-                        data: [planejado, gasto],
-                        backgroundColor: ['#36a2eb', '#ff6384']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
         }
 
         // Função de logout
         function logout() {
-            auth.signOut().then(() => {
-                alert("Você foi deslogado.");
-                window.location.href = "index.html";
-            });
+            auth.signOut()
+                .then(() => {
+                    alert("Você foi deslogado!");
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
         }
 
-        // Mostrar tela de login
+        // Função para exibir o formulário de login
         function showLoginForm() {
             document.getElementById("login-form").style.display = "block";
             document.getElementById("signup-form").style.display = "none";
         }
 
-        // Mostrar tela de cadastro
+        // Função para exibir o formulário de cadastro
         function showSignupForm() {
             document.getElementById("signup-form").style.display = "block";
             document.getElementById("login-form").style.display = "none";
         }
-    </script>
 
+        // Função para carregar gráficos de relatórios
+        function loadRelatorios() {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+
+            userRef.collection("despesas").get().then(querySnapshot => {
+                let despesas = [];
+                let valores = [];
+
+                querySnapshot.forEach(doc => {
+                    const despesa = doc.data();
+                    if (despesa.concluido) {
+                        despesas.push(despesa.nome);
+                        valores.push(despesa.valor);
+                    }
+                });
+
+                const ctx = document.getElementById('grafico').getContext('2d');
+                const grafico = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: despesas,
+                        datasets: [{
+                            label: 'Despesas Concluídas',
+                            data: valores,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>
