@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Firebase configuration
+// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
@@ -72,7 +72,7 @@ export function logout() {
     signOut(auth)
         .then(() => {
             console.log('Usuário deslogado');
-            window.location.href = 'index.html'; // Redireciona para a página de login
+            window.location.href = 'index.html'; // Redireciona para a página de login após logout
         })
         .catch(error => {
             console.error('Erro ao fazer logout:', error);
@@ -80,16 +80,68 @@ export function logout() {
 }
 
 // Função para adicionar despesas
-export function adicionarDespesa() {
-    // Código para adicionar a despesa, utilizando o Firestore ou outra lógica necessária.
+export async function adicionarDespesa(descricao, valor) {
+    const user = await checkAuthState();
+    if (user) {
+        try {
+            // Adiciona a despesa
+            await addDoc(collection(db, "despesas"), {
+                descricao: descricao,
+                valor: valor,
+                usuario: user.email,
+                data: new Date()
+            });
+            console.log('Despesa adicionada com sucesso!');
+
+            // Atualiza o valor do planejamento de gastos
+            const planejamentoDoc = await carregarPlanejamentoFirebase();
+            if (planejamentoDoc) {
+                const valorRestante = planejamentoDoc.valorRestante - valor;
+                await salvarPlanejamentoFirebase(valorRestante); // Atualiza o planejamento no Firebase
+                console.log('Planejamento atualizado com sucesso!');
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar despesa:', error);
+        }
+    }
 }
 
 // Função para carregar despesas pendentes
-export function carregarDespesasPendentes() {
-    // Código para carregar as despesas pendentes, com base no usuário logado.
+export async function carregarDespesasPendentes() {
+    const user = await checkAuthState();
+    if (user) {
+        try {
+            const q = query(collection(db, "despesas"), where("usuario", "==", user.email));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                console.log(doc.id, " => ", doc.data());
+            });
+        } catch (error) {
+            console.error('Erro ao carregar despesas pendentes:', error);
+        }
+    }
 }
 
-// Função para carregar o planejamento de gastos
-export function carregarPlanejamento() {
-    // Código para carregar o planejamento de gastos do Firestore.
+// Função para carregar o planejamento de gastos do Firebase
+export async function carregarPlanejamentoFirebase() {
+    const user = await checkAuthState();
+    const planejamentoRef = doc(db, 'planejamentos', user.uid); // Usa o ID do usuário como chave
+    const planejamentoDoc = await getDoc(planejamentoRef);
+
+    if (planejamentoDoc.exists()) {
+        return planejamentoDoc.data(); // Retorna os dados do planejamento
+    } else {
+        console.log('Planejamento não encontrado!');
+        return null;
+    }
+}
+
+// Função para salvar o planejamento de gastos no Firebase
+export async function salvarPlanejamentoFirebase(valorRestante) {
+    const user = await checkAuthState();
+    const planejamentoRef = doc(db, 'planejamentos', user.uid); // Usa o ID do usuário como chave
+    await setDoc(planejamentoRef, {
+        valorRestante: valorRestante
+    });
+    console.log('Planejamento salvo com sucesso!');
 }

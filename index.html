@@ -14,10 +14,10 @@
             <li><a href="relatorio.html">Relatório</a></li>
         </ul>
         <div id="auth-section">
-            <span id="user-name"></span> <!-- Aqui será exibido o nome do usuário -->
+            <span id="user-name"></span>
             <button id="login-btn">Login</button>
             <button id="create-account-btn">Criar Conta</button>
-            <button id="logout-btn" style="display:none;">Logout</button> <!-- Botão de logout -->
+            <button id="logout-btn" style="display:none;">Logout</button>
         </div>
     </nav>
 
@@ -33,7 +33,6 @@
         document.getElementById('create-account-btn').addEventListener('click', criarConta);
         document.getElementById('logout-btn').addEventListener('click', logout);
 
-        // Verifica se o usuário está autenticado e altera os botões
         checkAuthState(true).then(user => {
             document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
             document.getElementById('login-btn').style.display = 'none';
