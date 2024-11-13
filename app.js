@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
@@ -16,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Funções para login e criação de conta
+// Funções de login e criação de conta
 export function login() {
     const email = document.getElementById("login-email").value;
     const senha = document.getElementById("login-password").value;
@@ -46,23 +47,25 @@ export function criarConta() {
 }
 
 // Função de verificação de estado da autenticação
-// Passa um parâmetro para indicar que deve redirecionar se não estiver logado
+// Agora a função retorna uma Promise para ser utilizada com await nas páginas.
 export function checkAuthState(redirect = false) {
     return new Promise((resolve, reject) => {
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Se estiver logado, exibe nome do usuário e habilita logout
                 document.getElementById("user-name").textContent = `Bem-vindo, ${user.email}`;
                 document.getElementById("login-btn").style.display = "none";
                 document.getElementById("create-account-btn").style.display = "none";
                 document.getElementById("logout-btn").style.display = "block";
-                resolve(user);
+                resolve(user); // Resolve a Promise se estiver logado
             } else {
+                // Se não estiver logado, exibe botões de login e cadastro
                 document.getElementById("user-name").textContent = "";
                 document.getElementById("login-btn").style.display = "block";
                 document.getElementById("create-account-btn").style.display = "block";
                 document.getElementById("logout-btn").style.display = "none";
                 if (redirect) {
-                    reject("Usuário não autenticado");
+                    reject("Usuário não autenticado"); // Rejeita a Promise se não estiver logado
                 }
             }
         });
