@@ -54,7 +54,7 @@
         // Função de logout
         document.getElementById('logout-btn').addEventListener('click', logout);
 
-        // Verifica se o usuário está autenticado
+        // Verifica se o usuário está autenticado antes de permitir o acesso à página de despesas
         checkAuthState(true).then(() => {
             carregarDespesasPendentes();
             carregarPlanejamento();

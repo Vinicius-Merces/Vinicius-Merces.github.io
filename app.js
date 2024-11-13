@@ -77,3 +77,15 @@ export function logout() {
             console.error('Erro ao fazer logout:', error);
         });
 }
+
+// Exibir o nome do usuário logado e exibir os botões corretamente
+checkAuthState(true).then(user => {
+    // Exibe o nome do usuário logado
+    document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
+    document.getElementById('login-btn').style.display = 'none';
+    document.getElementById('create-account-btn').style.display = 'none';
+    document.getElementById('logout-btn').style.display = 'inline';
+}).catch(() => {
+    // Se não estiver logado, redireciona
+    window.location.href = "index.html";
+});
