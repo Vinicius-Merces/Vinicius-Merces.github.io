@@ -1,5 +1,4 @@
 // Importação do Firebase
-import { initializeApp } from "firebase/Despesas";
 import { getFirestore, doc, getDoc, collection, addDoc, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
 
