@@ -1,9 +1,7 @@
-// Importando módulos necessários do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
@@ -14,57 +12,79 @@ const firebaseConfig = {
     measurementId: "G-1N7LB9LZQM"
 };
 
-// Inicializando o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Função para verificar se o usuário está autenticado
-export function checkAuthState() {
-    const user = auth.currentUser;
-    if (!user) {
-        window.location.href = "index.html"; // Redireciona para a página de login
-    }
-}
-
-// Função para login
+// Funções para login e criação de conta
 export function login() {
     const email = document.getElementById("login-email").value;
     const senha = document.getElementById("login-password").value;
-    
     signInWithEmailAndPassword(auth, email, senha)
         .then((userCredential) => {
-            console.log('Usuário logado:', userCredential.user);
+            console.log("Usuário logado");
             window.location.href = "despesas.html";
         })
         .catch((error) => {
-            console.error('Erro ao fazer login:', error);
-            alert('Erro ao fazer login. Verifique seu e-mail e senha.');
+            console.error("Erro de login: ", error);
+            alert("Erro de login. Tente novamente.");
         });
 }
 
-// Função para criar conta
 export function criarConta() {
     const email = document.getElementById("signup-email").value;
     const senha = document.getElementById("signup-password").value;
-
     createUserWithEmailAndPassword(auth, email, senha)
         .then((userCredential) => {
-            console.log('Usuário criado:', userCredential.user);
-            alert('Conta criada com sucesso! Faça login.');
-            window.location.href = "index.html"; 
+            console.log("Conta criada");
+            window.location.href = "index.html";
         })
         .catch((error) => {
-            console.error('Erro ao criar conta:', error);
-            alert('Erro ao criar conta. Tente novamente.');
+            console.error("Erro ao criar conta: ", error);
+            alert("Erro ao criar conta. Tente novamente.");
         });
 }
 
-// Função para adicionar despesa
+// Função de verificação de estado da autenticação
+// Passa um parâmetro para indicar que deve redirecionar se não estiver logado
+export function checkAuthState(redirect = false) {
+    return new Promise((resolve, reject) => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById("user-name").textContent = `Bem-vindo, ${user.email}`;
+                document.getElementById("login-btn").style.display = "none";
+                document.getElementById("create-account-btn").style.display = "none";
+                document.getElementById("logout-btn").style.display = "block";
+                resolve(user);
+            } else {
+                document.getElementById("user-name").textContent = "";
+                document.getElementById("login-btn").style.display = "block";
+                document.getElementById("create-account-btn").style.display = "block";
+                document.getElementById("logout-btn").style.display = "none";
+                if (redirect) {
+                    reject("Usuário não autenticado");
+                }
+            }
+        });
+    });
+}
+
+// Função de logout
+export function logout() {
+    signOut(auth)
+        .then(() => {
+            window.location.href = "index.html";
+        })
+        .catch((error) => {
+            console.error("Erro ao sair:", error);
+        });
+}
+
+// Funções para gerenciamento de despesas
 export async function adicionarDespesa() {
-    const descricao = document.getElementById('descricao').value;
-    const valor = parseFloat(document.getElementById('valor').value);
-    const dataVencimento = document.getElementById('data-vencimento').value;
+    const descricao = document.getElementById("descricao").value;
+    const valor = parseFloat(document.getElementById("valor").value);
+    const dataVencimento = document.getElementById("data-vencimento").value;
 
     if (descricao && valor && dataVencimento) {
         try {
@@ -84,7 +104,7 @@ export async function adicionarDespesa() {
     }
 }
 
-// Função para carregar despesas pendentes
+// Carregar despesas pendentes
 export async function carregarDespesasPendentes() {
     const despesasRef = collection(db, "despesas");
     const q = query(despesasRef, where("pago", "==", false));
@@ -99,10 +119,21 @@ export async function carregarDespesasPendentes() {
     });
 }
 
+// Carregar planejamento de gastos
+export async function carregarPlanejamento() {
+    const planejamentoRef = collection(db, "planejamento");
+    const querySnapshot = await getDocs(planejamentoRef);
+
+    querySnapshot.forEach((doc) => {
+        const planejamento = doc.data();
+        document.getElementById("valor-disponivel").textContent = `Valor disponível para planejamento: R$ ${planejamento.valorDisponivel}`;
+    });
+}
+
 // Funções para exibir gráficos de barras e linha
 export function exibirGraficoBarras() {
     const ctx = document.getElementById("grafico-barras").getContext("2d");
-    const myChart = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Janeiro', 'Fevereiro', 'Março'],
@@ -119,7 +150,7 @@ export function exibirGraficoBarras() {
 
 export function exibirGraficoLinha() {
     const ctx = document.getElementById("grafico-linha").getContext("2d");
-    const myChart = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
         data: {
             labels: ['Janeiro', 'Fevereiro', 'Março'],
@@ -132,25 +163,4 @@ export function exibirGraficoLinha() {
             }]
         }
     });
-}
-
-export function carregarPlanejamento() {
-    const planejamentoRef = collection(db, "planejamento");
-    const querySnapshot = await getDocs(planejamentoRef);
-
-    querySnapshot.forEach((doc) => {
-        const planejamento = doc.data();
-        document.getElementById("valor-disponivel").textContent = `Valor disponível para planejamento: R$ ${planejamento.valorDisponivel}`;
-    });
-}
-
-// Função para logout
-export function logout() {
-    signOut(auth)
-        .then(() => {
-            window.location.href = "index.html"; // Redireciona para a página de login
-        })
-        .catch((error) => {
-            console.error("Erro ao sair:", error);
-        });
 }

@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <ul>
             <li><a href="index.html">Home</a></li>
@@ -25,8 +24,6 @@
 
     <div id="content">
         <h1>Relatório de Despesas</h1>
-
-        <!-- Gráficos -->
         <div>
             <canvas id="grafico-barras"></canvas>
         </div>
@@ -36,12 +33,16 @@
     </div>
 
     <script type="module">
-        import { exibirGraficoBarras, exibirGraficoLinha, carregarPlanejamento } from './app.js';
+        import { checkAuthState, exibirGraficoBarras, exibirGraficoLinha, carregarPlanejamento } from './app.js';
 
-        // Carregar planejamento e gráficos
-        carregarPlanejamento();
-        exibirGraficoBarras();
-        exibirGraficoLinha();
+        // Verifica se o usuário está logado antes de exibir a página de relatórios
+        checkAuthState(true).then(() => {
+            carregarPlanejamento();
+            exibirGraficoBarras();
+            exibirGraficoLinha();
+        }).catch(() => {
+            window.location.href = "index.html"; // Redireciona para a página de login caso não esteja logado
+        });
     </script>
 </body>
 </html>
