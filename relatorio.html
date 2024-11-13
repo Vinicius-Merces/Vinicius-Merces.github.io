@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Despesas</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Inclusão do Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -33,7 +35,6 @@
 
     <script type="module">
         import { checkAuthState } from './app.js'; // Importa a função de verificação de autenticação
-        import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js'; // Funções para gerar os gráficos
 
         // Função de logout
         document.getElementById('logout-btn').addEventListener('click', () => {
@@ -50,6 +51,58 @@
             // Se não estiver logado, redireciona para a página Home (index.html)
             window.location.href = "index.html";
         });
+
+        // Função para gerar o gráfico de barras
+        function gerarGraficoBarras() {
+            const ctx = document.getElementById('grafico-barras').getContext('2d');
+            const graficoBarras = new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico: barras
+                data: {
+                    labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio'], // Exemplo de meses
+                    datasets: [{
+                        label: 'Despesas mensais',
+                        data: [500, 400, 600, 700, 550], // Dados das despesas
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)', // Cor do fundo das barras
+                        borderColor: 'rgba(255, 99, 132, 1)', // Cor da borda das barras
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para gerar o gráfico de linha
+        function gerarGraficoLinha() {
+            const ctx = document.getElementById('grafico-linha').getContext('2d');
+            const graficoLinha = new Chart(ctx, {
+                type: 'line', // Tipo de gráfico: linha
+                data: {
+                    labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio'], // Exemplo de meses
+                    datasets: [{
+                        label: 'Despesas acumuladas',
+                        data: [500, 900, 1500, 2200, 2750], // Dados das despesas acumuladas
+                        fill: false,
+                        borderColor: 'rgba(54, 162, 235, 1)', // Cor da linha
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
