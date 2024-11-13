@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Despesas</title>
+    <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,50 +23,30 @@
 
     <div id="content">
         <h1>Gerenciar Despesas</h1>
-
         <div id="form-despesa">
             <label for="descricao">Descrição:</label>
             <input type="text" id="descricao" placeholder="Descrição da despesa" required>
-
             <label for="valor">Valor Total:</label>
-            <input type="number" id="valor" placeholder="Valor total da despesa" required>
-
-            <label for="data-vencimento">Data de Vencimento:</label>
-            <input type="date" id="data-vencimento" required>
-
-            <button id="btn-adicionar">Adicionar Despesa</button>
+            <input type="number" id="valor" placeholder="Valor" required>
+            <button id="adicionar-btn">Adicionar Despesa</button>
         </div>
 
-        <ul id="despesas-pendentes"></ul>
-
-        <div id="planejamento">
-            <h2>Planejamento de Gastos</h2>
-            <label for="valor-planejamento">Valor Planejado:</label>
-            <input type="number" id="valor-planejamento" placeholder="Valor total planejado">
-            <button id="salvar-planejamento">Salvar Planejamento</button>
-            <p id="valor-restante"></p>
+        <div id="despesas-lista">
+            <!-- Lista de despesas será carregada aqui -->
         </div>
     </div>
 
     <script type="module">
-        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamento, logout } from './app.js';
-    
-        // Verifica se o usuário está logado antes de permitir o acesso
-        checkAuthState(true).then(() => {
+        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes } from './app.js';
+
+        document.getElementById('adicionar-btn').addEventListener('click', adicionarDespesa);
+
+        checkAuthState(true).then(user => {
+            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
             carregarDespesasPendentes();
-            carregarPlanejamento();
         }).catch(() => {
-            window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
+            window.location.href = 'index.html';
         });
-    
-        // Adiciona a despesa
-        document.getElementById("btn-adicionar").addEventListener("click", () => {
-            adicionarDespesa();
-        });
-    
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', logout);
     </script>
-    
 </body>
 </html>

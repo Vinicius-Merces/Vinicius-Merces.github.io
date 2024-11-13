@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Despesas</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -24,7 +23,6 @@
 
     <div id="content">
         <h1>Relatório de Despesas</h1>
-
         <div id="grafico-container">
             <canvas id="grafico-barras"></canvas>
             <canvas id="grafico-linha"></canvas>
@@ -34,118 +32,13 @@
     <script type="module">
         import { checkAuthState } from './app.js';
         import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js';
-        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
-        const db = getFirestore();
-        const auth = getAuth();
-
-        // Função para gerar os gráficos
-        checkAuthState(true).then(async (user) => {
-            const usuarioId = user.uid;
-
-            // Obter as despesas
-            const despesasRef = collection(db, 'despesas');
-            const q = query(despesasRef, where("usuarioId", "==", usuarioId));
-            const despesasSnapshot = await getDocs(q);
-            
-            const despesas = [];
-            let totalGasto = 0;
-            despesasSnapshot.forEach(doc => {
-                const despesa = doc.data();
-                despesas.push(despesa);
-                totalGasto += despesa.valor;
-            });
-
-            // Obter o planejamento de gastos
-            const planejamentoRef = collection(db, 'planejamento');
-            const planejamentoSnapshot = await getDocs(planejamentoRef);
-            let valorPlanejado = 0;
-            planejamentoSnapshot.forEach(doc => {
-                if (doc.data().usuarioId === usuarioId) {
-                    valorPlanejado = doc.data().valorPlanejado;
-                }
-            });
-
-            // Gerar gráficos com os dados
-            gerarGraficoBarras(totalGasto, valorPlanejado);
-            gerarGraficoLinha(despesas, valorPlanejado);
+        checkAuthState(true).then(user => {
+            gerarGraficoBarras();
+            gerarGraficoLinha();
         }).catch(() => {
-            window.location.href = "index.html"; // Redireciona se o usuário não estiver logado
+            window.location.href = 'index.html';
         });
-
-        // Função para gerar gráfico de barras
-        function gerarGraficoBarras(totalGasto, valorPlanejado) {
-            const ctx = document.getElementById('grafico-barras').getContext('2d');
-            const graficoBarras = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Gasto', 'Planejamento'],
-                    datasets: [{
-                        label: 'Valores',
-                        data: [totalGasto, valorPlanejado],
-                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
-                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        // Função para gerar gráfico de linha
-        function gerarGraficoLinha(despesas, valorPlanejado) {
-            const ctx = document.getElementById('grafico-linha').getContext('2d');
-            const datas = despesas.map(d => d.dataVencimento);
-            const valores = despesas.map(d => d.valor);
-            const saldoRestante = [];
-
-            let saldo = valorPlanejado;
-            despesas.forEach(d => {
-                saldo -= d.valor;
-                saldoRestante.push(saldo);
-            });
-
-            const graficoLinha = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: datas,
-                    datasets: [{
-                        label: 'Saldo Restante',
-                        data: saldoRestante,
-                        fill: false,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'month'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Data'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Saldo Restante'
-                            }
-                        }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>

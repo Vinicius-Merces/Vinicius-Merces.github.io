@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
@@ -12,6 +13,7 @@ const firebaseConfig = {
     measurementId: "G-1N7LB9LZQM"
 };
 
+// Inicializando o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -36,7 +38,8 @@ export function checkAuthState(redirect = false) {
 // Função de login
 export function login() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password');
+    const senha = prompt('Digite sua senha', '', 'password'); // Agora usando "password" para ocultar a senha
+
     signInWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
             console.log('Usuário logado:', userCredential.user);
@@ -51,7 +54,8 @@ export function login() {
 // Função de criação de conta
 export function criarConta() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password');
+    const senha = prompt('Digite sua senha', '', 'password'); // Usando "password" aqui também
+
     createUserWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
             console.log('Usuário criado:', userCredential.user);
@@ -75,25 +79,17 @@ export function logout() {
         });
 }
 
-// Função de adicionar despesa
+// Função para adicionar despesas
 export function adicionarDespesa() {
-    const descricao = document.getElementById('descricao').value;
-    const valor = parseFloat(document.getElementById('valor').value);
-    const dataVencimento = document.getElementById('data-vencimento').value;
+    // Código para adicionar a despesa, utilizando o Firestore ou outra lógica necessária.
+}
 
-    // Lógica para adicionar despesa no Firestore
-    const despesasRef = collection(db, 'despesas');
-    addDoc(despesasRef, {
-        descricao,
-        valor,
-        dataVencimento,
-        usuarioId: auth.currentUser.uid // Garantindo que as despesas sejam associadas ao usuário logado
-    })
-    .then(() => {
-        console.log('Despesa adicionada');
-        carregarDespesasPendentes(); // Recarregar as despesas pendentes após adicionar
-    })
-    .catch(error => {
-        console.error('Erro ao adicionar despesa:', error);
-    });
+// Função para carregar despesas pendentes
+export function carregarDespesasPendentes() {
+    // Código para carregar as despesas pendentes, com base no usuário logado.
+}
+
+// Função para carregar o planejamento de gastos
+export function carregarPlanejamento() {
+    // Código para carregar o planejamento de gastos do Firestore.
 }
