@@ -3,34 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Despesas - Home</title>
+    <title>Controle de Despesas - Login</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Navbar -->
-<nav class="navbar">
-    <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="despesas.html">Despesas</a></li>
-        <li><a href="relatorio.html">Relatório</a></li> <!-- Novo botão de Relatório -->
-    </ul>
-    <div id="auth-section">
-        <span id="user-name"></span>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="despesas.html">Despesas</a></li>
+            <li><a href="relatorio.html">Relatórios</a></li>
+        </ul>
+        <div id="auth-section">
+            <span id="user-name"></span>
+            <button id="login-btn">Login</button>
+            <button id="create-account-btn">Criar Conta</button>
+            <button id="logout-btn" style="display:none;">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Formulário de Login -->
+    <div id="login-form" class="auth-form">
+        <h2>Login</h2>
+        <label for="login-email">E-mail:</label>
+        <input type="email" id="login-email" placeholder="Digite seu e-mail" required>
+        <label for="login-password">Senha:</label>
+        <input type="password" id="login-password" placeholder="Digite sua senha" required>
         <button id="login-btn">Login</button>
-        <button id="create-account-btn">Criar Conta</button>
-        <button id="logout-btn" style="display:none;">Logout</button>
     </div>
-</nav>
 
-
-    <!-- Conteúdo da Home -->
-    <div id="content">
-        <h1>Bem-vindo ao Controle de Despesas</h1>
-        <p>Gerencie suas finanças e controle suas despesas mensais de forma simples e eficaz!</p>
-        <p id="user-greeting"></p>
-
-        <!-- Link para ir à tela de despesas -->
-        <button id="go-to-despesas" style="display:none;" onclick="window.location.href='despesas.html'">Ir para Despesas</button>
+    <!-- Formulário de Criação de Conta -->
+    <div id="create-account-form" class="auth-form">
+        <h2>Criar Conta</h2>
+        <label for="signup-email">E-mail:</label>
+        <input type="email" id="signup-email" placeholder="Digite seu e-mail" required>
+        <label for="signup-password">Senha:</label>
+        <input type="password" id="signup-password" placeholder="Digite sua senha" required>
+        <button id="create-account-btn">Criar Conta</button>
     </div>
 
     <script type="module" src="app.js"></script>

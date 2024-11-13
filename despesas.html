@@ -12,7 +12,7 @@
         <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="despesas.html">Despesas</a></li>
-            <li><a href="relatorio.html">Relatório</a></li>
+            <li><a href="relatorio.html">Relatórios</a></li>
         </ul>
         <div id="auth-section">
             <span id="user-name"></span>
@@ -25,16 +25,6 @@
     <!-- Conteúdo das Despesas -->
     <div id="content">
         <h1>Gerenciar Despesas</h1>
-
-        <!-- Formulário para definir o planejamento de gastos -->
-        <div id="form-planejamento">
-            <label for="planejamento">Planejamento de Gastos:</label>
-            <input type="number" id="planejamento" placeholder="Valor disponível" required>
-            <button id="btn-salvar-planejamento">Salvar Planejamento</button>
-        </div>
-
-        <!-- Exibição do valor restante -->
-        <p id="valor-restante">Valor disponível para gastos: R$ <span id="restante">0</span></p>
 
         <!-- Formulário para adicionar despesas -->
         <div id="form-despesa">
@@ -55,7 +45,7 @@
     </div>
 
     <script type="module">
-        import { checkAuthState, carregarDespesasPendentes, adicionarDespesa, salvarPlanejamento, exibirValorRestante } from './app.js';
+        import { checkAuthState, carregarDespesasPendentes, adicionarDespesa } from './app.js';
 
         // Verifica se o usuário está autenticado, caso contrário redireciona para login
         checkAuthState();
@@ -65,14 +55,8 @@
             adicionarDespesa();
         });
 
-        // Função para salvar planejamento de gastos
-        document.getElementById("btn-salvar-planejamento")?.addEventListener("click", () => {
-            salvarPlanejamento();
-        });
-
-        // Carrega despesas pendentes e exibe o valor restante
+        // Função para carregar as despesas pendentes
         carregarDespesasPendentes();
-        exibirValorRestante();
     </script>
 </body>
 </html>
