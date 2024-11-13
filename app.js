@@ -1,6 +1,7 @@
 // Importação do Firebase com melhorias na estrutura de importação
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js';
 import { getFirestore, doc, getDoc, collection, addDoc, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
-import { getAuth, onAuthStateChanged, signOut, initializeApp } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
