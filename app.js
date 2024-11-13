@@ -12,7 +12,6 @@ const firebaseConfig = {
     measurementId: "G-1N7LB9LZQM"
 };
 
-// Inicializando o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -37,8 +36,7 @@ export function checkAuthState(redirect = false) {
 // Função de login
 export function login() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password'); // Agora usando "password" para ocultar a senha
-
+    const senha = prompt('Digite sua senha', '', 'password');
     signInWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
             console.log('Usuário logado:', userCredential.user);
@@ -53,8 +51,7 @@ export function login() {
 // Função de criação de conta
 export function criarConta() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password'); // Usando "password" aqui também
-
+    const senha = prompt('Digite sua senha', '', 'password');
     createUserWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
             console.log('Usuário criado:', userCredential.user);
@@ -77,15 +74,3 @@ export function logout() {
             console.error('Erro ao fazer logout:', error);
         });
 }
-
-// Exibir o nome do usuário logado e exibir os botões corretamente
-checkAuthState(true).then(user => {
-    // Exibe o nome do usuário logado
-    document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
-    document.getElementById('login-btn').style.display = 'none';
-    document.getElementById('create-account-btn').style.display = 'none';
-    document.getElementById('logout-btn').style.display = 'inline';
-}).catch(() => {
-    // Se não estiver logado, redireciona
-    window.location.href = "index.html";
-});

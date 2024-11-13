@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Despesas</title>
+    <title>Gerenciar Despesas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -51,10 +51,7 @@
     <script type="module">
         import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamento, logout } from './app.js';
 
-        // Função de logout
-        document.getElementById('logout-btn').addEventListener('click', logout);
-
-        // Verifica se o usuário está autenticado antes de permitir o acesso à página de despesas
+        // Verifica se o usuário está logado antes de permitir o acesso à página de despesas
         checkAuthState(true).then(() => {
             carregarDespesasPendentes();
             carregarPlanejamento();
@@ -66,6 +63,9 @@
         document.getElementById("btn-adicionar").addEventListener("click", () => {
             adicionarDespesa();
         });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', logout);
     </script>
 </body>
 </html>

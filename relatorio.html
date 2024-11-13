@@ -24,6 +24,7 @@
     <div id="content">
         <h1>Relatório de Despesas</h1>
 
+        <!-- Contêiner para os gráficos -->
         <div id="grafico-container">
             <canvas id="grafico-barras"></canvas>
             <canvas id="grafico-linha"></canvas>
@@ -31,18 +32,23 @@
     </div>
 
     <script type="module">
-        import { checkAuthState } from './app.js';
-        import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js';
+        import { checkAuthState } from './app.js'; // Importa a função de verificação de autenticação
+        import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js'; // Funções para gerar os gráficos
 
         // Função de logout
-        document.getElementById('logout-btn').addEventListener('click', logout);
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = 'index.html';
+        });
 
-        // Verifica se o usuário está autenticado
+        // Verifica se o usuário está autenticado antes de exibir os gráficos
         checkAuthState(true).then(() => {
-            gerarGraficoBarras();
-            gerarGraficoLinha();
+            // Se o usuário estiver logado, gera os gráficos
+            gerarGraficoBarras(); // Função para gerar o gráfico de barras
+            gerarGraficoLinha(); // Função para gerar o gráfico de linha
         }).catch(() => {
-            window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
+            // Se não estiver logado, redireciona para a página Home (index.html)
+            window.location.href = "index.html";
         });
     </script>
 </body>
