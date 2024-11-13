@@ -1,116 +1,226 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bem-vindo ao Controle de Despesas</title>
+    <title>Despesas</title>
+    
+    <!-- Adicionando o link para o Bootstrap (sem integridade para evitar erro) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Inclusão do Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJt0cqR4cQGpZ32ts1z5K1Khlz3qQXvYHvS9SKIbbVf5pG7a6LRk8Z3ShwpE" crossorigin="anonymous">
+    <!-- Adicionando a biblioteca do Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Inclusão do FontAwesome para ícones (opcional) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-
-    <!-- Inclusão de um CSS customizado -->
-    <style>
-        body {
-            background-color: #f4f7fc;
-        }
-        .card {
-            border-radius: 10px;
-        }
-        .form-container {
-            max-width: 500px;
-            margin: auto;
-            padding: 20px;
-        }
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            font-size: 1.5rem;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container-fluid">
-        <div class="row justify-content-center align-items-center" style="height: 100vh;">
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card shadow">
-                    <div class="card-header text-center">
-                        <h2>Controle de Despesas</h2>
-                    </div>
-                    <div class="card-body">
-                        <h3 class="text-center mb-4">Entrar</h3>
-
-                        <!-- Formulário de Login -->
-                        <form id="login-form">
-                            <div class="mb-3">
-                                <label for="login-email" class="form-label">E-mail</label>
-                                <input type="email" class="form-control" id="login-email" placeholder="E-mail">
-                            </div>
-                            <div class="mb-3">
-                                <label for="login-password" class="form-label">Senha</label>
-                                <input type="password" class="form-control" id="login-password" placeholder="Senha">
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button type="button" class="btn btn-primary w-100" onclick="login()">Entrar</button>
-                            </div>
-                            <div class="text-center mt-3">
-                                <p>Não tem uma conta? <a href="javascript:void(0);" onclick="showSignupForm()">Crie uma agora</a></p>
-                            </div>
-                        </form>
-
-                        <!-- Formulário de Cadastro -->
-                        <form id="signup-form" style="display:none;">
-                            <div class="mb-3">
-                                <label for="signup-email" class="form-label">E-mail</label>
-                                <input type="email" class="form-control" id="signup-email" placeholder="E-mail">
-                            </div>
-                            <div class="mb-3">
-                                <label for="signup-password" class="form-label">Senha</label>
-                                <input type="password" class="form-control" id="signup-password" placeholder="Senha">
-                            </div>
-                            <button type="button" class="btn btn-primary w-100" onclick="signup()">Criar Conta</button>
-                            <div class="text-center mt-3">
-                                <p>Já tem uma conta? <a href="javascript:void(0);" onclick="showLoginForm()">Faça login</a></p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts do Bootstrap e Firebase -->
+    <!-- Adicionando o Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+</head>
+<body>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div class="container">
+    <h1>Controle de Despesas</h1>
+    <div id="login-form" style="display:none;">
+        <h3>Login</h3>
+        <input type="email" id="login-email" placeholder="Email" class="form-control"><br>
+        <input type="password" id="login-password" placeholder="Senha" class="form-control"><br>
+        <button onclick="login()" class="btn btn-primary">Entrar</button>
+    </div>
 
-    <script src="app.js"></script>
+    <div id="signup-form" style="display:none;">
+        <h3>Criar Conta</h3>
+        <input type="email" id="signup-email" placeholder="Email" class="form-control"><br>
+        <input type="password" id="signup-password" placeholder="Senha" class="form-control"><br>
+        <button onclick="signup()" class="btn btn-success">Criar Conta</button>
+    </div>
 
-    <script>
-        function showLoginForm() {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('signup-form').style.display = 'none';
+    <!-- Página de Despesas -->
+    <div id="despesas-page" style="display:none;">
+        <h3>Planejamento de Despesas</h3>
+        <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
+        <button onclick="addDespesa()" class="btn btn-warning">Adicionar Despesa</button>
+        <div id="despesas-list"></div>
+    </div>
+
+    <!-- Gráfico de Relatório -->
+    <canvas id="grafico" width="400" height="200"></canvas>
+</div>
+
+<script>
+// Configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+    authDomain: "despesas-f60a3.firebaseapp.com",
+    projectId: "despesas-f60a3",
+    storageBucket: "despesas-f60a3.firebasestorage.app",
+    messagingSenderId: "677878335691",
+    appId: "1:677878335691:web:ec41de4f8987e95c28334e",
+};
+
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Exemplo de uso do Firebase Auth
+auth.onAuthStateChanged(user => {
+    if (user) {
+        console.log("Usuário logado:", user);
+        loadDespesas();  // Carregar despesas se estiver logado
+        loadRelatorios();  // Carregar relatórios se estiver logado
+        document.getElementById("despesas-page").style.display = "block";
+    } else {
+        document.getElementById("login-form").style.display = "block";  // Exibe a tela de login
+    }
+});
+
+// Função para login
+function login() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            window.location.href = "despesas.html";  // Redireciona para a página de despesas
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+}
+
+// Função para criar uma conta
+function signup() {
+    const email = document.getElementById("signup-email").value;
+    const password = document.getElementById("signup-password").value;
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+            window.location.href = "despesas.html";  // Redireciona para a página de despesas
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+}
+
+// Função para adicionar despesa
+function addDespesa() {
+    const user = auth.currentUser;
+    const nome = prompt("Nome da Despesa:");
+    const valor = parseFloat(prompt("Valor da Despesa:"));
+    const categoria = prompt("Categoria:");
+
+    const userRef = db.collection("users").doc(user.uid);
+    
+    // Adicionar despesa na coleção "despesas" do usuário
+    userRef.collection("despesas").add({
+        nome: nome,
+        valor: valor,
+        categoria: categoria,
+        concluido: false
+    })
+    .then(() => {
+        userRef.update({
+            planejamento: firebase.firestore.FieldValue.increment(-valor)
+        });
+        alert("Despesa adicionada com sucesso!");
+        loadDespesas();  // Atualiza a lista de despesas
+    })
+    .catch(error => {
+        alert(error.message);
+    });
+}
+
+// Função para carregar despesas
+function loadDespesas() {
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid);
+
+    // Carregar valor de planejamento
+    userRef.get().then(doc => {
+        const data = doc.data();
+        document.getElementById("planejamento").innerText = `R$ ${data.planejamento}`;
+    });
+
+    // Carregar despesas
+    userRef.collection("despesas").get().then(querySnapshot => {
+        let despesasList = document.getElementById("despesas-list");
+        despesasList.innerHTML = ""; // Limpar lista existente
+
+        querySnapshot.forEach(doc => {
+            const despesa = doc.data();
+            const despesaItem = document.createElement("div");
+            despesaItem.innerHTML = `
+                <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor} (${despesa.categoria})</p>
+                <button onclick="concluirDespesa('${doc.id}')">Concluir</button>
+            `;
+            despesasList.appendChild(despesaItem);
+        });
+    });
+}
+
+// Função para marcar despesa como concluída
+function concluirDespesa(despesaId) {
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid);
+    const despesaRef = userRef.collection("despesas").doc(despesaId);
+
+    despesaRef.update({
+        concluido: true
+    })
+    .then(() => {
+        despesaRef.get().then(doc => {
+            const valor = doc.data().valor;
+            userRef.update({
+                planejamento: firebase.firestore.FieldValue.increment(-valor)
+            });
+            alert("Despesa concluída e valor debitado do planejamento!");
+        });
+    })
+    .catch(error => {
+        alert(error.message);
+    });
+}
+
+// Função para carregar os relatórios
+function loadRelatorios() {
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid);
+    const despesasRef = userRef.collection("despesas");
+
+    let totalGasto = 0;
+    let totalPlanejado = 0;
+
+    despesasRef.get().then(querySnapshot => {
+        querySnapshot.forEach(doc => {
+            const despesa = doc.data();
+            if (despesa.concluido) {
+                totalGasto += despesa.valor;
+            }
+        });
+
+        userRef.get().then(doc => {
+            totalPlanejado = doc.data().planejamento;
+            renderChart(totalPlanejado, totalGasto);
+        });
+    });
+}
+
+// Função para exibir o gráfico
+function renderChart(planejado, gasto) {
+    const ctx = document.getElementById('grafico').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Planejamento', 'Gasto'],
+            datasets: [{
+                label: 'Comparação',
+                data: [planejado, gasto],
+                backgroundColor: ['#36a2eb', '#ff6384']
+            }]
         }
+    });
+}
+</script>
 
-        function showSignupForm() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('signup-form').style.display = 'block';
-        }
-    </script>
 </body>
-
 </html>
