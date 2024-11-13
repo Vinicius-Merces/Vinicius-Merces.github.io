@@ -8,15 +8,19 @@ const firebaseConfig = {
     appId: "1:677878335691:web:ec41de4f8987e95c28334e",
 };
 
-// Inicialize o Firebase
-firebase.initializeApp(firebaseConfig);
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // Exemplo de uso do Firebase Auth
-firebase.auth().onAuthStateChanged(user => {
+auth.onAuthStateChanged(user => {
     if (user) {
         console.log("Usuário logado:", user);
+        loadDespesas();  // Carregar despesas se estiver logado
+        loadRelatorios();  // Carregar relatórios se estiver logado
     } else {
-        console.log("Nenhum usuário logado");
+        window.location.href = "index.html";  // Redireciona para a tela de login
     }
 });
 
@@ -68,7 +72,7 @@ function signup() {
 
 // Função para adicionar despesa
 function addDespesa() {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     const nome = prompt("Nome da Despesa:");
     const valor = parseFloat(prompt("Valor da Despesa:"));
     const categoria = prompt("Categoria:");
@@ -97,7 +101,7 @@ function addDespesa() {
 
 // Função para marcar despesa como concluída
 function concluirDespesa(despesaId) {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const despesaRef = userRef.collection("despesas").doc(despesaId);
 
@@ -122,7 +126,7 @@ function concluirDespesa(despesaId) {
 
 // Função para carregar despesas e valor de planejamento
 function loadDespesas() {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
 
     // Carregar valor de planejamento
@@ -150,7 +154,7 @@ function loadDespesas() {
 
 // Função para carregar os relatórios
 function loadRelatorios() {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
 
@@ -191,13 +195,3 @@ function renderChart(planejado, gasto) {
         }
     });
 }
-
-// Monitorar o estado de autenticação
-auth.onAuthStateChanged(user => {
-    if (user) {
-        loadDespesas();  // Carregar despesas se estiver logado
-        loadRelatorios();  // Carregar relatórios se estiver logado
-    } else {
-        window.location.href = "index.html";  // Redireciona para a tela de login
-    }
-});
