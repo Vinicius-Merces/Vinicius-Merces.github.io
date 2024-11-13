@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Despesas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="despesas.html">Despesas</a></li>
+            <li><a href="relatorios.html">Relatórios</a></li>
+        </ul>
+        <div id="auth-section">
+            <span id="user-name"></span>
+            <button id="login-btn">Login</button>
+            <button id="create-account-btn">Criar Conta</button>
+            <button id="logout-btn" style="display:none;">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Conteúdo dos Relatórios -->
+    <div id="content">
+        <h1>Relatório de Despesas</h1>
+        
+        <!-- Seção de Planejamento -->
+        <div id="planejamento">
+            <h2>Planejamento de Gastos</h2>
+            <p>Valor Total Planejado: R$ <span id="valor-total-planejado">0.00</span></p>
+            <p>Valor Restante: R$ <span id="valor-restante">0.00</span></p>
+        </div>
+
+        <!-- Gráficos -->
+        <div id="chart-bar-container" style="width: 100%; height: 400px;">
+            <canvas id="barChart"></canvas>
+        </div>
+        <div id="chart-line-container" style="width: 100%; height: 400px; margin-top: 20px;">
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Scripts para gráficos e relatórios -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { carregarPlanejamento, gerarGraficoBarras, gerarGraficoLinha } from './app.js';
+
+        // Carrega os dados do planejamento e atualiza o relatório
+        carregarPlanejamento();
+
+        // Inicializa os gráficos
+        gerarGraficoBarras();
+        gerarGraficoLinha();
+    </script>
+</body>
+</html>

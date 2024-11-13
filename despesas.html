@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Despesas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="despesas.html">Despesas</a></li>
+            <li><a href="relatorio.html">Relatório</a></li>
+        </ul>
+        <div id="auth-section">
+            <span id="user-name"></span>
+            <button id="login-btn">Login</button>
+            <button id="create-account-btn">Criar Conta</button>
+            <button id="logout-btn" style="display:none;">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Conteúdo das Despesas -->
+    <div id="content">
+        <h1>Gerenciar Despesas</h1>
+
+        <!-- Formulário para definir o planejamento de gastos -->
+        <div id="form-planejamento">
+            <label for="planejamento">Planejamento de Gastos:</label>
+            <input type="number" id="planejamento" placeholder="Valor disponível" required>
+            <button id="btn-salvar-planejamento">Salvar Planejamento</button>
+        </div>
+
+        <!-- Exibição do valor restante -->
+        <p id="valor-restante">Valor disponível para gastos: R$ <span id="restante">0</span></p>
+
+        <!-- Formulário para adicionar despesas -->
+        <div id="form-despesa">
+            <label for="descricao">Descrição:</label>
+            <input type="text" id="descricao" placeholder="Descrição da despesa" required>
+            
+            <label for="valor">Valor Total:</label>
+            <input type="number" id="valor" placeholder="Valor total da despesa" required>
+            
+            <label for="data-vencimento">Data de Vencimento:</label>
+            <input type="date" id="data-vencimento" required>
+            
+            <button id="btn-adicionar">Adicionar Despesa</button>  
+        </div>
+
+        <!-- Lista de despesas pendentes -->
+        <ul id="despesas-pendentes"></ul>
+    </div>
+
+    <script type="module">
+        import { checkAuthState, carregarDespesasPendentes, adicionarDespesa, salvarPlanejamento, exibirValorRestante } from './app.js';
+
+        // Verifica se o usuário está autenticado, caso contrário redireciona para login
+        checkAuthState();
+
+        // Função para adicionar despesa
+        document.getElementById("btn-adicionar")?.addEventListener("click", () => {
+            adicionarDespesa();
+        });
+
+        // Função para salvar planejamento de gastos
+        document.getElementById("btn-salvar-planejamento")?.addEventListener("click", () => {
+            salvarPlanejamento();
+        });
+
+        // Carrega despesas pendentes e exibe o valor restante
+        carregarDespesasPendentes();
+        exibirValorRestante();
+    </script>
+</body>
+</html>
