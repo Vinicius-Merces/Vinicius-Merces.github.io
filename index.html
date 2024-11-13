@@ -27,21 +27,13 @@
     </div>
 
     <script type="module">
-        import { login, criarConta, checkAuthState } from './app.js';
-
-        // Função de login
+        import { login, criarConta, checkAuthState, logout } from './app.js';  <!-- Adicionei o logout aqui -->
+    
+        // Eventos de login e criação de conta
         document.getElementById('login-btn').addEventListener('click', login);
-
-        // Função de criação de conta
         document.getElementById('create-account-btn').addEventListener('click', criarConta);
-
-        // Função de logout
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            logout();
-            window.location.href = "index.html";
-        });
-
-        // Verifica se o usuário está autenticado e altera o estado do botão de logout
+    
+        // Verifica se o usuário está logado
         checkAuthState(true).then(user => {
             document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
             document.getElementById('login-btn').style.display = 'none';
@@ -50,6 +42,13 @@
         }).catch(() => {
             document.getElementById('logout-btn').style.display = 'none';
         });
+    
+        // Adiciona o evento de logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = 'index.html';
+        });
     </script>
+    
 </body>
 </html>

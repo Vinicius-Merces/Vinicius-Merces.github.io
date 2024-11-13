@@ -74,3 +74,26 @@ export function logout() {
             console.error('Erro ao fazer logout:', error);
         });
 }
+
+// Função de adicionar despesa
+export function adicionarDespesa() {
+    const descricao = document.getElementById('descricao').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const dataVencimento = document.getElementById('data-vencimento').value;
+
+    // Lógica para adicionar despesa no Firestore
+    const despesasRef = collection(db, 'despesas');
+    addDoc(despesasRef, {
+        descricao,
+        valor,
+        dataVencimento,
+        usuarioId: auth.currentUser.uid // Garantindo que as despesas sejam associadas ao usuário logado
+    })
+    .then(() => {
+        console.log('Despesa adicionada');
+        carregarDespesasPendentes(); // Recarregar as despesas pendentes após adicionar
+    })
+    .catch(error => {
+        console.error('Erro ao adicionar despesa:', error);
+    });
+}

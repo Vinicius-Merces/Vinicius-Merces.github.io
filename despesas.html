@@ -50,22 +50,23 @@
 
     <script type="module">
         import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamento, logout } from './app.js';
-
-        // Verifica se o usuário está logado antes de permitir o acesso à página de despesas
+    
+        // Verifica se o usuário está logado antes de permitir o acesso
         checkAuthState(true).then(() => {
             carregarDespesasPendentes();
             carregarPlanejamento();
         }).catch(() => {
             window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
         });
-
+    
         // Adiciona a despesa
         document.getElementById("btn-adicionar").addEventListener("click", () => {
             adicionarDespesa();
         });
-
+    
         // Logout
         document.getElementById('logout-btn').addEventListener('click', logout);
     </script>
+    
 </body>
 </html>
