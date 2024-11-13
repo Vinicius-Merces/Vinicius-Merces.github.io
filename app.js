@@ -130,6 +130,55 @@ export function logout() {
         });
 }
 
+// Função para carregar o planejamento do usuário
+export async function carregarPlanejamento() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para visualizar o planejamento!");
+        return;
+    }
+
+    try {
+        const docRef = doc(db, "planejamentos", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const planejamento = docSnap.data();
+            document.getElementById("valor-restante").textContent = `Valor disponível: R$ ${planejamento.valorDisponivel.toFixed(2)}`;
+        } else {
+            console.log("Nenhum planejamento encontrado.");
+        }
+    } catch (error) {
+        console.error("Erro ao carregar planejamento:", error);
+    }
+}
+
+// Função para exibir o valor restante do planejamento
+export async function exibirValorRestante() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para ver o valor restante!");
+        return;
+    }
+
+    try {
+        const docRef = doc(db, "planejamentos", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const planejamento = docSnap.data();
+            document.getElementById("valor-restante-relatorio").textContent = `Valor restante: R$ ${planejamento.valorDisponivel.toFixed(2)}`;
+        } else {
+            console.log("Nenhum planejamento encontrado.");
+        }
+    } catch (error) {
+        console.error("Erro ao exibir valor restante:", error);
+    }
+}
+
+// Exportações para uso nas páginas
+export { carregarPlanejamento, exibirValorRestante };
+
 // Função para exibir as despesas pendentes ao carregar a página
 if (window.location.pathname.includes('despesas.html')) {
     carregarDespesasPendentes();
