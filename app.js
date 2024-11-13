@@ -1,9 +1,7 @@
-// Importando módulos necessários do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
@@ -39,8 +37,8 @@ export function checkAuthState(redirect = false) {
 // Função de login
 export function login() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha');
-    
+    const senha = prompt('Digite sua senha', '', 'password'); // Agora usando "password" para ocultar a senha
+
     signInWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
             console.log('Usuário logado:', userCredential.user);
@@ -55,7 +53,7 @@ export function login() {
 // Função de criação de conta
 export function criarConta() {
     const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha');
+    const senha = prompt('Digite sua senha', '', 'password'); // Usando "password" aqui também
 
     createUserWithEmailAndPassword(auth, email, senha)
         .then(userCredential => {
@@ -77,68 +75,5 @@ export function logout() {
         })
         .catch(error => {
             console.error('Erro ao fazer logout:', error);
-        });
-}
-
-// Função para adicionar despesas
-export function adicionarDespesa() {
-    const descricao = document.getElementById("descricao").value;
-    const valorTotal = parseFloat(document.getElementById("valor").value);
-    const dataVencimento = document.getElementById("data-vencimento").value;
-
-    if (!descricao || isNaN(valorTotal) || !dataVencimento) {
-        alert("Por favor, preencha todos os campos!");
-        return;
-    }
-
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Você precisa estar logado para adicionar despesas!");
-        return;
-    }
-
-    // Adiciona a despesa ao banco de dados com o UID do usuário
-    addDoc(collection(db, "despesas"), {
-        descricao: descricao,
-        valorTotal: valorTotal,
-        valorPago: 0,
-        status: "pendente",
-        dataVencimento: new Date(dataVencimento),
-        userId: user.uid // Associando a despesa ao usuário logado
-    })
-    .then(() => {
-        alert("Despesa adicionada com sucesso!");
-        carregarDespesasPendentes();
-    })
-    .catch(error => {
-        console.error("Erro ao adicionar despesa:", error);
-    });
-}
-
-// Função para carregar as despesas pendentes
-export function carregarDespesasPendentes() {
-    const ul = document.getElementById("despesas-pendentes");
-    ul.innerHTML = '';  // Limpa a lista
-
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Você precisa estar logado para ver suas despesas!");
-        return;
-    }
-
-    // Carrega as despesas do usuário logado
-    const despesasQuery = query(collection(db, "despesas"), where("userId", "==", user.uid), where("status", "==", "pendente"));
-
-    getDocs(despesasQuery)
-        .then(querySnapshot => {
-            querySnapshot.forEach(doc => {
-                const despesa = doc.data();
-                const li = document.createElement("li");
-                li.textContent = `${despesa.descricao} - R$ ${despesa.valorTotal} - Vencimento: ${despesa.dataVencimento.toLocaleDateString()}`;
-                ul.appendChild(li);
-            });
-        })
-        .catch(error => {
-            console.error("Erro ao carregar despesas:", error);
         });
 }

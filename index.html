@@ -14,10 +14,10 @@
             <li><a href="relatorio.html">Relatório</a></li>
         </ul>
         <div id="auth-section">
-            <span id="user-name"></span>
+            <span id="user-name"></span> <!-- Aqui será exibido o nome do usuário -->
             <button id="login-btn">Login</button>
             <button id="create-account-btn">Criar Conta</button>
-            <button id="logout-btn" style="display:none;">Logout</button>
+            <button id="logout-btn" style="display:none;">Logout</button> <!-- Botão de logout -->
         </div>
     </nav>
 
@@ -35,8 +35,16 @@
         // Função de criação de conta
         document.getElementById('create-account-btn').addEventListener('click', criarConta);
 
+        // Função de logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = "index.html";
+        });
+
         // Verifica se o usuário está autenticado e altera o estado do botão de logout
-        checkAuthState(true).then(() => {
+        checkAuthState(true).then(user => {
+            // Exibe o nome do usuário logado
+            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('create-account-btn').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'inline';
