@@ -5,23 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Adicionando os scripts do Firebase -->
     <script type="module">
-        
         import { login, criarConta, checkAuthState, logout } from './app.js';
 
-        document.getElementById('login-btn').addEventListener('click', login);
-        document.getElementById('create-account-btn').addEventListener('click', criarConta);
-        document.getElementById('logout-btn').addEventListener('click', logout);
+        window.addEventListener('DOMContentLoaded', () => {
+            // Adiciona os ouvintes de eventos após o carregamento do DOM
+            document.getElementById('login-btn').addEventListener('click', () => {
+                const email = document.getElementById('email').value;
+                const senha = document.getElementById('senha').value;
+                login(email, senha);
+            });
 
-        // Verifica o estado de autenticação ao carregar a página
-        checkAuthState(true).then(user => {
-            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
-            document.getElementById('login-btn').style.display = 'none';
-            document.getElementById('create-account-btn').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'inline';
-        }).catch(() => {
-            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('create-account-btn').addEventListener('click', () => {
+                const email = document.getElementById('email').value;
+                const senha = document.getElementById('senha').value;
+                criarConta(email, senha);
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', logout);
+
+            // Verifica o estado de autenticação ao carregar a página
+            checkAuthState().then(user => {
+                document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
+                document.getElementById('login-btn').style.display = 'none';
+                document.getElementById('create-account-btn').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'inline';
+            }).catch(() => {
+                document.getElementById('logout-btn').style.display = 'none';
+            });
         });
     </script>
 </head>
@@ -34,6 +45,8 @@
         </ul>
         <div id="auth-section">
             <span id="user-name"></span>
+            <input type="email" id="email" placeholder="Digite seu email">
+            <input type="password" id="senha" placeholder="Digite sua senha">
             <button id="login-btn">Login</button>
             <button id="create-account-btn">Criar Conta</button>
             <button id="logout-btn" style="display:none;">Logout</button>

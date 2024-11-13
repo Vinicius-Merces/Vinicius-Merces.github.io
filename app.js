@@ -121,3 +121,15 @@ export async function carregarDespesasPendentesNaPagina() {
         console.error("Erro ao carregar despesas pendentes:", error);
     }
 }
+
+// Função para criar uma conta de usuário
+export async function criarConta(email, senha) {
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(auth, email, senha);
+        alert(`Conta criada com sucesso! Bem-vindo, ${userCredential.user.email}`);
+        window.location.href = 'despesas.html'; // Redireciona para a página de despesas
+    } catch (error) {
+        console.error("Erro ao criar conta:", error);
+        alert("Erro ao criar conta: " + error.message);
+    }
+}
