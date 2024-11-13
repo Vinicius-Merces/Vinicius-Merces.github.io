@@ -6,9 +6,41 @@
     <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Adicionando os scripts do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+            authDomain: "despesas-f60a3.firebaseapp.com",
+            projectId: "despesas-f60a3",
+            storageBucket: "despesas-f60a3.firebasestorage.app",
+            messagingSenderId: "677878335691",
+            appId: "1:677878335691:web:ec41de4f8987e95c28334e"
+        };
+
+        // Inicializando o Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        import { login, criarConta, checkAuthState, logout } from './app.js';
+
+        document.getElementById('login-btn').addEventListener('click', login);
+        document.getElementById('create-account-btn').addEventListener('click', criarConta);
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        // Verifica o estado de autenticação ao carregar a página
+        checkAuthState(true).then(user => {
+            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('create-account-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline';
+        }).catch(() => {
+            document.getElementById('logout-btn').style.display = 'none';
+        });
+    </script>
 </head>
 <body>
     <nav class="navbar">
@@ -29,37 +61,5 @@
         <h1>Bem-vindo ao Controle de Despesas</h1>
         <p>Por favor, faça login ou crie uma conta para acessar seus dados.</p>
     </div>
-
-    <script type="module">
-        // Configuração do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
-            authDomain: "despesas-f60a3.firebaseapp.com",
-            projectId: "despesas-f60a3",
-            storageBucket: "despesas-f60a3.firebasestorage.app",
-            messagingSenderId: "677878335691",
-            appId: "1:677878335691:web:ec41de4f8987e95c28334e"
-        };
-
-        // Inicializando o Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        import { login, criarConta, checkAuthState, logout } from './app.js';
-
-        document.getElementById('login-btn').addEventListener('click', login);
-        document.getElementById('create-account-btn').addEventListener('click', criarConta);
-        document.getElementById('logout-btn').addEventListener('click', logout);
-
-        // Verifica o estado de autenticação ao carregar a página
-        checkAuthState(true).then(user => {
-            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
-            document.getElementById('login-btn').style.display = 'none';
-            document.getElementById('create-account-btn').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'inline';
-        }).catch(() => {
-            document.getElementById('logout-btn').style.display = 'none';
-        });
-    </script>
 </body>
 </html>

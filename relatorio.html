@@ -35,6 +35,7 @@
         import { gerarGraficoBarras as gerarGraficoBarrasExternos, gerarGraficoLinha as gerarGraficoLinhaExternos } from './graficos.js';
         import { carregarPlanejamentoFirebase, carregarDespesasPendentes } from './app.js';
 
+        // Função para gerar gráfico de barras
         async function gerarGraficoBarras() {
             const ctx = document.getElementById('grafico-barras').getContext('2d');
             try {
@@ -68,6 +69,7 @@
             }
         }
 
+        // Função para gerar gráfico de linha
         async function gerarGraficoLinha() {
             const ctx = document.getElementById('grafico-linha').getContext('2d');
             try {
@@ -104,11 +106,12 @@
             }
         }
 
+        // Verifica se o usuário está logado antes de carregar os gráficos
         checkAuthState(true).then(() => {
-            gerarGraficoBarrasExternos(); 
-            gerarGraficoLinhaExternos(); 
+            gerarGraficoBarras(); 
+            gerarGraficoLinha(); 
         }).catch(() => {
-            window.location.href = 'index.html'; 
+            window.location.href = 'index.html'; // Redireciona para a página Home se não estiver logado
         });
     </script>
 </body>

@@ -1,6 +1,6 @@
 // Importação do Firebase com melhorias na estrutura de importação
 import { getFirestore, doc, getDoc, collection, addDoc, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
-import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut, initializeApp } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
@@ -10,12 +10,12 @@ const firebaseConfig = {
     messagingSenderId: "677878335691",
     appId: "1:677878335691:web:ec41de4f8987e95c28334e",
     measurementId: "G-1N7LB9LZQM"
-  };
-
+};
 
 // Inicialização do Firebase
-const db = getFirestore(firebase.initializeApp(firebaseConfig));
-const auth = getAuth();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Função para verificar autenticação com promessas melhoradas
 export function checkAuthState(redirect = false) {
