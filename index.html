@@ -7,24 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Adicionando os scripts do Firebase -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
-            authDomain: "despesas-f60a3.firebaseapp.com",
-            projectId: "despesas-f60a3",
-            storageBucket: "despesas-f60a3.firebasestorage.app",
-            messagingSenderId: "677878335691",
-            appId: "1:677878335691:web:ec41de4f8987e95c28334e"
-        };
-
-        // Inicializando o Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
         import { login, criarConta, checkAuthState, logout } from './app.js';
 
         document.getElementById('login-btn').addEventListener('click', login);
