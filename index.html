@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Despesas - Login</title>
+    <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
         <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="despesas.html">Despesas</a></li>
-            <li><a href="relatorio.html">Relatórios</a></li>
+            <li><a href="relatorio.html">Relatório</a></li>
         </ul>
         <div id="auth-section">
             <span id="user-name"></span>
@@ -21,24 +21,28 @@
         </div>
     </nav>
 
-    <div id="login-form" class="auth-form">
-        <h2>Login</h2>
-        <label for="login-email">E-mail:</label>
-        <input type="email" id="login-email" placeholder="Digite seu e-mail" required>
-        <label for="login-password">Senha:</label>
-        <input type="password" id="login-password" placeholder="Digite sua senha" required>
-        <button id="login-submit">Login</button>
+    <div id="content">
+        <h1>Bem-vindo ao Controle de Despesas</h1>
+        <p>Por favor, faça login ou crie uma conta para acessar seus dados.</p>
     </div>
 
-    <div id="create-account-form" class="auth-form">
-        <h2>Criar Conta</h2>
-        <label for="signup-email">E-mail:</label>
-        <input type="email" id="signup-email" placeholder="Digite seu e-mail" required>
-        <label for="signup-password">Senha:</label>
-        <input type="password" id="signup-password" placeholder="Digite sua senha" required>
-        <button id="create-account-submit">Criar Conta</button>
-    </div>
+    <script type="module">
+        import { login, criarConta, checkAuthState } from './app.js';
 
-    <script type="module" src="app.js"></script>
+        // Função de login
+        document.getElementById('login-btn').addEventListener('click', login);
+
+        // Função de criação de conta
+        document.getElementById('create-account-btn').addEventListener('click', criarConta);
+
+        // Verifica se o usuário está autenticado e altera o estado do botão de logout
+        checkAuthState(true).then(() => {
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('create-account-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline';
+        }).catch(() => {
+            document.getElementById('logout-btn').style.display = 'none';
+        });
+    </script>
 </body>
 </html>

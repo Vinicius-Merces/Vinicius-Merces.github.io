@@ -1,6 +1,7 @@
+// Importando módulos necessários do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -13,157 +14,162 @@ const firebaseConfig = {
     measurementId: "G-1N7LB9LZQM"
 };
 
+// Inicializando o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Funções de login e criação de conta
-export function login() {
-    const email = document.getElementById("login-email").value;
-    const senha = document.getElementById("login-password").value;
-    signInWithEmailAndPassword(auth, email, senha)
-        .then((userCredential) => {
-            console.log("Usuário logado");
-            window.location.href = "despesas.html";
-        })
-        .catch((error) => {
-            console.error("Erro de login: ", error);
-            alert("Erro de login. Tente novamente.");
-        });
-}
-
-export function criarConta() {
-    const email = document.getElementById("signup-email").value;
-    const senha = document.getElementById("signup-password").value;
-    createUserWithEmailAndPassword(auth, email, senha)
-        .then((userCredential) => {
-            console.log("Conta criada");
-            window.location.href = "index.html";
-        })
-        .catch((error) => {
-            console.error("Erro ao criar conta: ", error);
-            alert("Erro ao criar conta. Tente novamente.");
-        });
-}
-
-// Função de verificação de estado da autenticação
-// Agora a função retorna uma Promise para ser utilizada com await nas páginas.
+// Função de verificação de estado de autenticação (agora retorna uma Promise)
 export function checkAuthState(redirect = false) {
     return new Promise((resolve, reject) => {
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Se estiver logado, exibe nome do usuário e habilita logout
-                document.getElementById("user-name").textContent = `Bem-vindo, ${user.email}`;
-                document.getElementById("login-btn").style.display = "none";
-                document.getElementById("create-account-btn").style.display = "none";
-                document.getElementById("logout-btn").style.display = "block";
-                resolve(user); // Resolve a Promise se estiver logado
+                // Se estiver logado, resolve a Promise
+                resolve(user);
             } else {
-                // Se não estiver logado, exibe botões de login e cadastro
-                document.getElementById("user-name").textContent = "";
-                document.getElementById("login-btn").style.display = "block";
-                document.getElementById("create-account-btn").style.display = "block";
-                document.getElementById("logout-btn").style.display = "none";
+                // Se não estiver logado, rejeita a Promise
                 if (redirect) {
-                    reject("Usuário não autenticado"); // Rejeita a Promise se não estiver logado
+                    reject("Usuário não autenticado");
                 }
             }
         });
     });
 }
 
+// Função para adicionar uma nova despesa
+export function adicionarDespesa() {
+    const descricao = document.getElementById("descricao").value;
+    const valorTotal = parseFloat(document.getElementById("valor").value);
+    const dataVencimento = document.getElementById("data-vencimento").value;
+
+    if (!descricao || isNaN(valorTotal) || !dataVencimento) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para adicionar despesas!");
+        return;
+    }
+
+    // Adiciona a despesa ao banco de dados com o UID do usuário
+    addDoc(collection(db, "despesas"), {
+        descricao: descricao,
+        valorTotal: valorTotal,
+        valorPago: 0,
+        status: "pendente",
+        dataVencimento: new Date(dataVencimento),
+        userId: user.uid // Associando a despesa ao usuário logado
+    })
+    .then(() => {
+        alert("Despesa adicionada com sucesso!");
+        carregarDespesasPendentes();
+    })
+    .catch(error => {
+        console.error("Erro ao adicionar despesa:", error);
+    });
+}
+
+// Função para carregar as despesas pendentes
+export function carregarDespesasPendentes() {
+    const ul = document.getElementById("despesas-pendentes");
+    ul.innerHTML = '';  // Limpa a lista
+
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para ver suas despesas!");
+        return;
+    }
+
+    // Carrega as despesas do usuário logado
+    const despesasQuery = query(collection(db, "despesas"), where("userId", "==", user.uid), where("status", "==", "pendente"));
+
+    getDocs(despesasQuery)
+        .then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                const despesa = doc.data();
+                const li = document.createElement("li");
+                li.textContent = `${despesa.descricao} - R$ ${despesa.valorTotal} - Vencimento: ${despesa.dataVencimento.toLocaleDateString()}`;
+                ul.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error("Erro ao carregar despesas:", error);
+        });
+}
+
+// Função de login
+export function login() {
+    const email = prompt('Digite seu e-mail');
+    const senha = prompt('Digite sua senha');
+    
+    signInWithEmailAndPassword(auth, email, senha)
+        .then(userCredential => {
+            console.log('Usuário logado:', userCredential.user);
+        })
+        .catch(error => {
+            console.error('Erro ao fazer login:', error);
+            alert('Erro ao fazer login. Verifique seu e-mail e senha.');
+        });
+}
+
+// Função de criação de conta
+export function criarConta() {
+    const email = prompt('Digite seu e-mail');
+    const senha = prompt('Digite sua senha');
+
+    createUserWithEmailAndPassword(auth, email, senha)
+        .then(userCredential => {
+            console.log('Usuário criado:', userCredential.user);
+            alert('Conta criada com sucesso! Agora faça login.');
+        })
+        .catch(error => {
+            console.error('Erro ao criar conta:', error);
+            alert('Erro ao criar conta. Verifique os dados fornecidos.');
+        });
+}
+
 // Função de logout
 export function logout() {
     signOut(auth)
         .then(() => {
-            window.location.href = "index.html";
+            console.log('Usuário deslogado');
         })
-        .catch((error) => {
-            console.error("Erro ao sair:", error);
+        .catch(error => {
+            console.error('Erro ao fazer logout:', error);
         });
 }
 
-// Funções para gerenciamento de despesas
-export async function adicionarDespesa() {
-    const descricao = document.getElementById("descricao").value;
-    const valor = parseFloat(document.getElementById("valor").value);
-    const dataVencimento = document.getElementById("data-vencimento").value;
+// Função para exibir as despesas pendentes ao carregar a página
+if (window.location.pathname.includes('despesas.html')) {
+    checkAuthState(true).then(() => {
+        carregarDespesasPendentes();
+    }).catch(() => {
+        window.location.href = "index.html";  // Redireciona para a página Home se não estiver logado
+    });
+}
 
-    if (descricao && valor && dataVencimento) {
-        try {
-            await addDoc(collection(db, "despesas"), {
-                descricao,
-                valor,
-                dataVencimento,
-                pago: false
-            });
-            alert("Despesa adicionada com sucesso!");
-        } catch (e) {
-            alert("Erro ao adicionar despesa.");
-            console.error("Erro ao adicionar despesa: ", e);
-        }
-    } else {
-        alert("Preencha todos os campos.");
+// Função para carregar os dados do planejamento
+export function carregarPlanejamento() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para ver o planejamento.");
+        return;
     }
-}
 
-// Carregar despesas pendentes
-export async function carregarDespesasPendentes() {
-    const despesasRef = collection(db, "despesas");
-    const q = query(despesasRef, where("pago", "==", false));
-    const querySnapshot = await getDocs(q);
-    const despesasPendentes = document.getElementById("despesas-pendentes");
+    const planejamentoRef = collection(db, "planejamentos");
+    const planejamentoQuery = query(planejamentoRef, where("userId", "==", user.uid));
 
-    querySnapshot.forEach((doc) => {
-        const despesa = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${despesa.descricao} - R$ ${despesa.valor} - Vencimento: ${despesa.dataVencimento}`;
-        despesasPendentes.appendChild(li);
-    });
-}
-
-// Carregar planejamento de gastos
-export async function carregarPlanejamento() {
-    const planejamentoRef = collection(db, "planejamento");
-    const querySnapshot = await getDocs(planejamentoRef);
-
-    querySnapshot.forEach((doc) => {
-        const planejamento = doc.data();
-        document.getElementById("valor-disponivel").textContent = `Valor disponível para planejamento: R$ ${planejamento.valorDisponivel}`;
-    });
-}
-
-// Funções para exibir gráficos de barras e linha
-export function exibirGraficoBarras() {
-    const ctx = document.getElementById("grafico-barras").getContext("2d");
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Janeiro', 'Fevereiro', 'Março'],
-            datasets: [{
-                label: 'Despesas por Mês',
-                data: [500, 600, 450],
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }]
-        }
-    });
-}
-
-export function exibirGraficoLinha() {
-    const ctx = document.getElementById("grafico-linha").getContext("2d");
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Janeiro', 'Fevereiro', 'Março'],
-            datasets: [{
-                label: 'Evolução das Despesas',
-                data: [500, 600, 450],
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        }
-    });
+    getDocs(planejamentoQuery)
+        .then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                const planejamento = doc.data();
+                const valorRestante = planejamento.valorPlanejamento - planejamento.valorPago;
+                document.getElementById("valor-restante").textContent = `R$ ${valorRestante.toFixed(2)}`;
+            });
+        })
+        .catch(error => {
+            console.error("Erro ao carregar o planejamento:", error);
+        });
 }

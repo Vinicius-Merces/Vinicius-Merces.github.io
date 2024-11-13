@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatórios de Despesas</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Relatório de Despesas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,7 +11,7 @@
         <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="despesas.html">Despesas</a></li>
-            <li><a href="relatorio.html">Relatórios</a></li>
+            <li><a href="relatorio.html">Relatório</a></li>
         </ul>
         <div id="auth-section">
             <span id="user-name"></span>
@@ -24,24 +23,26 @@
 
     <div id="content">
         <h1>Relatório de Despesas</h1>
-        <div>
+
+        <div id="grafico-container">
             <canvas id="grafico-barras"></canvas>
-        </div>
-        <div>
             <canvas id="grafico-linha"></canvas>
         </div>
     </div>
 
     <script type="module">
-        import { checkAuthState, exibirGraficoBarras, exibirGraficoLinha, carregarPlanejamento } from './app.js';
+        import { checkAuthState } from './app.js';
+        import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js';
 
-        // Verifica se o usuário está logado antes de exibir a página de relatórios
+        // Função de logout
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        // Verifica se o usuário está autenticado
         checkAuthState(true).then(() => {
-            carregarPlanejamento();
-            exibirGraficoBarras();
-            exibirGraficoLinha();
+            gerarGraficoBarras();
+            gerarGraficoLinha();
         }).catch(() => {
-            window.location.href = "index.html"; // Redireciona para a página de login caso não esteja logado
+            window.location.href = "index.html"; // Redireciona se não estiver logado
         });
     </script>
 </body>
