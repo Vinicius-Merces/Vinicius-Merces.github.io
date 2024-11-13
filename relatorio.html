@@ -35,10 +35,10 @@
 
     <script type="module">
         import { checkAuthState } from './app.js';
-        import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js';
+        import { gerarGraficoBarras as gerarGraficoBarrasExternos, gerarGraficoLinha as gerarGraficoLinhaExternos } from './graficos.js';
         import { carregarPlanejamentoFirebase, carregarDespesasPendentes } from './app.js'; // Importando funções de carregar dados
 
-        // Função que cria o gráfico de barras com dados dinâmicos
+        // Função interna para gerar gráfico de barras
         async function gerarGraficoBarras() {
             const ctx = document.getElementById('grafico-barras').getContext('2d');
             
@@ -73,7 +73,7 @@
             }
         }
 
-        // Função que cria o gráfico de linha com dados dinâmicos
+        // Função interna para gerar gráfico de linha
         async function gerarGraficoLinha() {
             const ctx = document.getElementById('grafico-linha').getContext('2d');
             
@@ -113,8 +113,8 @@
 
         // Verifica se o usuário está autenticado
         checkAuthState(true).then(() => {
-            gerarGraficoBarras();
-            gerarGraficoLinha();
+            gerarGraficoBarrasExternos(); // Chama a função importada de graficos.js
+            gerarGraficoLinhaExternos();  // Chama a função importada de graficos.js
         }).catch(() => {
             window.location.href = 'index.html'; // Redireciona para a página Home se não estiver logado
         });

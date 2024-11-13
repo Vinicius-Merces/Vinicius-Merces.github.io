@@ -49,13 +49,13 @@
     </div>
 
     <script type="module">
-        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamento, logout, salvarPlanejamentoFirebase } from './app.js';
+        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamentoFirebase, logout, salvarPlanejamentoFirebase } from './app.js';
 
         let valorPlanejado = 0;
         let valorRestante = 0;
 
         // Função para carregar o planejamento de gastos
-        async function carregarPlanejamento() {
+        async function carregarPlanejamentoNaPagina() {
             const valorPlanejadoInput = document.getElementById('valor-planejamento');
             const valorRestanteEl = document.getElementById('valor-restante');
             // Pega o valor do planejamento no Firebase
@@ -119,7 +119,7 @@
         // Verifica se o usuário está logado antes de permitir o acesso à página de despesas
         checkAuthState(true).then(() => {
             carregarDespesasPendentes();
-            carregarPlanejamento(); // Carrega o planejamento ao acessar a página
+            carregarPlanejamentoNaPagina(); // Alterado para carregarPlanejamentoNaPagina
         }).catch(() => {
             window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
         });
