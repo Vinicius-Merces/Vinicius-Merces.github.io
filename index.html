@@ -94,10 +94,12 @@
             const email = document.getElementById("login-email").value;
             const password = document.getElementById("login-password").value;
 
+            if (!email || !password) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    window.location.href = "despesas.html";  // Redireciona para a página de despesas
-                })
                 .catch(error => {
                     alert(error.message);
                 });
@@ -108,10 +110,12 @@
             const email = document.getElementById("signup-email").value;
             const password = document.getElementById("signup-password").value;
 
+            if (!email || !password) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
             auth.createUserWithEmailAndPassword(email, password)
-                .then(() => {
-                    window.location.href = "despesas.html";  // Redireciona para a página de despesas
-                })
                 .catch(error => {
                     alert(error.message);
                 });
@@ -123,6 +127,11 @@
             const nome = prompt("Nome da Despesa:");
             const valor = parseFloat(prompt("Valor da Despesa:"));
             const categoria = prompt("Categoria:");
+
+            if (!nome || isNaN(valor) || valor <= 0 || !categoria) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
+            }
 
             const userRef = db.collection("users").doc(user.uid);
 
@@ -162,14 +171,14 @@
             // Carregar valor de planejamento
             userRef.get().then(doc => {
                 const data = doc.data();
-                const planejamento = data.planejamento || 0; // Garantir que o planejamento não seja undefined
+                const planejamento = data.planejamento || 0;
                 document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
             });
 
             // Carregar despesas
             userRef.collection("despesas").get().then(querySnapshot => {
                 let despesasList = document.getElementById("despesas-list");
-                despesasList.innerHTML = ""; // Limpar lista existente
+                despesasList.innerHTML = "";  // Limpar lista existente
 
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
@@ -178,6 +187,7 @@
                     despesaItem.innerHTML = `
                         <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
                         <button onclick="concluirDespesa('${doc.id}')" class="btn btn-success btn-sm">Concluir</button>
+                        <button onclick="removerDespesa('${doc.id}')" class="btn btn-danger btn-sm">Remover</button>
                     `;
                     despesasList.appendChild(despesaItem);
                 });
@@ -207,24 +217,48 @@
             });
         }
 
+        // Função para remover despesa
+        function removerDespesa(despesaId) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(despesaId);
+
+            despesaRef.get().then(doc => {
+                const valor = doc.data().valor;
+
+                despesaRef.delete()
+                    .then(() => {
+                        userRef.update({
+                            planejamento: firebase.firestore.FieldValue.increment(valor)
+                        });
+                        alert("Despesa removida e valor restituído ao planejamento!");
+                        loadDespesas();  // Atualiza a lista de despesas
+                    })
+                    .catch(error => {
+                        alert(error.message);
+                    });
+            });
+        }
+
         // Função para adicionar valor ao planejamento
         function addPlanejamento() {
             const user = auth.currentUser;
             const valor = parseFloat(prompt("Informe o valor do planejamento:"));
 
-            if (valor > 0) {
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.update({
-                    planejamento: firebase.firestore.FieldValue.increment(valor)
-                }).then(() => {
-                    alert("Planejamento atualizado!");
-                    loadDespesas();  // Atualiza o valor do planejamento
-                }).catch(error => {
-                    alert(error.message);
-                });
-            } else {
+            if (valor <= 0 || isNaN(valor)) {
                 alert("Por favor, insira um valor válido.");
+                return;
             }
+
+            const userRef = db.collection("users").doc(user.uid);
+            userRef.update({
+                planejamento: firebase.firestore.FieldValue.increment(valor)
+            }).then(() => {
+                alert("Planejamento atualizado!");
+                loadDespesas();  // Atualiza o valor do planejamento
+            }).catch(error => {
+                alert(error.message);
+            });
         }
 
         // Função para carregar os relatórios
@@ -263,6 +297,14 @@
                         data: [planejado, gasto],
                         backgroundColor: ['#36a2eb', '#ff6384']
                     }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
         }
