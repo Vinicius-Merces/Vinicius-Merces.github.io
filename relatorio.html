@@ -36,56 +36,79 @@
     <script type="module">
         import { checkAuthState } from './app.js';
         import { gerarGraficoBarras, gerarGraficoLinha } from './graficos.js';
+        import { carregarPlanejamentoFirebase, carregarDespesasPendentes } from './app.js'; // Importando funções de carregar dados
 
-        // Função que cria o gráfico de barras
-        function gerarGraficoBarras() {
+        // Função que cria o gráfico de barras com dados dinâmicos
+        async function gerarGraficoBarras() {
             const ctx = document.getElementById('grafico-barras').getContext('2d');
-            const graficoBarras = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Planejamento', 'Gasto Real', 'Abatimento'],
-                    datasets: [{
-                        label: 'Despesas',
-                        data: [1000, 800, 200], // Exemplo de valores
-                        backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
-                        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            
+            try {
+                const planejamentoDoc = await carregarPlanejamentoFirebase();
+                const despesasPendentes = await carregarDespesasPendentes();
+                const gastoReal = despesasPendentes.reduce((total, despesa) => total + despesa.valor, 0);
+                const abatimento = planejamentoDoc ? planejamentoDoc.valorPlanejado - gastoReal : 0;
+
+                const graficoBarras = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Planejamento', 'Gasto Real', 'Abatimento'],
+                        datasets: [{
+                            label: 'Despesas',
+                            data: [planejamentoDoc ? planejamentoDoc.valorPlanejado : 0, gastoReal, abatimento],
+                            backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error("Erro ao carregar dados para gráfico de barras:", error);
+            }
         }
 
-        // Função que cria o gráfico de linha
-        function gerarGraficoLinha() {
+        // Função que cria o gráfico de linha com dados dinâmicos
+        async function gerarGraficoLinha() {
             const ctx = document.getElementById('grafico-linha').getContext('2d');
-            const graficoLinha = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril'], // Exemplo de meses
-                    datasets: [{
-                        label: 'Gastos Mensais',
-                        data: [150, 300, 200, 400], // Exemplo de dados de gastos
-                        fill: false,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            
+            try {
+                const despesasPendentes = await carregarDespesasPendentes();
+                const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril']; // Exemplo de meses, substitua se necessário
+                const gastosMensais = meses.map((mes) => {
+                    return despesasPendentes.filter(despesa => new Date(despesa.dataVencimento).getMonth() === meses.indexOf(mes))
+                        .reduce((total, despesa) => total + despesa.valor, 0);
+                });
+
+                const graficoLinha = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: meses,
+                        datasets: [{
+                            label: 'Gastos Mensais',
+                            data: gastosMensais,
+                            fill: false,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error("Erro ao carregar dados para gráfico de linha:", error);
+            }
         }
 
         // Verifica se o usuário está autenticado

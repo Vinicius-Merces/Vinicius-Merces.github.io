@@ -1,147 +1,147 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+// Importando o Firebase
+import { getFirestore, doc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
 
-// Configuração do Firebase
+// Configuração do Firebase (substitua com suas credenciais do Firebase)
 const firebaseConfig = {
-    apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
-    authDomain: "despesas-f60a3.firebaseapp.com",
-    projectId: "despesas-f60a3",
-    storageBucket: "despesas-f60a3.firebasestorage.app",
-    messagingSenderId: "677878335691",
-    appId: "1:677878335691:web:ec41de4f8987e95c28334e",
-    measurementId: "G-1N7LB9LZQM"
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_AUTH_DOMAIN",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_STORAGE_BUCKET",
+    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+    appId: "SEU_APP_ID"
 };
 
 // Inicializando o Firebase
-const app = initializeApp(firebaseConfig);
+const app = firebase.initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Função para verificar o estado de autenticação
+// Função para verificar o estado de autenticação do usuário
 export function checkAuthState(redirect = false) {
     return new Promise((resolve, reject) => {
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Usuário logado
+                document.getElementById('user-name').textContent = `Olá, ${user.displayName || user.email}`;
+                document.getElementById('login-btn').style.display = 'none';
+                document.getElementById('create-account-btn').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'inline-block';
                 resolve(user);
             } else {
+                // Usuário não logado
                 if (redirect) {
-                    reject();
-                } else {
-                    resolve(null);
+                    window.location.href = 'index.html'; // Redireciona para a página inicial se não estiver logado
                 }
+                reject();
             }
         });
     });
-}
-
-// Função de login
-export function login() {
-    const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password'); // Agora usando "password" para ocultar a senha
-
-    signInWithEmailAndPassword(auth, email, senha)
-        .then(userCredential => {
-            console.log('Usuário logado:', userCredential.user);
-            window.location.href = 'despesas.html'; // Redireciona para a página de despesas
-        })
-        .catch(error => {
-            console.error('Erro ao fazer login:', error);
-            alert('Erro ao fazer login. Verifique seu e-mail e senha.');
-        });
-}
-
-// Função de criação de conta
-export function criarConta() {
-    const email = prompt('Digite seu e-mail');
-    const senha = prompt('Digite sua senha', '', 'password'); // Usando "password" aqui também
-
-    createUserWithEmailAndPassword(auth, email, senha)
-        .then(userCredential => {
-            console.log('Usuário criado:', userCredential.user);
-            alert('Conta criada com sucesso! Agora faça login.');
-        })
-        .catch(error => {
-            console.error('Erro ao criar conta:', error);
-            alert('Erro ao criar conta. Verifique os dados fornecidos.');
-        });
-}
-
-// Função de logout
-export function logout() {
-    signOut(auth)
-        .then(() => {
-            console.log('Usuário deslogado');
-            window.location.href = 'index.html'; // Redireciona para a página de login após logout
-        })
-        .catch(error => {
-            console.error('Erro ao fazer logout:', error);
-        });
-}
-
-// Função para adicionar despesas
-export async function adicionarDespesa(descricao, valor) {
-    const user = await checkAuthState();
-    if (user) {
-        try {
-            // Adiciona a despesa
-            await addDoc(collection(db, "despesas"), {
-                descricao: descricao,
-                valor: valor,
-                usuario: user.email,
-                data: new Date()
-            });
-            console.log('Despesa adicionada com sucesso!');
-
-            // Atualiza o valor do planejamento de gastos
-            const planejamentoDoc = await carregarPlanejamentoFirebase();
-            if (planejamentoDoc) {
-                const valorRestante = planejamentoDoc.valorRestante - valor;
-                await salvarPlanejamentoFirebase(valorRestante); // Atualiza o planejamento no Firebase
-                console.log('Planejamento atualizado com sucesso!');
-            }
-        } catch (error) {
-            console.error('Erro ao adicionar despesa:', error);
-        }
-    }
-}
-
-// Função para carregar despesas pendentes
-export async function carregarDespesasPendentes() {
-    const user = await checkAuthState();
-    if (user) {
-        try {
-            const q = query(collection(db, "despesas"), where("usuario", "==", user.email));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                console.log(doc.id, " => ", doc.data());
-            });
-        } catch (error) {
-            console.error('Erro ao carregar despesas pendentes:', error);
-        }
-    }
 }
 
 // Função para carregar o planejamento de gastos do Firebase
 export async function carregarPlanejamentoFirebase() {
-    const user = await checkAuthState();
-    const planejamentoRef = doc(db, 'planejamentos', user.uid); // Usa o ID do usuário como chave
-    const planejamentoDoc = await getDoc(planejamentoRef);
+    try {
+        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId'); // Substitua com o ID real
+        const docSnap = await getDocs(planejamentoRef);
+        
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            throw new Error("Planejamento não encontrado.");
+        }
+    } catch (error) {
+        console.error("Erro ao carregar o planejamento:", error);
+        throw error;
+    }
+}
 
-    if (planejamentoDoc.exists()) {
-        return planejamentoDoc.data(); // Retorna os dados do planejamento
-    } else {
-        console.log('Planejamento não encontrado!');
-        return null;
+// Função para carregar as despesas pendentes do Firebase
+export async function carregarDespesasPendentes() {
+    try {
+        const despesasRef = collection(db, 'despesas');
+        const querySnapshot = await getDocs(despesasRef);
+        const despesas = [];
+        
+        querySnapshot.forEach((doc) => {
+            despesas.push(doc.data());
+        });
+
+        return despesas.filter(despesa => despesa.status === 'pendente'); // Filtrando despesas pendentes
+    } catch (error) {
+        console.error("Erro ao carregar as despesas:", error);
+        throw error;
+    }
+}
+
+// Função para adicionar uma despesa ao Firebase
+export async function adicionarDespesa(descricao, valor, dataVencimento) {
+    try {
+        const despesasRef = collection(db, 'despesas');
+        await addDoc(despesasRef, {
+            descricao: descricao,
+            valor: valor,
+            dataVencimento: dataVencimento,
+            status: 'pendente'
+        });
+    } catch (error) {
+        console.error("Erro ao adicionar a despesa:", error);
+        throw error;
     }
 }
 
 // Função para salvar o planejamento de gastos no Firebase
-export async function salvarPlanejamentoFirebase(valorRestante) {
-    const user = await checkAuthState();
-    const planejamentoRef = doc(db, 'planejamentos', user.uid); // Usa o ID do usuário como chave
-    await setDoc(planejamentoRef, {
-        valorRestante: valorRestante
+export async function salvarPlanejamentoFirebase(valorPlanejado) {
+    try {
+        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId'); // Substitua com o ID real
+        await setDoc(planejamentoRef, {
+            valorPlanejado: valorPlanejado
+        });
+    } catch (error) {
+        console.error("Erro ao salvar planejamento:", error);
+        throw error;
+    }
+}
+
+// Função para logout do usuário
+export function logout() {
+    signOut(auth).then(() => {
+        window.location.href = 'index.html'; // Redireciona para a página inicial após logout
+    }).catch((error) => {
+        console.error("Erro ao fazer logout:", error);
     });
-    console.log('Planejamento salvo com sucesso!');
+}
+
+// Função para carregar as despesas pendentes e o planejamento de gastos ao acessar a página de despesas
+export async function carregarDespesasPendentesNaPagina() {
+    try {
+        const despesasPendentes = await carregarDespesasPendentes();
+        const listaDespesas = document.getElementById('despesas-pendentes');
+        listaDespesas.innerHTML = ''; // Limpa a lista antes de adicionar os itens
+        despesasPendentes.forEach(despesa => {
+            const li = document.createElement('li');
+            li.textContent = `${despesa.descricao} - R$ ${despesa.valor} (Vencimento: ${new Date(despesa.dataVencimento).toLocaleDateString()})`;
+            listaDespesas.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar despesas pendentes:", error);
+    }
+}
+
+// Função para carregar o planejamento de gastos na página de despesas
+export async function carregarPlanejamentoNaPagina() {
+    try {
+        const planejamentoDoc = await carregarPlanejamentoFirebase();
+        const valorPlanejadoInput = document.getElementById('valor-planejamento');
+        const valorRestanteEl = document.getElementById('valor-restante');
+
+        if (planejamentoDoc) {
+            valorPlanejado = planejamentoDoc.valorPlanejado;
+            valorRestante = valorPlanejado;
+            valorRestanteEl.textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
+            valorPlanejadoInput.value = valorPlanejado;
+        }
+    } catch (error) {
+        console.error("Erro ao carregar planejamento:", error);
+    }
 }
