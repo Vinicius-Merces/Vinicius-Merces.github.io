@@ -23,6 +23,7 @@
 
     <div id="content">
         <h1>Gerenciar Despesas</h1>
+        <div id="loading" style="display:none;">Carregando...</div>
 
         <div id="form-despesa">
             <label for="descricao">Descrição:</label>
@@ -44,7 +45,7 @@
             <label for="valor-planejamento">Valor Planejado:</label>
             <input type="number" id="valor-planejamento" placeholder="Valor total planejado">
             <button id="salvar-planejamento">Salvar Planejamento</button>
-            <p id="valor-restante">Valor restante: R$ 0</p> <!-- Exibição do valor restante -->
+            <p id="valor-restante">Valor restante: R$ 0</p>
         </div>
     </div>
 
@@ -54,8 +55,8 @@
         let valorPlanejado = 0;
         let valorRestante = 0;
 
-        // Função para carregar o planejamento de gastos
         async function carregarPlanejamentoNaPagina() {
+            document.getElementById('loading').style.display = 'block'; // Exibe indicador de carregamento
             const valorPlanejadoInput = document.getElementById('valor-planejamento');
             const valorRestanteEl = document.getElementById('valor-restante');
             try {
@@ -68,28 +69,30 @@
                 }
             } catch (error) {
                 console.error("Erro ao carregar planejamento:", error);
+                alert('Erro ao carregar o planejamento. Tente novamente.');
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Oculta indicador de carregamento
             }
         }
 
-        // Salvar o valor do planejamento no Firebase
         document.getElementById('salvar-planejamento').addEventListener('click', async () => {
             const valorPlanejadoInput = document.getElementById('valor-planejamento').value;
             if (valorPlanejadoInput && !isNaN(valorPlanejadoInput)) {
                 valorPlanejado = parseFloat(valorPlanejadoInput);
                 valorRestante = valorPlanejado;
                 try {
-                    await salvarPlanejamentoFirebase(valorPlanejado); // Salva o planejamento no Firebase
+                    await salvarPlanejamentoFirebase(valorPlanejado);
                     document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
                     alert('Planejamento de gastos salvo com sucesso!');
                 } catch (error) {
                     console.error("Erro ao salvar planejamento:", error);
+                    alert('Erro ao salvar o planejamento. Tente novamente.');
                 }
             } else {
                 alert('Por favor, insira um valor válido.');
             }
         });
 
-        // Função para adicionar uma despesa e debitar o valor do planejamento
         document.getElementById("btn-adicionar").addEventListener("click", () => {
             const descricao = document.getElementById('descricao').value;
             const valor = parseFloat(document.getElementById('valor').value);
@@ -97,11 +100,10 @@
             
             if (descricao && !isNaN(valor) && dataVencimento) {
                 adicionarDespesa(descricao, valor, dataVencimento).then(() => {
-                    // Após adicionar a despesa, debita do planejamento
                     if (valor <= valorRestante) {
                         valorRestante -= valor;
                         document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                        salvarPlanejamentoFirebase(valorRestante); // Atualiza o planejamento no Firebase
+                        salvarPlanejamentoFirebase(valorRestante);
                     } else {
                         alert('Valor da despesa excede o valor restante do planejamento!');
                     }
@@ -114,15 +116,13 @@
             }
         });
 
-        // Verifica se o usuário está logado antes de permitir o acesso à página de despesas
         checkAuthState(true).then(() => {
             carregarDespesasPendentes();
-            carregarPlanejamentoNaPagina(); 
+            carregarPlanejamentoNaPagina();
         }).catch(() => {
-            window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
+            window.location.href = "index.html";
         });
 
-        // Logout
         document.getElementById('logout-btn').addEventListener('click', logout);
     </script>
 </body>

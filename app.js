@@ -1,4 +1,4 @@
-// Importação do Firebase com melhorias na estrutura de importação
+// Importação do Firebase
 import { initializeApp } from "firebase/Despesas";
 import { getFirestore, doc, getDoc, collection, addDoc, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Função para verificar autenticação com promessas melhoradas
+// Função para verificar autenticação
 export function checkAuthState(redirect = false) {
     return new Promise((resolve, reject) => {
         onAuthStateChanged(auth, user => {
@@ -34,25 +34,37 @@ export function checkAuthState(redirect = false) {
     });
 }
 
-// Refatoração para melhor manipulação de erros
+// Função otimizada para buscar dados do Firebase
 async function fetchDataFromDoc(docRef) {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) return docSnap.data();
-    throw new Error("Document not found.");
+    throw new Error("Documento não encontrado.");
 }
 
-// Função para carregar planejamento com código mais limpo
+// Função para criar conta de forma segura
+export async function criarConta(email, senha) {
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(auth, email, senha);
+        alert(`Conta criada com sucesso! Bem-vindo, ${userCredential.user.email}`);
+        window.location.href = 'despesas.html';
+    } catch (error) {
+        console.error("Erro ao criar conta:", error);
+        alert("Erro ao criar conta. Verifique seus dados.");
+    }
+}
+
+// Função para carregar planejamento de forma eficiente
 export async function carregarPlanejamentoFirebase() {
     try {
         const planejamentoRef = doc(db, 'planejamento', 'planejamentoId');
         return await fetchDataFromDoc(planejamentoRef);
     } catch (error) {
-        console.error("Erro ao carregar o planejamento:", error);
-        throw error;
+        console.error("Erro ao carregar planejamento:", error);
+        throw new Error("Erro ao carregar planejamento. Tente novamente.");
     }
 }
 
-// Função para carregar despesas pendentes com código otimizado
+// Função para carregar despesas pendentes com segurança
 export async function carregarDespesasPendentes() {
     try {
         const despesasRef = collection(db, 'despesas');
@@ -62,39 +74,50 @@ export async function carregarDespesasPendentes() {
             .filter(despesa => despesa.status === 'pendente');
     } catch (error) {
         console.error("Erro ao carregar as despesas:", error);
-        throw error;
+        throw new Error("Erro ao carregar as despesas. Tente novamente.");
     }
 }
 
-// Função para adicionar despesa de maneira otimizada
+// Função para adicionar despesa com feedback visual
 export async function adicionarDespesa(descricao, valor, dataVencimento) {
     try {
         const despesasRef = collection(db, 'despesas');
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block'; // Mostra o indicador de carregamento
+
         await addDoc(despesasRef, { descricao, valor, dataVencimento, status: 'pendente' });
+
+        loading.style.display = 'none'; // Esconde o indicador de carregamento
     } catch (error) {
-        console.error("Erro ao adicionar a despesa:", error);
-        throw error;
+        console.error("Erro ao adicionar despesa:", error);
+        alert("Erro ao adicionar despesa. Tente novamente.");
     }
 }
 
-// Função para salvar planejamento com melhorias
+// Função para salvar o planejamento com feedback visual
 export async function salvarPlanejamentoFirebase(valorPlanejado) {
     try {
         const planejamentoRef = doc(db, 'planejamento', 'planejamentoId');
         await setDoc(planejamentoRef, { valorPlanejado });
+        alert('Planejamento salvo com sucesso!');
     } catch (error) {
         console.error("Erro ao salvar planejamento:", error);
-        throw error;
+        alert("Erro ao salvar planejamento. Tente novamente.");
     }
 }
 
-// Função de logout
+// Função de logout com feedback ao usuário
 export function logout() {
-    signOut(auth).then(() => window.location.href = 'index.html')
-        .catch(error => console.error("Erro ao fazer logout:", error));
+    signOut(auth).then(() => {
+        alert('Você saiu com sucesso!');
+        window.location.href = 'index.html';
+    }).catch(error => {
+        console.error("Erro ao fazer logout:", error);
+        alert("Erro ao fazer logout. Tente novamente.");
+    });
 }
 
-// Função de atualização visual do planejamento na página
+// Função de carregamento do planejamento na página
 export async function carregarPlanejamentoNaPagina() {
     try {
         const planejamentoDoc = await carregarPlanejamentoFirebase();
@@ -103,10 +126,11 @@ export async function carregarPlanejamentoNaPagina() {
         document.getElementById('valor-planejamento').value = valorPlanejado;
     } catch (error) {
         console.error("Erro ao carregar planejamento:", error);
+        alert("Erro ao carregar planejamento. Tente novamente.");
     }
 }
 
-// Função para atualizar lista de despesas pendentes de forma eficiente
+// Função para carregar despesas pendentes de forma eficiente
 export async function carregarDespesasPendentesNaPagina() {
     try {
         const despesasPendentes = await carregarDespesasPendentes();
@@ -119,17 +143,6 @@ export async function carregarDespesasPendentesNaPagina() {
         });
     } catch (error) {
         console.error("Erro ao carregar despesas pendentes:", error);
-    }
-}
-
-// Função para criar uma conta de usuário
-export async function criarConta(email, senha) {
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(auth, email, senha);
-        alert(`Conta criada com sucesso! Bem-vindo, ${userCredential.user.email}`);
-        window.location.href = 'despesas.html'; // Redireciona para a página de despesas
-    } catch (error) {
-        console.error("Erro ao criar conta:", error);
-        alert("Erro ao criar conta: " + error.message);
+        alert("Erro ao carregar despesas. Tente novamente.");
     }
 }
