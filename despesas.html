@@ -1,129 +1,182 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Despesas</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Minhas Despesas</title>
+
+    <!-- Inclusão do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJt0cqR4cQGpZ32ts1z5K1Khlz3qQXvYHvS9SKIbbVf5pG7a6LRk8Z3ShwpE" crossorigin="anonymous">
+
+    <!-- Inclusão do FontAwesome (opcional para ícones) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+    <!-- Estilo customizado -->
+    <style>
+        body {
+            background-color: #f4f7fc;
+        }
+
+        .card {
+            border-radius: 10px;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        .despesa-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .despesa-item button {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .despesa-item button:hover {
+            background-color: #218838;
+        }
+    </style>
 </head>
+
 <body>
-    <nav class="navbar">
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="despesas.html">Despesas</a></li>
-            <li><a href="relatorio.html">Relatório</a></li>
-        </ul>
-        <div id="auth-section">
-            <span id="user-name"></span>
-            <button id="login-btn">Login</button>
-            <button id="create-account-btn">Criar Conta</button>
-            <button id="logout-btn" style="display:none;">Logout</button>
-        </div>
-    </nav>
+    <div class="container-fluid">
+        <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header text-center">
+                        <h2>Minhas Despesas</h2>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="text-center mb-4">Planejamento: <span id="planejamento">R$ 0,00</span></h4>
 
-    <div id="content">
-        <h1>Gerenciar Despesas</h1>
-        <div id="loading" style="display:none;">Carregando...</div>
+                        <!-- Formulário para adicionar despesa -->
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição da Despesa</label>
+                            <input type="text" class="form-control" id="descricao" placeholder="Exemplo: Mercado, Aluguel">
+                        </div>
+                        <div class="mb-3">
+                            <label for="valor" class="form-label">Valor da Despesa</label>
+                            <input type="number" class="form-control" id="valor" placeholder="Valor em R$">
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="addDespesa()">Adicionar Despesa</button>
 
-        <div id="form-despesa">
-            <label for="descricao">Descrição:</label>
-            <input type="text" id="descricao" placeholder="Descrição da despesa" required>
+                        <hr>
 
-            <label for="valor">Valor Total:</label>
-            <input type="number" id="valor" placeholder="Valor total da despesa" required>
-
-            <label for="data-vencimento">Data de Vencimento:</label>
-            <input type="date" id="data-vencimento" required>
-
-            <button id="btn-adicionar">Adicionar Despesa</button>
-        </div>
-
-        <ul id="despesas-pendentes"></ul>
-
-        <div id="planejamento">
-            <h2>Planejamento de Gastos</h2>
-            <label for="valor-planejamento">Valor Planejado:</label>
-            <input type="number" id="valor-planejamento" placeholder="Valor total planejado">
-            <button id="salvar-planejamento">Salvar Planejamento</button>
-            <p id="valor-restante">Valor restante: R$ 0</p>
+                        <h5>Despesas Cadastradas:</h5>
+                        <div id="despesas-list">
+                            <!-- As despesas serão listadas aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script type="module">
-        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamentoFirebase, logout, salvarPlanejamentoFirebase } from './app.js';
+    <!-- Inclusão dos scripts do Bootstrap e Firebase -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+    <script src="app.js"></script>
 
-        let valorPlanejado = 0;
-        let valorRestante = 0;
+    <script>
+        // Função para adicionar despesa
+        function addDespesa() {
+            const descricao = document.getElementById('descricao').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const planejamento = parseFloat(document.getElementById('planejamento').innerText.replace('R$', '').replace(',', '.'));
+            
+            if (descricao && valor) {
+                const novaDespesa = {
+                    descricao: descricao,
+                    valor: valor
+                };
 
-        async function carregarPlanejamentoNaPagina() {
-            document.getElementById('loading').style.display = 'block'; // Exibe indicador de carregamento
-            const valorPlanejadoInput = document.getElementById('valor-planejamento');
-            const valorRestanteEl = document.getElementById('valor-restante');
-            try {
-                const planejamentoDoc = await carregarPlanejamentoFirebase();
-                if (planejamentoDoc) {
-                    valorPlanejado = planejamentoDoc.valorPlanejado;
-                    valorRestante = valorPlanejado;
-                    valorRestanteEl.textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                    valorPlanejadoInput.value = valorPlanejado;
+                // Salvar despesa no Firebase
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    const despesasRef = firebase.firestore().collection('despesas').doc(user.uid);
+                    despesasRef.update({
+                        despesas: firebase.firestore.FieldValue.arrayUnion(novaDespesa),
+                        planejamento: planejamento - valor
+                    }).then(() => {
+                        // Atualizar a lista de despesas na interface
+                        renderDespesas();
+                    }).catch((error) => {
+                        console.error("Erro ao adicionar despesa: ", error);
+                    });
                 }
-            } catch (error) {
-                console.error("Erro ao carregar planejamento:", error);
-                alert('Erro ao carregar o planejamento. Tente novamente.');
-            } finally {
-                document.getElementById('loading').style.display = 'none'; // Oculta indicador de carregamento
             }
         }
 
-        document.getElementById('salvar-planejamento').addEventListener('click', async () => {
-            const valorPlanejadoInput = document.getElementById('valor-planejamento').value;
-            if (valorPlanejadoInput && !isNaN(valorPlanejadoInput)) {
-                valorPlanejado = parseFloat(valorPlanejadoInput);
-                valorRestante = valorPlanejado;
-                try {
-                    await salvarPlanejamentoFirebase(valorPlanejado);
-                    document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                    alert('Planejamento de gastos salvo com sucesso!');
-                } catch (error) {
-                    console.error("Erro ao salvar planejamento:", error);
-                    alert('Erro ao salvar o planejamento. Tente novamente.');
-                }
-            } else {
-                alert('Por favor, insira um valor válido.');
-            }
-        });
+        // Função para renderizar despesas
+        function renderDespesas() {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                const despesasRef = firebase.firestore().collection('despesas').doc(user.uid);
+                despesasRef.get().then((doc) => {
+                    const data = doc.data();
+                    const despesasList = document.getElementById('despesas-list');
+                    despesasList.innerHTML = '';
+                    data.despesas.forEach(despesa => {
+                        const div = document.createElement('div');
+                        div.classList.add('despesa-item');
+                        div.innerHTML = `
+                            <span>${despesa.descricao} - R$ ${despesa.valor.toFixed(2)}</span>
+                            <button class="btn btn-success" onclick="concluirDespesa('${despesa.descricao}', ${despesa.valor})">Concluir</button>
+                        `;
+                        despesasList.appendChild(div);
+                    });
 
-        document.getElementById("btn-adicionar").addEventListener("click", () => {
-            const descricao = document.getElementById('descricao').value;
-            const valor = parseFloat(document.getElementById('valor').value);
-            const dataVencimento = document.getElementById('data-vencimento').value;
-            
-            if (descricao && !isNaN(valor) && dataVencimento) {
-                adicionarDespesa(descricao, valor, dataVencimento).then(() => {
-                    if (valor <= valorRestante) {
-                        valorRestante -= valor;
-                        document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                        salvarPlanejamentoFirebase(valorRestante);
-                    } else {
-                        alert('Valor da despesa excede o valor restante do planejamento!');
-                    }
-                }).catch(error => {
-                    console.error('Erro ao adicionar despesa:', error);
-                    alert('Erro ao adicionar despesa.');
+                    // Atualizar o valor do planejamento
+                    document.getElementById('planejamento').innerText = `R$ ${data.planejamento.toFixed(2)}`;
                 });
-            } else {
-                alert('Por favor, preencha todos os campos corretamente.');
             }
-        });
+        }
 
-        checkAuthState(true).then(() => {
-            carregarDespesasPendentes();
-            carregarPlanejamentoNaPagina();
-        }).catch(() => {
-            window.location.href = "index.html";
-        });
+        // Função para concluir a despesa
+        function concluirDespesa(descricao, valor) {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                const despesasRef = firebase.firestore().collection('despesas').doc(user.uid);
+                despesasRef.update({
+                    despesas: firebase.firestore.FieldValue.arrayRemove({ descricao, valor }),
+                    planejamento: firebase.firestore.FieldValue.increment(valor)
+                }).then(() => {
+                    renderDespesas();
+                }).catch((error) => {
+                    console.error("Erro ao concluir despesa: ", error);
+                });
+            }
+        }
 
-        document.getElementById('logout-btn').addEventListener('click', logout);
+        // Chamar função para renderizar as despesas ao carregar a página
+        window.onload = renderDespesas;
     </script>
 </body>
+
 </html>

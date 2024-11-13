@@ -1,61 +1,114 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Despesas</title>
-    <link rel="stylesheet" href="styles.css">
-    <script type="module">
-        import { login, criarConta, checkAuthState, logout } from './app.js';
+    <title>Bem-vindo ao Controle de Despesas</title>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            // Adiciona os ouvintes de eventos após o carregamento do DOM
-            document.getElementById('login-btn').addEventListener('click', () => {
-                const email = document.getElementById('email').value;
-                const senha = document.getElementById('senha').value;
-                login(email, senha);
-            });
+    <!-- Inclusão do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJt0cqR4cQGpZ32ts1z5K1Khlz3qQXvYHvS9SKIbbVf5pG7a6LRk8Z3ShwpE" crossorigin="anonymous">
 
-            document.getElementById('create-account-btn').addEventListener('click', () => {
-                const email = document.getElementById('email').value;
-                const senha = document.getElementById('senha').value;
-                criarConta(email, senha);
-            });
+    <!-- Inclusão do FontAwesome para ícones (opcional) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
-            document.getElementById('logout-btn').addEventListener('click', logout);
-
-            // Verifica o estado de autenticação ao carregar a página
-            checkAuthState().then(user => {
-                document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
-                document.getElementById('login-btn').style.display = 'none';
-                document.getElementById('create-account-btn').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'inline';
-            }).catch(() => {
-                document.getElementById('logout-btn').style.display = 'none';
-            });
-        });
-    </script>
+    <!-- Inclusão de um CSS customizado -->
+    <style>
+        body {
+            background-color: #f4f7fc;
+        }
+        .card {
+            border-radius: 10px;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-size: 1.5rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
 </head>
-<body>
-    <nav class="navbar">
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="despesas.html">Despesas</a></li>
-            <li><a href="relatorio.html">Relatório</a></li>
-        </ul>
-        <div id="auth-section">
-            <span id="user-name"></span>
-            <input type="email" id="email" placeholder="Digite seu email">
-            <input type="password" id="senha" placeholder="Digite sua senha">
-            <button id="login-btn">Login</button>
-            <button id="create-account-btn">Criar Conta</button>
-            <button id="logout-btn" style="display:none;">Logout</button>
-        </div>
-    </nav>
 
-    <div id="content">
-        <h1>Bem-vindo ao Controle de Despesas</h1>
-        <p>Por favor, faça login ou crie uma conta para acessar seus dados.</p>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center align-items-center" style="height: 100vh;">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header text-center">
+                        <h2>Controle de Despesas</h2>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">Entrar</h3>
+
+                        <!-- Formulário de Login -->
+                        <form id="login-form">
+                            <div class="mb-3">
+                                <label for="login-email" class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="login-email" placeholder="E-mail">
+                            </div>
+                            <div class="mb-3">
+                                <label for="login-password" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="login-password" placeholder="Senha">
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button type="button" class="btn btn-primary w-100" onclick="login()">Entrar</button>
+                            </div>
+                            <div class="text-center mt-3">
+                                <p>Não tem uma conta? <a href="javascript:void(0);" onclick="showSignupForm()">Crie uma agora</a></p>
+                            </div>
+                        </form>
+
+                        <!-- Formulário de Cadastro -->
+                        <form id="signup-form" style="display:none;">
+                            <div class="mb-3">
+                                <label for="signup-email" class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="signup-email" placeholder="E-mail">
+                            </div>
+                            <div class="mb-3">
+                                <label for="signup-password" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="signup-password" placeholder="Senha">
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" onclick="signup()">Criar Conta</button>
+                            <div class="text-center mt-3">
+                                <p>Já tem uma conta? <a href="javascript:void(0);" onclick="showLoginForm()">Faça login</a></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Scripts do Bootstrap e Firebase -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('signup-form').style.display = 'none';
+        }
+
+        function showSignupForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'block';
+        }
+    </script>
 </body>
+
 </html>
