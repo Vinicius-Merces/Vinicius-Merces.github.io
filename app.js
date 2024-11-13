@@ -8,10 +8,17 @@ const firebaseConfig = {
     appId: "1:677878335691:web:ec41de4f8987e95c28334e",
 };
 
-// Inicializando o Firebase
+// Inicialize o Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+// Exemplo de uso do Firebase Auth
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        console.log("Usuário logado:", user);
+    } else {
+        console.log("Nenhum usuário logado");
+    }
+});
 
 // Função para exibir a tela de boas-vindas
 function showWelcomeScreen() {
