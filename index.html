@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,211 +17,267 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
+
 <body>
+    <div class="container mt-4">
+        <h1>Controle de Despesas</h1>
+        
+        <!-- Área de Login -->
+        <div id="login-form" class="mb-4" style="display:none;">
+            <h3>Login</h3>
+            <input type="email" id="login-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="login-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
+            <button onclick="showSignupForm()" class="btn btn-link w-100">Criar Conta</button>
+        </div>
 
-<div class="container">
-    <h1>Controle de Despesas</h1>
-    <div id="login-form" style="display:none;">
-        <h3>Login</h3>
-        <input type="email" id="login-email" placeholder="Email" class="form-control"><br>
-        <input type="password" id="login-password" placeholder="Senha" class="form-control"><br>
-        <button onclick="login()" class="btn btn-primary">Entrar</button>
+        <!-- Área de Cadastro -->
+        <div id="signup-form" class="mb-4" style="display:none;">
+            <h3>Criar Conta</h3>
+            <input type="email" id="signup-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="signup-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="signup()" class="btn btn-success w-100">Criar Conta</button>
+            <button onclick="showLoginForm()" class="btn btn-link w-100">Já tem uma conta? Entrar</button>
+        </div>
+
+        <!-- Página de Despesas -->
+        <div id="despesas-page" style="display:none;">
+            <h3>Planejamento de Despesas</h3>
+            <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
+
+            <!-- Botões de ação -->
+            <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
+            <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
+            <button onclick="logout()" class="btn btn-danger mb-2">Sair</button>
+            
+            <div id="despesas-list"></div>
+        </div>
+
+        <!-- Gráfico de Relatório -->
+        <canvas id="grafico" width="400" height="200"></canvas>
     </div>
 
-    <div id="signup-form" style="display:none;">
-        <h3>Criar Conta</h3>
-        <input type="email" id="signup-email" placeholder="Email" class="form-control"><br>
-        <input type="password" id="signup-password" placeholder="Senha" class="form-control"><br>
-        <button onclick="signup()" class="btn btn-success">Criar Conta</button>
-    </div>
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+            authDomain: "despesas-f60a3.firebaseapp.com",
+            projectId: "despesas-f60a3",
+            storageBucket: "despesas-f60a3.firebasestorage.app",
+            messagingSenderId: "677878335691",
+            appId: "1:677878335691:web:ec41de4f8987e95c28334e",
+        };
 
-    <!-- Página de Despesas -->
-    <div id="despesas-page" style="display:none;">
-        <h3>Planejamento de Despesas</h3>
-        <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
-        <button onclick="addDespesa()" class="btn btn-warning">Adicionar Despesa</button>
-        <div id="despesas-list"></div>
-    </div>
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    <!-- Gráfico de Relatório -->
-    <canvas id="grafico" width="400" height="200"></canvas>
-</div>
-
-<script>
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
-    authDomain: "despesas-f60a3.firebaseapp.com",
-    projectId: "despesas-f60a3",
-    storageBucket: "despesas-f60a3.firebasestorage.app",
-    messagingSenderId: "677878335691",
-    appId: "1:677878335691:web:ec41de4f8987e95c28334e",
-};
-
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// Exemplo de uso do Firebase Auth
-auth.onAuthStateChanged(user => {
-    if (user) {
-        console.log("Usuário logado:", user);
-        loadDespesas();  // Carregar despesas se estiver logado
-        loadRelatorios();  // Carregar relatórios se estiver logado
-        document.getElementById("despesas-page").style.display = "block";
-    } else {
-        document.getElementById("login-form").style.display = "block";  // Exibe a tela de login
-    }
-});
-
-// Função para login
-function login() {
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-password").value;
-
-    auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            window.location.href = "despesas.html";  // Redireciona para a página de despesas
-        })
-        .catch(error => {
-            alert(error.message);
-        });
-}
-
-// Função para criar uma conta
-function signup() {
-    const email = document.getElementById("signup-email").value;
-    const password = document.getElementById("signup-password").value;
-
-    auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-            window.location.href = "despesas.html";  // Redireciona para a página de despesas
-        })
-        .catch(error => {
-            alert(error.message);
-        });
-}
-
-// Função para adicionar despesa
-function addDespesa() {
-    const user = auth.currentUser;
-    const nome = prompt("Nome da Despesa:");
-    const valor = parseFloat(prompt("Valor da Despesa:"));
-    const categoria = prompt("Categoria:");
-
-    const userRef = db.collection("users").doc(user.uid);
-    
-    // Adicionar despesa na coleção "despesas" do usuário
-    userRef.collection("despesas").add({
-        nome: nome,
-        valor: valor,
-        categoria: categoria,
-        concluido: false
-    })
-    .then(() => {
-        userRef.update({
-            planejamento: firebase.firestore.FieldValue.increment(-valor)
-        });
-        alert("Despesa adicionada com sucesso!");
-        loadDespesas();  // Atualiza a lista de despesas
-    })
-    .catch(error => {
-        alert(error.message);
-    });
-}
-
-// Função para carregar despesas
-function loadDespesas() {
-    const user = auth.currentUser;
-    const userRef = db.collection("users").doc(user.uid);
-
-    // Carregar valor de planejamento
-    userRef.get().then(doc => {
-        const data = doc.data();
-        document.getElementById("planejamento").innerText = `R$ ${data.planejamento}`;
-    });
-
-    // Carregar despesas
-    userRef.collection("despesas").get().then(querySnapshot => {
-        let despesasList = document.getElementById("despesas-list");
-        despesasList.innerHTML = ""; // Limpar lista existente
-
-        querySnapshot.forEach(doc => {
-            const despesa = doc.data();
-            const despesaItem = document.createElement("div");
-            despesaItem.innerHTML = `
-                <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor} (${despesa.categoria})</p>
-                <button onclick="concluirDespesa('${doc.id}')">Concluir</button>
-            `;
-            despesasList.appendChild(despesaItem);
-        });
-    });
-}
-
-// Função para marcar despesa como concluída
-function concluirDespesa(despesaId) {
-    const user = auth.currentUser;
-    const userRef = db.collection("users").doc(user.uid);
-    const despesaRef = userRef.collection("despesas").doc(despesaId);
-
-    despesaRef.update({
-        concluido: true
-    })
-    .then(() => {
-        despesaRef.get().then(doc => {
-            const valor = doc.data().valor;
-            userRef.update({
-                planejamento: firebase.firestore.FieldValue.increment(-valor)
-            });
-            alert("Despesa concluída e valor debitado do planejamento!");
-        });
-    })
-    .catch(error => {
-        alert(error.message);
-    });
-}
-
-// Função para carregar os relatórios
-function loadRelatorios() {
-    const user = auth.currentUser;
-    const userRef = db.collection("users").doc(user.uid);
-    const despesasRef = userRef.collection("despesas");
-
-    let totalGasto = 0;
-    let totalPlanejado = 0;
-
-    despesasRef.get().then(querySnapshot => {
-        querySnapshot.forEach(doc => {
-            const despesa = doc.data();
-            if (despesa.concluido) {
-                totalGasto += despesa.valor;
+        // Exemplo de uso do Firebase Auth
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("Usuário logado:", user);
+                loadDespesas();  // Carregar despesas se estiver logado
+                loadRelatorios();  // Carregar relatórios se estiver logado
+                document.getElementById("despesas-page").style.display = "block";
+                document.getElementById("login-form").style.display = "none";
+                document.getElementById("signup-form").style.display = "none";
+            } else {
+                document.getElementById("login-form").style.display = "block";  // Exibe a tela de login
+                document.getElementById("signup-form").style.display = "none";
+                document.getElementById("despesas-page").style.display = "none";
             }
         });
 
-        userRef.get().then(doc => {
-            totalPlanejado = doc.data().planejamento;
-            renderChart(totalPlanejado, totalGasto);
-        });
-    });
-}
+        // Função para login
+        function login() {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
 
-// Função para exibir o gráfico
-function renderChart(planejado, gasto) {
-    const ctx = document.getElementById('grafico').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Planejamento', 'Gasto'],
-            datasets: [{
-                label: 'Comparação',
-                data: [planejado, gasto],
-                backgroundColor: ['#36a2eb', '#ff6384']
-            }]
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.location.href = "despesas.html";  // Redireciona para a página de despesas
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
         }
-    });
-}
-</script>
+
+        // Função para criar uma conta
+        function signup() {
+            const email = document.getElementById("signup-email").value;
+            const password = document.getElementById("signup-password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.location.href = "despesas.html";  // Redireciona para a página de despesas
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+        }
+
+        // Função para adicionar despesa
+        function addDespesa() {
+            const user = auth.currentUser;
+            const nome = prompt("Nome da Despesa:");
+            const valor = parseFloat(prompt("Valor da Despesa:"));
+            const categoria = prompt("Categoria:");
+
+            const userRef = db.collection("users").doc(user.uid);
+            
+            // Adicionar despesa na coleção "despesas" do usuário
+            userRef.collection("despesas").add({
+                nome: nome,
+                valor: valor,
+                categoria: categoria,
+                concluido: false
+            })
+            .then(() => {
+                userRef.update({
+                    planejamento: firebase.firestore.FieldValue.increment(-valor)
+                });
+                alert("Despesa adicionada com sucesso!");
+                loadDespesas();  // Atualiza a lista de despesas
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        // Função para carregar despesas
+        function loadDespesas() {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+
+            // Carregar valor de planejamento
+            userRef.get().then(doc => {
+                const data = doc.data();
+                document.getElementById("planejamento").innerText = `R$ ${data.planejamento.toFixed(2)}`;
+            });
+
+            // Carregar despesas
+            userRef.collection("despesas").get().then(querySnapshot => {
+                let despesasList = document.getElementById("despesas-list");
+                despesasList.innerHTML = ""; // Limpar lista existente
+
+                querySnapshot.forEach(doc => {
+                    const despesa = doc.data();
+                    const despesaItem = document.createElement("div");
+                    despesaItem.classList.add("mb-2");
+                    despesaItem.innerHTML = `
+                        <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
+                        <button onclick="concluirDespesa('${doc.id}')" class="btn btn-success btn-sm">Concluir</button>
+                    `;
+                    despesasList.appendChild(despesaItem);
+                });
+            });
+        }
+
+        // Função para marcar despesa como concluída
+        function concluirDespesa(despesaId) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(despesaId);
+
+            despesaRef.update({
+                concluido: true
+            })
+            .then(() => {
+                despesaRef.get().then(doc => {
+                    const valor = doc.data().valor;
+                    userRef.update({
+                        planejamento: firebase.firestore.FieldValue.increment(-valor)
+                    });
+                    alert("Despesa concluída e valor debitado do planejamento!");
+                });
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        // Função para adicionar valor ao planejamento
+        function addPlanejamento() {
+            const user = auth.currentUser;
+            const valor = parseFloat(prompt("Informe o valor do planejamento:"));
+            
+            if (valor > 0) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.update({
+                    planejamento: firebase.firestore.FieldValue.increment(valor)
+                }).then(() => {
+                    alert("Planejamento atualizado!");
+                    loadDespesas();  // Atualiza o valor do planejamento
+                }).catch(error => {
+                    alert(error.message);
+                });
+            } else {
+                alert("Por favor, insira um valor válido.");
+            }
+        }
+
+        // Função para carregar os relatórios
+        function loadRelatorios() {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesasRef = userRef.collection("despesas");
+
+            let totalGasto = 0;
+            let totalPlanejado = 0;
+
+            despesasRef.get().then(querySnapshot => {
+                querySnapshot.forEach(doc => {
+                    const despesa = doc.data();
+                    if (despesa.concluido) {
+                        totalGasto += despesa.valor;
+                    }
+                });
+
+                userRef.get().then(doc => {
+                    totalPlanejado = doc.data().planejamento;
+                    renderChart(totalPlanejado, totalGasto);
+                });
+            });
+        }
+
+        // Função para exibir o gráfico
+        function renderChart(planejado, gasto) {
+            const ctx = document.getElementById('grafico').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Planejamento', 'Gasto'],
+                    datasets: [{
+                        label: 'Comparação',
+                        data: [planejado, gasto],
+                        backgroundColor: ['#36a2eb', '#ff6384']
+                    }]
+                }
+            });
+        }
+
+        // Função de logout
+        function logout() {
+            auth.signOut().then(() => {
+                alert("Você foi deslogado.");
+                window.location.href = "index.html";
+            });
+        }
+
+        // Mostrar tela de login
+        function showLoginForm() {
+            document.getElementById("login-form").style.display = "block";
+            document.getElementById("signup-form").style.display = "none";
+        }
+
+        // Mostrar tela de cadastro
+        function showSignupForm() {
+            document.getElementById("signup-form").style.display = "block";
+            document.getElementById("login-form").style.display = "none";
+        }
+    </script>
 
 </body>
+
 </html>
