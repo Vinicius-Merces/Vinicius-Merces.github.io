@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Adicionando os scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -27,12 +31,27 @@
     </div>
 
     <script type="module">
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+            authDomain: "despesas-f60a3.firebaseapp.com",
+            projectId: "despesas-f60a3",
+            storageBucket: "despesas-f60a3.firebasestorage.app",
+            messagingSenderId: "677878335691",
+            appId: "1:677878335691:web:ec41de4f8987e95c28334e"
+        };
+
+        // Inicializando o Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
         import { login, criarConta, checkAuthState, logout } from './app.js';
 
         document.getElementById('login-btn').addEventListener('click', login);
         document.getElementById('create-account-btn').addEventListener('click', criarConta);
         document.getElementById('logout-btn').addEventListener('click', logout);
 
+        // Verifica o estado de autenticação ao carregar a página
         checkAuthState(true).then(user => {
             document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
             document.getElementById('login-btn').style.display = 'none';

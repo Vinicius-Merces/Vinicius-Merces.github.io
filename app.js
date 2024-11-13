@@ -1,123 +1,116 @@
-// Importando o Firebase
-import { getFirestore, doc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
+// Importação do Firebase com melhorias na estrutura de importação
+import { getFirestore, doc, getDoc, collection, addDoc, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js';
 
-// Configuração do Firebase (substitua com suas credenciais do Firebase)
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-};
+    apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+    authDomain: "despesas-f60a3.firebaseapp.com",
+    projectId: "despesas-f60a3",
+    storageBucket: "despesas-f60a3.firebasestorage.app",
+    messagingSenderId: "677878335691",
+    appId: "1:677878335691:web:ec41de4f8987e95c28334e",
+    measurementId: "G-1N7LB9LZQM"
+  };
 
-// Inicializando o Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
-// Função para verificar o estado de autenticação do usuário
+// Inicialização do Firebase
+const db = getFirestore(firebase.initializeApp(firebaseConfig));
+const auth = getAuth();
+
+// Função para verificar autenticação com promessas melhoradas
 export function checkAuthState(redirect = false) {
     return new Promise((resolve, reject) => {
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, user => {
             if (user) {
-                // Usuário logado
                 document.getElementById('user-name').textContent = `Olá, ${user.displayName || user.email}`;
-                document.getElementById('login-btn').style.display = 'none';
-                document.getElementById('create-account-btn').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'inline-block';
+                toggleAuthButtons(true);
                 resolve(user);
             } else {
-                // Usuário não logado
-                if (redirect) {
-                    window.location.href = 'index.html'; // Redireciona para a página inicial se não estiver logado
-                }
+                if (redirect) window.location.href = 'index.html';
                 reject();
             }
         });
     });
 }
 
-// Função para carregar o planejamento de gastos do Firebase
+// Refatoração para melhor manipulação de erros
+async function fetchDataFromDoc(docRef) {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) return docSnap.data();
+    throw new Error("Document not found.");
+}
+
+// Função para carregar planejamento com código mais limpo
 export async function carregarPlanejamentoFirebase() {
     try {
-        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId'); // Substitua com o ID real
-        const docSnap = await getDocs(planejamentoRef);
-        
-        if (docSnap.exists()) {
-            return docSnap.data();
-        } else {
-            throw new Error("Planejamento não encontrado.");
-        }
+        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId');
+        return await fetchDataFromDoc(planejamentoRef);
     } catch (error) {
         console.error("Erro ao carregar o planejamento:", error);
         throw error;
     }
 }
 
-// Função para carregar as despesas pendentes do Firebase
+// Função para carregar despesas pendentes com código otimizado
 export async function carregarDespesasPendentes() {
     try {
         const despesasRef = collection(db, 'despesas');
         const querySnapshot = await getDocs(despesasRef);
-        const despesas = [];
-        
-        querySnapshot.forEach((doc) => {
-            despesas.push(doc.data());
-        });
-
-        return despesas.filter(despesa => despesa.status === 'pendente'); // Filtrando despesas pendentes
+        return querySnapshot.docs
+            .map(doc => doc.data())
+            .filter(despesa => despesa.status === 'pendente');
     } catch (error) {
         console.error("Erro ao carregar as despesas:", error);
         throw error;
     }
 }
 
-// Função para adicionar uma despesa ao Firebase
+// Função para adicionar despesa de maneira otimizada
 export async function adicionarDespesa(descricao, valor, dataVencimento) {
     try {
         const despesasRef = collection(db, 'despesas');
-        await addDoc(despesasRef, {
-            descricao: descricao,
-            valor: valor,
-            dataVencimento: dataVencimento,
-            status: 'pendente'
-        });
+        await addDoc(despesasRef, { descricao, valor, dataVencimento, status: 'pendente' });
     } catch (error) {
         console.error("Erro ao adicionar a despesa:", error);
         throw error;
     }
 }
 
-// Função para salvar o planejamento de gastos no Firebase
+// Função para salvar planejamento com melhorias
 export async function salvarPlanejamentoFirebase(valorPlanejado) {
     try {
-        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId'); // Substitua com o ID real
-        await setDoc(planejamentoRef, {
-            valorPlanejado: valorPlanejado
-        });
+        const planejamentoRef = doc(db, 'planejamento', 'planejamentoId');
+        await setDoc(planejamentoRef, { valorPlanejado });
     } catch (error) {
         console.error("Erro ao salvar planejamento:", error);
         throw error;
     }
 }
 
-// Função para logout do usuário
+// Função de logout
 export function logout() {
-    signOut(auth).then(() => {
-        window.location.href = 'index.html'; // Redireciona para a página inicial após logout
-    }).catch((error) => {
-        console.error("Erro ao fazer logout:", error);
-    });
+    signOut(auth).then(() => window.location.href = 'index.html')
+        .catch(error => console.error("Erro ao fazer logout:", error));
 }
 
-// Função para carregar as despesas pendentes e o planejamento de gastos ao acessar a página de despesas
+// Função de atualização visual do planejamento na página
+export async function carregarPlanejamentoNaPagina() {
+    try {
+        const planejamentoDoc = await carregarPlanejamentoFirebase();
+        const valorPlanejado = planejamentoDoc.valorPlanejado;
+        document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorPlanejado.toFixed(2)}`;
+        document.getElementById('valor-planejamento').value = valorPlanejado;
+    } catch (error) {
+        console.error("Erro ao carregar planejamento:", error);
+    }
+}
+
+// Função para atualizar lista de despesas pendentes de forma eficiente
 export async function carregarDespesasPendentesNaPagina() {
     try {
         const despesasPendentes = await carregarDespesasPendentes();
         const listaDespesas = document.getElementById('despesas-pendentes');
-        listaDespesas.innerHTML = ''; // Limpa a lista antes de adicionar os itens
+        listaDespesas.innerHTML = '';
         despesasPendentes.forEach(despesa => {
             const li = document.createElement('li');
             li.textContent = `${despesa.descricao} - R$ ${despesa.valor} (Vencimento: ${new Date(despesa.dataVencimento).toLocaleDateString()})`;
@@ -125,23 +118,5 @@ export async function carregarDespesasPendentesNaPagina() {
         });
     } catch (error) {
         console.error("Erro ao carregar despesas pendentes:", error);
-    }
-}
-
-// Função para carregar o planejamento de gastos na página de despesas
-export async function carregarPlanejamentoNaPagina() {
-    try {
-        const planejamentoDoc = await carregarPlanejamentoFirebase();
-        const valorPlanejadoInput = document.getElementById('valor-planejamento');
-        const valorRestanteEl = document.getElementById('valor-restante');
-
-        if (planejamentoDoc) {
-            valorPlanejado = planejamentoDoc.valorPlanejado;
-            valorRestante = valorPlanejado;
-            valorRestanteEl.textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-            valorPlanejadoInput.value = valorPlanejado;
-        }
-    } catch (error) {
-        console.error("Erro ao carregar planejamento:", error);
     }
 }

@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Adicionando os scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -22,110 +26,40 @@
     </nav>
 
     <div id="content">
-        <h1>Gerenciar Despesas</h1>
-
-        <div id="form-despesa">
-            <label for="descricao">Descrição:</label>
-            <input type="text" id="descricao" placeholder="Descrição da despesa" required>
-
-            <label for="valor">Valor Total:</label>
-            <input type="number" id="valor" placeholder="Valor total da despesa" required>
-
-            <label for="data-vencimento">Data de Vencimento:</label>
-            <input type="date" id="data-vencimento" required>
-
-            <button id="btn-adicionar">Adicionar Despesa</button>
-        </div>
-
-        <ul id="despesas-pendentes"></ul>
-
-        <div id="planejamento">
-            <h2>Planejamento de Gastos</h2>
-            <label for="valor-planejamento">Valor Planejado:</label>
-            <input type="number" id="valor-planejamento" placeholder="Valor total planejado">
-            <button id="salvar-planejamento">Salvar Planejamento</button>
-            <p id="valor-restante">Valor restante: R$ 0</p> <!-- Exibição do valor restante -->
-        </div>
+        <h1>Bem-vindo ao Controle de Despesas</h1>
+        <p>Por favor, faça login ou crie uma conta para acessar seus dados.</p>
     </div>
 
     <script type="module">
-        import { checkAuthState, adicionarDespesa, carregarDespesasPendentes, carregarPlanejamentoFirebase, logout, salvarPlanejamentoFirebase } from './app.js';
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
+            authDomain: "despesas-f60a3.firebaseapp.com",
+            projectId: "despesas-f60a3",
+            storageBucket: "despesas-f60a3.firebasestorage.app",
+            messagingSenderId: "677878335691",
+            appId: "1:677878335691:web:ec41de4f8987e95c28334e"
+        };
 
-        let valorPlanejado = 0;
-        let valorRestante = 0;
+        // Inicializando o Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-        // Função para carregar o planejamento de gastos
-        async function carregarPlanejamentoNaPagina() {
-            const valorPlanejadoInput = document.getElementById('valor-planejamento');
-            const valorRestanteEl = document.getElementById('valor-restante');
-            // Pega o valor do planejamento no Firebase
-            try {
-                const planejamentoDoc = await carregarPlanejamentoFirebase();
-                if (planejamentoDoc) {
-                    valorPlanejado = planejamentoDoc.valorPlanejado;
-                    valorRestante = valorPlanejado;
-                    valorRestanteEl.textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                    valorPlanejadoInput.value = valorPlanejado;
-                }
-            } catch (error) {
-                console.error("Erro ao carregar planejamento:", error);
-            }
-        }
+        import { login, criarConta, checkAuthState, logout } from './app.js';
 
-        // Salvar o valor do planejamento no Firebase
-        document.getElementById('salvar-planejamento').addEventListener('click', async () => {
-            const valorPlanejadoInput = document.getElementById('valor-planejamento').value;
-            if (valorPlanejadoInput && !isNaN(valorPlanejadoInput)) {
-                valorPlanejado = parseFloat(valorPlanejadoInput);
-                valorRestante = valorPlanejado;
-                try {
-                    await salvarPlanejamentoFirebase(valorPlanejado); // Salva o planejamento no Firebase
-                    document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                    alert('Planejamento de gastos salvo com sucesso!');
-                } catch (error) {
-                    console.error("Erro ao salvar planejamento:", error);
-                }
-            } else {
-                alert('Por favor, insira um valor válido.');
-            }
-        });
-
-        // Função para adicionar uma despesa e debitar o valor do planejamento
-        document.getElementById("btn-adicionar").addEventListener("click", () => {
-            const descricao = document.getElementById('descricao').value;
-            const valor = parseFloat(document.getElementById('valor').value);
-            const dataVencimento = document.getElementById('data-vencimento').value;
-            
-            if (descricao && !isNaN(valor) && dataVencimento) {
-                // Adiciona a despesa
-                adicionarDespesa(descricao, valor, dataVencimento).then(() => {
-                    // Após adicionar a despesa, debita do planejamento
-                    if (valor <= valorRestante) {
-                        valorRestante -= valor;
-                        document.getElementById('valor-restante').textContent = `Valor restante: R$ ${valorRestante.toFixed(2)}`;
-                        salvarPlanejamentoFirebase(valorRestante); // Atualiza o planejamento no Firebase
-                    } else {
-                        alert('Valor da despesa excede o valor restante do planejamento!');
-                    }
-                }).catch(error => {
-                    console.error('Erro ao adicionar despesa:', error);
-                    alert('Erro ao adicionar despesa.');
-                });
-            } else {
-                alert('Por favor, preencha todos os campos corretamente.');
-            }
-        });
-
-        // Verifica se o usuário está logado antes de permitir o acesso à página de despesas
-        checkAuthState(true).then(() => {
-            carregarDespesasPendentes();
-            carregarPlanejamentoNaPagina(); // Alterado para carregarPlanejamentoNaPagina
-        }).catch(() => {
-            window.location.href = "index.html"; // Redireciona para a página Home se não estiver logado
-        });
-
-        // Logout
+        document.getElementById('login-btn').addEventListener('click', login);
+        document.getElementById('create-account-btn').addEventListener('click', criarConta);
         document.getElementById('logout-btn').addEventListener('click', logout);
+
+        // Verifica o estado de autenticação ao carregar a página
+        checkAuthState(true).then(user => {
+            document.getElementById('user-name').textContent = `Bem-vindo, ${user.email}`;
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('create-account-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline';
+        }).catch(() => {
+            document.getElementById('logout-btn').style.display = 'none';
+        });
     </script>
 </body>
 </html>
