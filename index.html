@@ -21,31 +21,39 @@
     <div class="container mt-4">
         <h1>Controle de Despesas</h1>
 
-        <!-- Filtro de Período -->
-        <div class="mb-4">
-            <label for="periodo" class="form-label">Selecione o Período de Análise:</label>
-            <select id="periodo" class="form-select" onchange="loadRelatorios()">
-                <option value="1">Último 1 Dia</option>
-                <option value="7">Última Semana</option>
-                <option value="30">Último Mês</option>
-            </select>
+        <!-- Tela de Login/Cadastro -->
+        <div id="login-page">
+            <h3>Bem-vindo!</h3>
+            <p>Por favor, faça login ou crie uma conta para continuar.</p>
+
+            <input type="email" id="email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="login()" class="btn btn-primary mb-2">Login</button>
+            <button onclick="signUp()" class="btn btn-secondary mb-2">Criar Conta</button>
         </div>
 
         <!-- Página de Despesas -->
         <div id="despesas-page" style="display:none;">
+            <!-- Filtro de Período -->
+            <div class="mb-4">
+                <label for="periodo" class="form-label">Selecione o Período de Análise:</label>
+                <select id="periodo" class="form-select" onchange="loadRelatorios()">
+                    <option value="1">Último 1 Dia</option>
+                    <option value="7">Última Semana</option>
+                    <option value="30">Último Mês</option>
+                </select>
+            </div>
+
             <h3>Planejamento de Despesas</h3>
             <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
 
-            <!-- Botões de ação -->
             <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
             <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
             <button onclick="logout()" class="btn btn-danger mb-2">Sair</button>
 
             <div id="despesas-list"></div>
+            <canvas id="grafico" width="200" height="150"></canvas>
         </div>
-
-        <!-- Gráfico de Relatório -->
-        <canvas id="grafico" width="200" height="150"></canvas>
     </div>
 
     <script>
@@ -59,22 +67,47 @@
             appId: "1:677878335691:web:ec41de4f8987e95c28334e",
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Gerenciamento de autenticação
         auth.onAuthStateChanged(user => {
             if (user) {
                 loadDespesas();
                 loadRelatorios();
+                document.getElementById("login-page").style.display = "none";
                 document.getElementById("despesas-page").style.display = "block";
             } else {
+                document.getElementById("login-page").style.display = "block";
                 document.getElementById("despesas-page").style.display = "none";
             }
         });
 
+        // Função de login
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    document.getElementById("email").value = "";
+                    document.getElementById("password").value = "";
+                })
+                .catch(error => alert("Erro ao fazer login: " + error.message));
+        }
+
+        // Função para criar nova conta
+        function signUp() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    document.getElementById("email").value = "";
+                    document.getElementById("password").value = "";
+                })
+                .catch(error => alert("Erro ao criar conta: " + error.message));
+        }
         // Função para carregar despesas e planejamento
         function loadDespesas() {
             const user = auth.currentUser;
@@ -128,6 +161,12 @@
             });
         }
 
+
+         function logout() {
+            auth.signOut().then(() => alert("Você foi desconectado!"))
+                .catch(error => alert("Erro ao deslogar: " + error.message));
+        }
+        
         // Função para concluir despesa
         function concluirDespesa(id, valor) {
             const user = auth.currentUser;
