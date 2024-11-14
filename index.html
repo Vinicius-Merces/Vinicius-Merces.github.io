@@ -186,6 +186,55 @@
             });
         }
 
+        // Função para concluir uma despesa
+function concluirDespesa(despesaId) {
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid);
+    const despesaRef = userRef.collection("despesas").doc(despesaId);
+
+    despesaRef.get().then((doc) => {
+        if (doc.exists) {
+            despesaRef.update({ concluido: true })
+                .then(() => {
+                    alert("Despesa concluída!");
+                    loadDespesas(); // Atualiza a lista após conclusão
+                })
+                .catch(error => {
+                    alert("Erro ao concluir despesa: " + error.message);
+                });
+        } else {
+            alert("Despesa não encontrada.");
+        }
+    }).catch(error => {
+        alert("Erro ao acessar despesa: " + error.message);
+    });
+}
+
+// Função para remover uma despesa
+function removerDespesa(despesaId) {
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid);
+    const despesaRef = userRef.collection("despesas").doc(despesaId);
+
+    despesaRef.get().then((doc) => {
+        if (doc.exists) {
+            despesaRef.delete()
+                .then(() => {
+                    alert("Despesa removida!");
+                    loadDespesas(); // Atualiza a lista após remoção
+                })
+                .catch(error => {
+                    alert("Erro ao remover despesa: " + error.message);
+                });
+        } else {
+            alert("Despesa não encontrada.");
+        }
+    }).catch(error => {
+        alert("Erro ao acessar despesa: " + error.message);
+    });
+}
+
+
         function addPlanejamento() {
     const user = auth.currentUser;
     const valor = parseFloat(prompt("Informe o valor do planejamento:"));
