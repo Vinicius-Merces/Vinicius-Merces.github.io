@@ -31,23 +31,23 @@
                 <div id="login-error" style="color: red; display: none;">Usuário ou senha inválidos.</div>
                 <p>Não tem uma conta? <a href="#" id="show-register">Cadastrar-se</a></p>
             </form>
+        </div>
 
-            <!-- Tela de Registro -->
-            <div id="register-page" style="display: none;">
-                <h3>Criar Conta</h3>
-                <form id="register-form">
-                    <div class="mb-3">
-                        <label for="register-email" class="form-label">Email</label>
-                        <input type="email" id="register-email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="register-password" class="form-label">Senha</label>
-                        <input type="password" id="register-password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-success">Cadastrar</button>
-                    <p>Já tem uma conta? <a href="#" id="show-login">Fazer login</a></p>
-                </form>
-            </div>
+        <!-- Tela de Registro -->
+        <div id="register-page" style="display: none;">
+            <h3>Criar Conta</h3>
+            <form id="register-form">
+                <div class="mb-3">
+                    <label for="register-email" class="form-label">Email</label>
+                    <input type="email" id="register-email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="register-password" class="form-label">Senha</label>
+                    <input type="password" id="register-password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-success">Cadastrar</button>
+                <p>Já tem uma conta? <a href="#" id="show-login">Fazer login</a></p>
+            </form>
         </div>
 
         <!-- Página de Despesas -->
@@ -91,9 +91,11 @@
                 loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
                 document.getElementById("login-page").style.display = "none";
+                document.getElementById("register-page").style.display = "none";
             } else {
                 document.getElementById("despesas-page").style.display = "none";
                 document.getElementById("login-page").style.display = "block";
+                document.getElementById("register-page").style.display = "none";
             }
         });
 
@@ -182,123 +184,81 @@
 
             userRef.get().then(doc => {
                 const planejamento = doc.data().planejamento || 0;
-                document.getElementById("planejamento").textContent = `R$ ${planejamento.toFixed(2)}`;
-            }).catch(error => {
-                console.error("Erro ao carregar o planejamento:", error);
-            });
-        }
-
-        function concluirDespesa(id, valor) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesaRef = userRef.collection("despesas").doc(id);
-
-            despesaRef.update({
-                concluido: true
-            }).then(() => {
-                userRef.update({
-                    planejamento: firebase.firestore.FieldValue.increment(-valor)
-                });
-                loadDespesas();
-                loadRelatorios();
-            }).catch(error => alert("Erro ao concluir despesa: " + error.message));
-        }
-
-        function loadRelatorios() {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesasRef = userRef.collection("despesas");
-
-            despesasRef.where("concluido", "==", true).get().then(querySnapshot => {
-                const despesasConcluidas = [];
-                querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
-
-                const ctx = document.getElementById("grafico").getContext("2d");
-
-                if (window.grafico instanceof Chart) {
-                    window.grafico.destroy();
-                }
-
-                const totalDespesas = despesasConcluidas.reduce((acc, valor) => acc + valor, 0);
-
-                userRef.get().then(doc => {
-                    const planejamento = doc.data().planejamento || 0;
-
-                    window.grafico = new Chart(ctx, {
-                        type: "bar",
-                        data: {
-                            labels: ["Despesas", "Planejamento"],
-                            datasets: [{
-                                label: "Valores",
-                                data: [totalDespesas, planejamento],
-                                backgroundColor: ["#4CAF50", "#FF9800"],
-                                borderColor: ["#388E3C", "#F57C00"],
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true
-                                }
-                            }
-                        }
-                    });
-                }).catch(error => {
-                    console.error("Erro ao carregar o planejamento para gráfico:", error);
-                });
-            }).catch(error => {
-                console.error("Erro ao carregar despesas para gráfico:", error);
+                document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
             });
         }
 
         function addDespesa() {
-            const nome = prompt("Digite o nome da despesa:");
-            const valor = parseFloat(prompt("Digite o valor da despesa:"));
-            const user = auth.currentUser;
+            const nome = prompt("Nome da despesa");
+            const valor = parseFloat(prompt("Valor da despesa"));
+            const data = new Date();
 
-            if (nome && valor) {
+            if (nome && !isNaN(valor)) {
+                const user = auth.currentUser;
                 const userRef = db.collection("users").doc(user.uid);
                 userRef.collection("despesas").add({
-                    nome,
-                    valor,
-                    data: new Date(),
+                    nome: nome,
+                    valor: valor,
+                    data: data,
                     concluido: false
                 }).then(() => {
                     loadDespesas();
-                    loadRelatorios();
-                }).catch(error => alert("Erro ao adicionar despesa: " + error.message));
+                }).catch(error => {
+                    console.error("Erro ao adicionar despesa:", error);
+                });
             }
         }
 
         function addPlanejamento() {
-            const valor = parseFloat(prompt("Digite o valor do planejamento:"));
-            const user = auth.currentUser;
-
-            if (valor) {
+            const valor = parseFloat(prompt("Valor do planejamento de despesas"));
+            if (!isNaN(valor)) {
+                const user = auth.currentUser;
                 const userRef = db.collection("users").doc(user.uid);
-                userRef.update({ planejamento: valor })
-                    .then(() => {
-                        loadDespesas();
-                        loadRelatorios();
-                    })
-                    .catch(error => alert("Erro ao adicionar planejamento: " + error.message));
+                userRef.update({
+                    planejamento: valor
+                }).then(() => {
+                    loadDespesas();
+                }).catch(error => {
+                    console.error("Erro ao atualizar planejamento:", error);
+                });
             }
         }
 
-        function deleteDespesa(id) {
+        function concluirDespesa(despesaId, valor) {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
-            userRef.collection("despesas").doc(id).delete().then(() => {
+            userRef.collection("despesas").doc(despesaId).update({
+                concluido: true
+            }).then(() => {
+                const novoPlanejamento = (userRef.data().planejamento || 0) - valor;
+                userRef.update({
+                    planejamento: novoPlanejamento
+                }).then(() => {
+                    loadDespesas();
+                }).catch(error => {
+                    console.error("Erro ao concluir a despesa:", error);
+                });
+            });
+        }
+
+        function deleteDespesa(despesaId) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            userRef.collection("despesas").doc(despesaId).delete().then(() => {
                 loadDespesas();
-                loadRelatorios();
-            }).catch(error => alert("Erro ao excluir despesa: " + error.message));
+            }).catch(error => {
+                console.error("Erro ao excluir a despesa:", error);
+            });
         }
 
         function logout() {
             auth.signOut().then(() => {
-                alert("Você foi desconectado!");
-            }).catch(error => alert("Erro ao deslogar: " + error.message));
+                document.getElementById("despesas-page").style.display = "none";
+                document.getElementById("login-page").style.display = "block";
+                document.getElementById("register-page").style.display = "none";
+            }).catch(error => {
+                console.error("Erro ao sair:", error);
+            });
         }
     </script>
 </body>
