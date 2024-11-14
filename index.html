@@ -80,17 +80,29 @@
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesasRef = userRef.collection("despesas");
-
+        
             // Exibir todas as despesas cadastradas
             despesasRef.get().then(querySnapshot => {
                 let despesasList = "";
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
+                    const data = despesa.data;
+        
+                    // Verificar se a data é do tipo Timestamp e pode ser convertida para Date
+                    let dataFormatada = "Data inválida";
+                    if (data && data.toDate) {
+                        try {
+                            dataFormatada = data.toDate().toLocaleDateString();
+                        } catch (error) {
+                            console.error("Erro ao formatar a data: ", error);
+                        }
+                    }
+        
                     despesasList += `
                         <div class="mb-3">
                             <strong>${despesa.nome}</strong><br>
                             Valor: R$ ${despesa.valor.toFixed(2)}<br>
-                            Data: ${despesa.data ? despesa.data.toDate().toLocaleDateString() : 'Data inválida'}<br>
+                            Data: ${dataFormatada}<br>
                             <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
                         </div>
                     `;
@@ -100,6 +112,7 @@
                 console.error("Erro ao carregar as despesas:", error);
             });
         }
+
 
         // Função para carregar o gráfico de relatórios
         function loadRelatorios() {
