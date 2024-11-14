@@ -46,6 +46,7 @@
                     <input type="password" id="register-password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-success">Cadastrar</button>
+                <div id="register-error" style="color: red; display: none;">Erro ao criar conta. O email pode já estar em uso.</div>
                 <p>Já tem uma conta? <a href="#" id="show-login">Fazer login</a></p>
             </form>
         </div>
@@ -53,13 +54,11 @@
         <!-- Página de Despesas -->
         <div id="despesas-page" style="display:none;">
             <h3>Planejamento de Despesas</h3>
-            
             <!-- Filtro de Despesas -->
             <div class="mb-3">
                 <label for="filtro-data" class="form-label">Filtrar por Data</label>
                 <input type="date" id="filtro-data" class="form-control" onchange="loadDespesas()">
             </div>
-
             <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
             <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
             <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
@@ -99,6 +98,7 @@
             }
         });
 
+        // Login
         document.getElementById("login-form").addEventListener("submit", function(event) {
             event.preventDefault();
             const email = document.getElementById("email").value;
@@ -112,7 +112,7 @@
             });
         });
 
-        // Função para registrar um novo usuário
+        // Registro de novo usuário
         document.getElementById("register-form").addEventListener("submit", function(event) {
             event.preventDefault();
             const email = document.getElementById("register-email").value;
@@ -124,14 +124,17 @@
                 document.getElementById("login-page").style.display = "block";
             }).catch(error => {
                 console.error("Erro ao criar conta:", error);
+                document.getElementById("register-error").style.display = "block";
             });
         });
 
+        // Alternar para tela de registro
         document.getElementById("show-register").addEventListener("click", function() {
             document.getElementById("login-page").style.display = "none";
             document.getElementById("register-page").style.display = "block";
         });
 
+        // Alternar para tela de login
         document.getElementById("show-login").addEventListener("click", function() {
             document.getElementById("register-page").style.display = "none";
             document.getElementById("login-page").style.display = "block";
