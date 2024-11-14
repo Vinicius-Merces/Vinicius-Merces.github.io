@@ -187,17 +187,32 @@
         }
 
         function addPlanejamento() {
-            const user = auth.currentUser;
-            const valor = parseFloat(prompt("Informe o valor do planejamento:"));
+    const user = auth.currentUser;
+    const valor = parseFloat(prompt("Informe o valor do planejamento:"));
 
-            if (isNaN(valor) || valor <= 0) {
-                alert("Por favor, insira um valor válido.");
-                return;
-            }
+    if (isNaN(valor) || valor <= 0) {
+        alert("Por favor, insira um valor válido.");
+        return;
+    }
 
-            const userRef = db.collection("users").doc(user.uid);
+    const userRef = db.collection("users").doc(user.uid);
+
+    // Verifica se o documento existe
+    userRef.get().then(doc => {
+        if (!doc.exists) {
+            // Cria o documento com o valor do planejamento se ele não existir
             userRef.set({
                 planejamento: valor
+            }).then(() => {
+                alert("Planejamento criado com sucesso!");
+                loadDespesas();
+            }).catch(error => {
+                alert(error.message);
+            });
+        } else {
+            // Atualiza o valor do planejamento se o documento já existir
+            userRef.set({
+                planejamento: firebase.firestore.FieldValue.increment(valor)
             }, { merge: true })
             .then(() => {
                 alert("Planejamento atualizado!");
@@ -207,6 +222,11 @@
                 alert(error.message);
             });
         }
+    }).catch(error => {
+        alert("Erro ao acessar o documento do usuário: " + error.message);
+    });
+}
+
 
         function logout() {
             auth.signOut().then(() => {
