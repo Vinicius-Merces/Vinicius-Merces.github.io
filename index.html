@@ -70,11 +70,7 @@
                 loadDespesas();
                 loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
-                document.getElementById("login-form").style.display = "none";
-                document.getElementById("signup-form").style.display = "none";
             } else {
-                document.getElementById("login-form").style.display = "block";
-                document.getElementById("signup-form").style.display = "none";
                 document.getElementById("despesas-page").style.display = "none";
             }
         });
@@ -94,7 +90,7 @@
                         <div class="mb-3">
                             <strong>${despesa.nome}</strong><br>
                             Valor: R$ ${despesa.valor.toFixed(2)}<br>
-                            Data: ${despesa.data.toDate().toLocaleDateString()}<br>
+                            Data: ${despesa.data ? despesa.data.toDate().toLocaleDateString() : 'Data inválida'}<br>
                             <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
                         </div>
                     `;
