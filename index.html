@@ -29,12 +29,37 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Entrar</button>
                 <div id="login-error" style="color: red; display: none;">Usuário ou senha inválidos.</div>
+                <p>Não tem uma conta? <a href="#" id="show-register">Cadastrar-se</a></p>
             </form>
+
+            <!-- Tela de Registro -->
+            <div id="register-page" style="display: none;">
+                <h3>Criar Conta</h3>
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label for="register-email" class="form-label">Email</label>
+                        <input type="email" id="register-email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-password" class="form-label">Senha</label>
+                        <input type="password" id="register-password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Cadastrar</button>
+                    <p>Já tem uma conta? <a href="#" id="show-login">Fazer login</a></p>
+                </form>
+            </div>
         </div>
 
         <!-- Página de Despesas -->
         <div id="despesas-page" style="display:none;">
             <h3>Planejamento de Despesas</h3>
+            
+            <!-- Filtro de Despesas -->
+            <div class="mb-3">
+                <label for="filtro-data" class="form-label">Filtrar por Data</label>
+                <input type="date" id="filtro-data" class="form-control" onchange="loadDespesas()">
+            </div>
+
             <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
             <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
             <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
@@ -85,12 +110,43 @@
             });
         });
 
+        // Função para registrar um novo usuário
+        document.getElementById("register-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const email = document.getElementById("register-email").value;
+            const password = document.getElementById("register-password").value;
+
+            auth.createUserWithEmailAndPassword(email, password).then(result => {
+                console.log("Conta criada:", result.user);
+                document.getElementById("register-page").style.display = "none";
+                document.getElementById("login-page").style.display = "block";
+            }).catch(error => {
+                console.error("Erro ao criar conta:", error);
+            });
+        });
+
+        document.getElementById("show-register").addEventListener("click", function() {
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("register-page").style.display = "block";
+        });
+
+        document.getElementById("show-login").addEventListener("click", function() {
+            document.getElementById("register-page").style.display = "none";
+            document.getElementById("login-page").style.display = "block";
+        });
+
         function loadDespesas() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesasRef = userRef.collection("despesas");
+            const filtroData = document.getElementById("filtro-data").value;
 
-            despesasRef.get().then(querySnapshot => {
+            let query = despesasRef;
+            if (filtroData) {
+                query = despesasRef.where("data", "==", new Date(filtroData));
+            }
+
+            query.get().then(querySnapshot => {
                 let despesasList = "";
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
