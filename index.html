@@ -171,7 +171,7 @@
 
         function addPlanejamento() {
             const user = auth.currentUser;
-            const valor = parseFloat(prompt("Valor do planejamento:"));
+            const valor = parseFloat(prompt("Novo valor do planejamento:"));
             if (isNaN(valor) || valor <= 0) {
                 alert("Por favor, insira um valor válido.");
                 return;
@@ -195,7 +195,9 @@
 
                 // Verifica se o gráfico já existe e o destrói antes de criar um novo
                 const ctx = document.getElementById("grafico").getContext("2d");
-                if (window.grafico && typeof window.grafico.destroy === 'function') {
+
+                // Verifica se o gráfico existe antes de tentar destruí-lo
+                if (window.grafico instanceof Chart) {
                     window.grafico.destroy(); // Destrói o gráfico antigo
                 }
 
