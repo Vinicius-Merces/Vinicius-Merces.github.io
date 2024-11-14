@@ -74,13 +74,11 @@
         // Verifica o estado de autenticação do usuário ao carregar a página
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Usuário autenticado: mostra a página de despesas
                 document.getElementById("login-page").style.display = "none";
                 document.getElementById("despesas-page").style.display = "block";
                 loadDespesas();
                 loadRelatorios();
             } else {
-                // Usuário não autenticado: mostra a página de login
                 document.getElementById("login-page").style.display = "block";
                 document.getElementById("despesas-page").style.display = "none";
             }
@@ -105,7 +103,12 @@
             const password = document.getElementById("password").value;
 
             auth.createUserWithEmailAndPassword(email, password)
-                .then(() => {
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    const userRef = db.collection("users").doc(user.uid);
+                    userRef.set({
+                        planejamento: 0
+                    });
                     document.getElementById("email").value = "";
                     document.getElementById("password").value = "";
                 })
@@ -156,7 +159,8 @@
 
             // Carregar o valor do planejamento
             userRef.get().then(doc => {
-                const planejamento = doc.data().planejamento || 0;
+                const data = doc.data();
+                const planejamento = data ? data.planejamento : 0;
                 document.getElementById("planejamento").textContent = `R$ ${planejamento.toFixed(2)}`;
             }).catch(error => {
                 console.error("Erro ao carregar o planejamento:", error);
@@ -208,7 +212,8 @@
                     const totalDespesas = despesasConcluidas.reduce((acc, valor) => acc + valor, 0);
 
                     userRef.get().then(doc => {
-                        const planejamento = doc.data().planejamento || 0;
+                        const data = doc.data();
+                        const planejamento = data ? data.planejamento : 0;
                         window.grafico = new Chart(ctx, {
                             type: "bar",
                             data: {
