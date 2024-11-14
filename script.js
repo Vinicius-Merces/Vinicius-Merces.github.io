@@ -17,17 +17,32 @@ const db = firebase.firestore();
 document.addEventListener('DOMContentLoaded', () => {
     // Verifica o estado de autenticação do usuário ao carregar a página
     auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById("login-page").style.display = "none";
-            document.getElementById("despesas-page").style.display = "block";
-            loadDespesas();
-            loadRelatorios();
-        } else {
-            document.getElementById("login-page").style.display = "block";
-            document.getElementById("despesas-page").style.display = "none";
+        const loginPage = document.getElementById("login-page");
+        const despesasPage = document.getElementById("despesas-page");
+
+        if (loginPage && despesasPage) {
+            if (user) {
+                loginPage.style.display = "none";
+                despesasPage.style.display = "block";
+                loadDespesas();
+                loadRelatorios();
+            } else {
+                loginPage.style.display = "block";
+                despesasPage.style.display = "none";
+            }
         }
     });
 });
+
+// Função para verificar se o usuário está autenticado
+function checkUserAuth() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Você precisa estar logado para acessar esta funcionalidade.");
+        return false;
+    }
+    return true;
+}
 
 // Função de login
 function login() {
@@ -99,9 +114,9 @@ function loadDespesas() {
 
 // Função para adicionar uma despesa
 function addDespesa() {
-    const user = auth.currentUser;
-    if (!user) return; // Verificar se o usuário está autenticado
+    if (!checkUserAuth()) return;
 
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
 
@@ -123,9 +138,9 @@ function addDespesa() {
 
 // Função para adicionar planejamento
 function addPlanejamento() {
-    const user = auth.currentUser;
-    if (!user) return; // Verificar se o usuário está autenticado
+    if (!checkUserAuth()) return;
 
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const valorPlanejamento = parseFloat(prompt("Digite o valor do planejamento:"));
 
@@ -140,9 +155,9 @@ function addPlanejamento() {
 
 // Função para concluir despesa
 function concluirDespesa(id, valor) {
-    const user = auth.currentUser;
-    if (!user) return;
+    if (!checkUserAuth()) return;
 
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const despesaRef = userRef.collection("despesas").doc(id);
 
@@ -153,9 +168,9 @@ function concluirDespesa(id, valor) {
 
 // Função para excluir despesa
 function deleteDespesa(id) {
-    const user = auth.currentUser;
-    if (!user) return;
+    if (!checkUserAuth()) return;
 
+    const user = auth.currentUser;
     const userRef = db.collection("users").doc(user.uid);
     const despesaRef = userRef.collection("despesas").doc(id);
 
@@ -166,9 +181,9 @@ function deleteDespesa(id) {
 
 // Função para carregar relatórios
 function loadRelatorios() {
-    const user = auth.currentUser;
-    if (!user) return; // Garantir que o usuário esteja autenticado
+    if (!checkUserAuth()) return;
 
+    const user = auth.currentUser;
     const periodo = parseInt(document.getElementById("periodo").value);
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
