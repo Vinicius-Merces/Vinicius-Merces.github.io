@@ -79,103 +79,33 @@
             }
         });
 
-        function login() {
-            const email = document.getElementById("login-email").value;
-            const password = document.getElementById("login-password").value;
-            auth.signInWithEmailAndPassword(email, password).catch(error => alert(error.message));
-        }
-
-        function signup() {
-            const email = document.getElementById("signup-email").value;
-            const password = document.getElementById("signup-password").value;
-            auth.createUserWithEmailAndPassword(email, password).catch(error => alert(error.message));
-        }
-
-        function addDespesa() {
-            const user = auth.currentUser;
-            const nome = prompt("Nome da Despesa:");
-            const valor = parseFloat(prompt("Valor da Despesa:"));
-            const categoria = prompt("Categoria:");
-            if (!nome || isNaN(valor) || valor <= 0 || !categoria) {
-                alert("Por favor, preencha todos os campos corretamente.");
-                return;
-            }
-            const userRef = db.collection("users").doc(user.uid);
-            userRef.collection("despesas").add({
-                nome, valor, categoria, concluido: false
-            }).then(() => {
-                alert("Despesa adicionada com sucesso!");
-                loadDespesas();
-                loadRelatorios();
-            }).catch(error => alert(error.message));
-        }
-
+        // Função para carregar despesas e planejamento
         function loadDespesas() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
-            userRef.get().then(doc => {
-                const planejamento = doc.data().planejamento || 0;
-                document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
-            });
-            userRef.collection("despesas").where("concluido", "==", false).get().then(querySnapshot => {
-                let despesasList = document.getElementById("despesas-list");
-                despesasList.innerHTML = "";
+            const despesasRef = userRef.collection("despesas");
+
+            // Exibir todas as despesas cadastradas
+            despesasRef.get().then(querySnapshot => {
+                let despesasList = "";
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
-                    const despesaItem = document.createElement("div");
-                    despesaItem.classList.add("mb-2");
-                    despesaItem.innerHTML = `
-                        <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
-                        <button onclick="concluirDespesa('${doc.id}', ${despesa.valor})" class="btn btn-success btn-sm">Concluir</button>
-                        <button onclick="removerDespesa('${doc.id}')" class="btn btn-danger btn-sm">Remover</button>
+                    despesasList += `
+                        <div class="mb-3">
+                            <strong>${despesa.nome}</strong><br>
+                            Valor: R$ ${despesa.valor.toFixed(2)}<br>
+                            Data: ${despesa.data.toDate().toLocaleDateString()}<br>
+                            <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
+                        </div>
                     `;
-                    despesasList.appendChild(despesaItem);
                 });
+                document.getElementById("despesas-list").innerHTML = despesasList;
+            }).catch(error => {
+                console.error("Erro ao carregar as despesas:", error);
             });
         }
 
-        function concluirDespesa(despesaId, valor) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesaRef = userRef.collection("despesas").doc(despesaId);
-            despesaRef.get().then(doc => {
-                if (doc.exists && !doc.data().concluido) {
-                    userRef.update({ planejamento: firebase.firestore.FieldValue.increment(-valor) }).then(() => {
-                        despesaRef.update({ concluido: true }).then(() => {
-                            alert("Despesa concluída e valor debitado do planejamento!");
-                            loadDespesas(); // Atualiza lista de despesas
-                            loadRelatorios(); // Atualiza gráfico
-                        });
-                    }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
-                } else alert("Despesa já concluída ou não encontrada.");
-            }).catch(error => alert("Erro ao acessar despesa: " + error.message));
-        }
-
-        function removerDespesa(despesaId) {
-            const user = auth.currentUser;
-            const despesaRef = db.collection("users").doc(user.uid).collection("despesas").doc(despesaId);
-            despesaRef.delete().then(() => {
-                alert("Despesa removida com sucesso!");
-                loadDespesas(); // Atualiza lista de despesas
-                loadRelatorios(); // Atualiza gráfico
-            }).catch(error => alert("Erro ao remover despesa: " + error.message));
-        }
-
-        function addPlanejamento() {
-            const user = auth.currentUser;
-            const valor = parseFloat(prompt("Novo valor do planejamento:"));
-            if (isNaN(valor) || valor <= 0) {
-                alert("Por favor, insira um valor válido.");
-                return;
-            }
-            const userRef = db.collection("users").doc(user.uid);
-            userRef.update({ planejamento: valor }).then(() => {
-                alert("Planejamento atualizado!");
-                loadDespesas(); // Atualiza lista de despesas
-                loadRelatorios(); // Atualiza gráfico
-            }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
-        }
-
+        // Função para carregar o gráfico de relatórios
         function loadRelatorios() {
             const user = auth.currentUser;
             const periodo = parseInt(document.getElementById("periodo").value);
@@ -239,19 +169,57 @@
                 });
         }
 
+        // Função para adicionar despesas
+        function addDespesa() {
+            const nome = prompt("Digite o nome da despesa:");
+            const valor = parseFloat(prompt("Digite o valor da despesa:"));
+            const user = auth.currentUser;
 
+            if (nome && valor) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.collection("despesas").add({
+                    nome,
+                    valor,
+                    data: new Date(),
+                    concluido: false // Defina como 'false' por padrão
+                }).then(() => {
+                    loadDespesas();
+                    loadRelatorios();
+                }).catch(error => alert("Erro ao adicionar despesa: " + error.message));
+            }
+        }
+
+        // Função para adicionar planejamento
+        function addPlanejamento() {
+            const valor = parseFloat(prompt("Digite o valor do planejamento:"));
+            const user = auth.currentUser;
+
+            if (valor) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.update({ planejamento: valor })
+                    .then(() => {
+                        loadDespesas();
+                        loadRelatorios();
+                    })
+                    .catch(error => alert("Erro ao adicionar planejamento: " + error.message));
+            }
+        }
+
+        // Função para excluir despesa
+        function deleteDespesa(id) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            userRef.collection("despesas").doc(id).delete().then(() => {
+                loadDespesas();
+                loadRelatorios();
+            }).catch(error => alert("Erro ao excluir despesa: " + error.message));
+        }
+
+        // Função de logout
         function logout() {
-            auth.signOut();
-        }
-
-        function showSignupForm() {
-            document.getElementById("login-form").style.display = "none";
-            document.getElementById("signup-form").style.display = "block";
-        }
-
-        function showLoginForm() {
-            document.getElementById("signup-form").style.display = "none";
-            document.getElementById("login-form").style.display = "block";
+            auth.signOut().then(() => {
+                alert("Você foi desconectado!");
+            }).catch(error => alert("Erro ao deslogar: " + error.message));
         }
     </script>
 </body>
