@@ -98,12 +98,18 @@
                         }
                     }
 
+                    // Adicionar o botão "Concluído" apenas se a despesa não for concluída
+                    let concluidoButton = '';
+                    if (!despesa.concluido) {
+                        concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}')">Concluir</button>`;
+                    }
+
                     despesasList += `
                         <div class="mb-3">
                             <strong>${despesa.nome}</strong><br>
                             Valor: R$ ${despesa.valor.toFixed(2)}<br>
                             Data: ${dataFormatada}<br>
-                            <button class="btn btn-success" onclick="concluirDespesa('${doc.id}')">Concluir</button>
+                            ${concluidoButton}
                             <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
                         </div>
                     `;
@@ -111,6 +117,14 @@
                 document.getElementById("despesas-list").innerHTML = despesasList;
             }).catch(error => {
                 console.error("Erro ao carregar as despesas:", error);
+            });
+
+            // Carregar o valor do planejamento
+            userRef.get().then(doc => {
+                const planejamento = doc.data().planejamento || 0;
+                document.getElementById("planejamento").textContent = `R$ ${planejamento.toFixed(2)}`;
+            }).catch(error => {
+                console.error("Erro ao carregar o planejamento:", error);
             });
         }
 
@@ -170,25 +184,21 @@
                                     label: "Valor",
                                     data: [totalDespesas, planejamento], // Dados: total das despesas e do planejamento
                                     backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)"], // Cores das barras
-                                    borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"], // Cor das bordas
+                                    borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"],
                                     borderWidth: 1
                                 }]
                             },
                             options: {
-                                responsive: true,
                                 scales: {
                                     y: {
-                                        beginAtZero: true, // Começa o eixo Y do zero
-                                        ticks: {
-                                            stepSize: 10 // Define o tamanho do incremento no eixo Y
-                                        }
+                                        beginAtZero: true // Começa o eixo Y no valor 0
                                     }
                                 }
                             }
                         });
-                    }).catch(error => alert("Erro ao carregar o planejamento: " + error.message));
+                    });
                 }).catch(error => {
-                    console.error("Erro ao carregar as despesas concluídas:", error);
+                    console.error("Erro ao carregar despesas para gráfico:", error);
                 });
         }
 
@@ -204,7 +214,7 @@
                     nome,
                     valor,
                     data: new Date(),
-                    concluido: false // Defina como 'false' por padrão
+                    concluido: false // Define como 'false' por padrão
                 }).then(() => {
                     loadDespesas();
                     loadRelatorios();
