@@ -101,7 +101,7 @@
                     // Adicionar o botão "Concluído" apenas se a despesa não for concluída
                     let concluidoButton = '';
                     if (!despesa.concluido) {
-                        concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}')">Concluir</button>`;
+                        concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}', ${despesa.valor})">Concluir</button>`;
                     }
 
                     despesasList += `
@@ -129,14 +129,21 @@
         }
 
         // Função para concluir despesa
-        function concluirDespesa(id) {
+        function concluirDespesa(id, valor) {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesaRef = userRef.collection("despesas").doc(id);
-            
+
+            // Atualizar a despesa para "concluída"
             despesaRef.update({
                 concluido: true
             }).then(() => {
+                // Atualizar o valor do planejamento subtraindo a despesa concluída
+                const planejamentoRef = userRef.update({
+                    planejamento: firebase.firestore.FieldValue.increment(-valor)
+                });
+
+                // Recarregar despesas e relatórios após concluir a despesa
                 loadDespesas();
                 loadRelatorios();
             }).catch(error => alert("Erro ao concluir despesa: " + error.message));
@@ -181,10 +188,10 @@
                             data: {
                                 labels: ["Despesas", "Planejamento"], // Labels para as barras
                                 datasets: [{
-                                    label: "Valor",
-                                    data: [totalDespesas, planejamento], // Dados: total das despesas e do planejamento
-                                    backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)"], // Cores das barras
-                                    borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"],
+                                    label: "Valores",
+                                    data: [totalDespesas, planejamento], // Dados do gráfico
+                                    backgroundColor: ["#4CAF50", "#FF9800"],
+                                    borderColor: ["#388E3C", "#F57C00"],
                                     borderWidth: 1
                                 }]
                             },
@@ -196,6 +203,8 @@
                                 }
                             }
                         });
+                    }).catch(error => {
+                        console.error("Erro ao carregar o planejamento para gráfico:", error);
                     });
                 }).catch(error => {
                     console.error("Erro ao carregar despesas para gráfico:", error);
