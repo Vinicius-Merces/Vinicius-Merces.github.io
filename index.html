@@ -19,6 +19,44 @@
 </head>
 <body>
     <!-- Seu conteúdo HTML aqui -->
+    <div class="container mt-4">
+        <h1>Controle de Despesas</h1>
+
+        <!-- Área de Login -->
+        <div id="login-form" class="mb-4" style="display:none;">
+            <h3>Login</h3>
+            <input type="email" id="login-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="login-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
+            <button onclick="showSignupForm()" class="btn btn-link w-100">Criar Conta</button>
+        </div>
+
+        <!-- Área de Cadastro -->
+        <div id="signup-form" class="mb-4" style="display:none;">
+            <h3>Criar Conta</h3>
+            <input type="email" id="signup-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="signup-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="signup()" class="btn btn-success w-100">Criar Conta</button>
+            <button onclick="showLoginForm()" class="btn btn-link w-100">Já tem uma conta? Entrar</button>
+        </div>
+
+        <!-- Página de Despesas -->
+        <div id="despesas-page" style="display:none;">
+            <h3>Planejamento de Despesas</h3>
+            <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
+
+            <!-- Botões de ação -->
+            <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
+            <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
+            <button onclick="logout()" class="btn btn-danger mb-2">Sair</button>
+
+            <div id="despesas-list"></div>
+        </div>
+
+        <!-- Gráfico de Relatório -->
+        <canvas id="grafico" width="400" height="150"></canvas>
+    </div>
+
 
     <script src="script.js"></script>
 </body>

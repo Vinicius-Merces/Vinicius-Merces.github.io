@@ -1,5 +1,5 @@
- // Configuração do Firebase
- const firebaseConfig = {
+// Configuração do Firebase
+const firebaseConfig = {
     apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
     authDomain: "despesas-f60a3.firebaseapp.com",
     projectId: "despesas-f60a3",
@@ -8,21 +8,25 @@
     appId: "1:677878335691:web:ec41de4f8987e95c28334e",
 };
 
+// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Verifica o estado de autenticação do usuário ao carregar a página
-auth.onAuthStateChanged(user => {
-    if (user) {
-        document.getElementById("login-page").style.display = "none";
-        document.getElementById("despesas-page").style.display = "block";
-        loadDespesas();
-        loadRelatorios();
-    } else {
-        document.getElementById("login-page").style.display = "block";
-        document.getElementById("despesas-page").style.display = "none";
-    }
+// Aguarda o carregamento completo do DOM
+document.addEventListener('DOMContentLoaded', () => {
+    // Verifica o estado de autenticação do usuário ao carregar a página
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("despesas-page").style.display = "block";
+            loadDespesas();
+            loadRelatorios();
+        } else {
+            document.getElementById("login-page").style.display = "block";
+            document.getElementById("despesas-page").style.display = "none";
+        }
+    });
 });
 
 // Função de login
@@ -54,8 +58,11 @@ function signUp() {
         .catch(error => alert("Erro ao criar conta: " + error.message));
 }
 
+// Função para carregar as despesas
 function loadDespesas() {
     const user = auth.currentUser;
+    if (!user) return;  // Garantir que o usuário esteja autenticado
+
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
 
@@ -90,8 +97,11 @@ function loadDespesas() {
     }).catch(error => console.error("Erro ao carregar o planejamento:", error));
 }
 
+// Função para adicionar uma despesa
 function addDespesa() {
     const user = auth.currentUser;
+    if (!user) return; // Verificar se o usuário está autenticado
+
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
 
@@ -111,8 +121,11 @@ function addDespesa() {
     }
 }
 
+// Função para adicionar planejamento
 function addPlanejamento() {
     const user = auth.currentUser;
+    if (!user) return; // Verificar se o usuário está autenticado
+
     const userRef = db.collection("users").doc(user.uid);
     const valorPlanejamento = parseFloat(prompt("Digite o valor do planejamento:"));
 
@@ -125,8 +138,11 @@ function addPlanejamento() {
     }
 }
 
+// Função para concluir despesa
 function concluirDespesa(id, valor) {
     const user = auth.currentUser;
+    if (!user) return;
+
     const userRef = db.collection("users").doc(user.uid);
     const despesaRef = userRef.collection("despesas").doc(id);
 
@@ -135,8 +151,11 @@ function concluirDespesa(id, valor) {
         .catch(error => alert("Erro ao concluir despesa: " + error.message));
 }
 
+// Função para excluir despesa
 function deleteDespesa(id) {
     const user = auth.currentUser;
+    if (!user) return;
+
     const userRef = db.collection("users").doc(user.uid);
     const despesaRef = userRef.collection("despesas").doc(id);
 
@@ -145,8 +164,11 @@ function deleteDespesa(id) {
         .catch(error => alert("Erro ao excluir despesa: " + error.message));
 }
 
+// Função para carregar relatórios
 function loadRelatorios() {
     const user = auth.currentUser;
+    if (!user) return; // Garantir que o usuário esteja autenticado
+
     const periodo = parseInt(document.getElementById("periodo").value);
     const userRef = db.collection("users").doc(user.uid);
     const despesasRef = userRef.collection("despesas");
@@ -194,6 +216,7 @@ function loadRelatorios() {
         }).catch(error => alert("Erro ao carregar relatório: " + error.message));
 }
 
+// Função para logout
 function logout() {
     auth.signOut().catch(error => alert("Erro ao sair: " + error.message));
 }
