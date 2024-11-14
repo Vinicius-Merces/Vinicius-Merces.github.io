@@ -80,14 +80,14 @@
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesasRef = userRef.collection("despesas");
-        
+
             // Exibir todas as despesas cadastradas
             despesasRef.get().then(querySnapshot => {
                 let despesasList = "";
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
                     const data = despesa.data;
-        
+
                     // Verificar se a data é do tipo Timestamp e pode ser convertida para Date
                     let dataFormatada = "Data inválida";
                     if (data && data.toDate) {
@@ -97,12 +97,13 @@
                             console.error("Erro ao formatar a data: ", error);
                         }
                     }
-        
+
                     despesasList += `
                         <div class="mb-3">
                             <strong>${despesa.nome}</strong><br>
                             Valor: R$ ${despesa.valor.toFixed(2)}<br>
                             Data: ${dataFormatada}<br>
+                            <button class="btn btn-success" onclick="concluirDespesa('${doc.id}')">Concluir</button>
                             <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
                         </div>
                     `;
@@ -113,6 +114,19 @@
             });
         }
 
+        // Função para concluir despesa
+        function concluirDespesa(id) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(id);
+            
+            despesaRef.update({
+                concluido: true
+            }).then(() => {
+                loadDespesas();
+                loadRelatorios();
+            }).catch(error => alert("Erro ao concluir despesa: " + error.message));
+        }
 
         // Função para carregar o gráfico de relatórios
         function loadRelatorios() {
