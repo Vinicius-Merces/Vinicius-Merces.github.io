@@ -5,72 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Despesas</title>
 
+    <!-- Link para o Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Biblioteca do Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Usar versão do Firebase com script tradicional (não módulo) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <div class="container mt-4">
         <h1>Controle de Despesas</h1>
 
-        <!-- Tela de Login -->
-        <div id="login-page">
+        <!-- Área de Login -->
+        <div id="login-form" class="mb-4" style="display:none;">
             <h3>Login</h3>
-            <form id="login-form">
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Senha</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Entrar</button>
-                <div id="login-error" style="color: red; display: none;">Usuário ou senha inválidos.</div>
-                <p>Não tem uma conta? <a href="#" id="show-register">Cadastrar-se</a></p>
-            </form>
+            <input type="email" id="login-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="login-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
+            <button onclick="showSignupForm()" class="btn btn-link w-100">Criar Conta</button>
         </div>
 
-        <!-- Tela de Registro -->
-        <div id="register-page" style="display: none;">
+        <!-- Área de Cadastro -->
+        <div id="signup-form" class="mb-4" style="display:none;">
             <h3>Criar Conta</h3>
-            <form id="register-form">
-                <div class="mb-3">
-                    <label for="register-email" class="form-label">Email</label>
-                    <input type="email" id="register-email" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="register-password" class="form-label">Senha</label>
-                    <input type="password" id="register-password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-success">Cadastrar</button>
-                <div id="register-error" style="color: red; display: none;">Erro ao criar conta. O email pode já estar em uso.</div>
-                <p>Já tem uma conta? <a href="#" id="show-login">Fazer login</a></p>
-            </form>
+            <input type="email" id="signup-email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="signup-password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="signup()" class="btn btn-success w-100">Criar Conta</button>
+            <button onclick="showLoginForm()" class="btn btn-link w-100">Já tem uma conta? Entrar</button>
         </div>
 
         <!-- Página de Despesas -->
         <div id="despesas-page" style="display:none;">
             <h3>Planejamento de Despesas</h3>
-            <!-- Filtro de Despesas -->
-            <div class="mb-3">
-                <label for="filtro-data" class="form-label">Filtrar por Data</label>
-                <input type="date" id="filtro-data" class="form-control" onchange="loadDespesas()">
-            </div>
             <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
+
+            <!-- Botões de ação -->
             <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
             <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
             <button onclick="logout()" class="btn btn-danger mb-2">Sair</button>
+
             <div id="despesas-list"></div>
         </div>
 
         <!-- Gráfico de Relatório -->
-        <canvas id="grafico" width="200" height="150"></canvas>
+        <canvas id="grafico" width="400" height="150"></canvas>
     </div>
 
     <script>
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDzxKkfnVgH8AR2w6mrWYtxWhE2puqbCik",
             authDomain: "despesas-f60a3.firebaseapp.com",
@@ -80,195 +67,165 @@
             appId: "1:677878335691:web:ec41de4f8987e95c28334e",
         };
 
+        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Gerenciamento de autenticação
         auth.onAuthStateChanged(user => {
             if (user) {
-                loadDespesas();  // Atualizar as despesas do usuário após login
-                loadRelatorios(); // Carregar relatórios, se necessário
+                loadDespesas();
+                loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
-                document.getElementById("login-page").style.display = "none";
-                document.getElementById("register-page").style.display = "none";
+                document.getElementById("login-form").style.display = "none";
+                document.getElementById("signup-form").style.display = "none";
             } else {
-                // Se o usuário não estiver logado, exibir a tela de login
+                document.getElementById("login-form").style.display = "block";
+                document.getElementById("signup-form").style.display = "none";
                 document.getElementById("despesas-page").style.display = "none";
-                document.getElementById("login-page").style.display = "block";
-                document.getElementById("register-page").style.display = "none";
             }
         });
-        
-        // Função de Login
-        document.getElementById("login-form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-        
-            auth.signInWithEmailAndPassword(email, password).then(result => {
-                console.log("Usuário logado:", result.user);
-            }).catch(error => {
-                console.error("Erro ao fazer login:", error);
-                document.getElementById("login-error").style.display = "block";
-            });
-        });
 
-        // Registro de novo usuário
-        document.getElementById("register-form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const email = document.getElementById("register-email").value;
-            const password = document.getElementById("register-password").value;
+        function login() {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+            auth.signInWithEmailAndPassword(email, password).catch(error => alert(error.message));
+        }
 
-            auth.createUserWithEmailAndPassword(email, password).then(result => {
-                console.log("Conta criada:", result.user);
-                document.getElementById("register-page").style.display = "none";
-                document.getElementById("login-page").style.display = "block";
-            }).catch(error => {
-                console.error("Erro ao criar conta:", error);
-                document.getElementById("register-error").style.display = "block";
-            });
-        });
+        function signup() {
+            const email = document.getElementById("signup-email").value;
+            const password = document.getElementById("signup-password").value;
+            auth.createUserWithEmailAndPassword(email, password).catch(error => alert(error.message));
+        }
 
-        // Alternar para tela de registro
-        document.getElementById("show-register").addEventListener("click", function() {
-            document.getElementById("login-page").style.display = "none";
-            document.getElementById("register-page").style.display = "block";
-        });
-
-        // Alternar para tela de login
-        document.getElementById("show-login").addEventListener("click", function() {
-            document.getElementById("register-page").style.display = "none";
-            document.getElementById("login-page").style.display = "block";
-        });
+        function addDespesa() {
+            const user = auth.currentUser;
+            const nome = prompt("Nome da Despesa:");
+            const valor = parseFloat(prompt("Valor da Despesa:"));
+            const categoria = prompt("Categoria:");
+            if (!nome || isNaN(valor) || valor <= 0 || !categoria) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
+            }
+            const userRef = db.collection("users").doc(user.uid);
+            userRef.collection("despesas").add({
+                nome, valor, categoria, concluido: false
+            }).then(() => {
+                alert("Despesa adicionada com sucesso!");
+                loadDespesas();
+                loadRelatorios();
+            }).catch(error => alert(error.message));
+        }
 
         function loadDespesas() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
-            const despesasRef = userRef.collection("despesas");
-            const filtroData = document.getElementById("filtro-data").value;
-
-            let query = despesasRef;
-            if (filtroData) {
-                const dataFiltro = new Date(filtroData);
-                query = despesasRef.where("data", "==", firebase.firestore.Timestamp.fromDate(dataFiltro));
-            }
-
-            query.get().then(querySnapshot => {
-                let despesasList = "";
-                querySnapshot.forEach(doc => {
-                    const despesa = doc.data();
-                    const data = despesa.data;
-                    let dataFormatada = "Data inválida";
-                    if (data && data.toDate) {
-                        try {
-                            dataFormatada = data.toDate().toLocaleDateString();
-                        } catch (error) {
-                            console.error("Erro ao formatar a data: ", error);
-                        }
-                    }
-
-                    let concluidoButton = '';
-                    if (!despesa.concluido) {
-                        concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}', ${despesa.valor})">Concluir</button>`;
-                    }
-
-                    despesasList += ` 
-                        <div class="mb-3">
-                            <strong>${despesa.nome}</strong><br>
-                            Valor: R$ ${despesa.valor.toFixed(2)}<br>
-                            Data: ${dataFormatada}<br>
-                            ${concluidoButton}
-                            <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
-                        </div>
-                    `;
-                });
-                document.getElementById("despesas-list").innerHTML = despesasList;
-            }).catch(error => {
-                console.error("Erro ao carregar as despesas:", error);
-            });
-
             userRef.get().then(doc => {
                 const planejamento = doc.data().planejamento || 0;
                 document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
             });
-        }
-
-        function addDespesa() {
-            const nome = prompt("Nome da despesa");
-            const valor = parseFloat(prompt("Valor da despesa"));
-            const data = new Date();
-
-            if (nome && !isNaN(valor)) {
-                const user = auth.currentUser;
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.collection("despesas").add({
-                    nome: nome,
-                    valor: valor,
-                    data: firebase.firestore.Timestamp.fromDate(data), // Corrigido para Timestamp
-                    concluido: false
-                }).then(() => {
-                    loadDespesas();
-                }).catch(error => {
-                    console.error("Erro ao adicionar despesa:", error);
+            userRef.collection("despesas").where("concluido", "==", false).get().then(querySnapshot => {
+                let despesasList = document.getElementById("despesas-list");
+                despesasList.innerHTML = "";
+                querySnapshot.forEach(doc => {
+                    const despesa = doc.data();
+                    const despesaItem = document.createElement("div");
+                    despesaItem.classList.add("mb-2");
+                    despesaItem.innerHTML = `
+                        <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
+                        <button onclick="concluirDespesa('${doc.id}', ${despesa.valor})" class="btn btn-success btn-sm">Concluir</button>
+                        <button onclick="removerDespesa('${doc.id}')" class="btn btn-danger btn-sm">Remover</button>
+                    `;
+                    despesasList.appendChild(despesaItem);
                 });
-            }
-        }
-
-        function addPlanejamento() {
-            const valor = parseFloat(prompt("Valor do planejamento de despesas"));
-            if (!isNaN(valor)) {
-                const user = auth.currentUser;
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.update({
-                    planejamento: valor
-                }).then(() => {
-                    loadDespesas();
-                }).catch(error => {
-                    console.error("Erro ao atualizar planejamento:", error);
-                });
-            }
+            });
         }
 
         function concluirDespesa(despesaId, valor) {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
-            userRef.collection("despesas").doc(despesaId).update({
-                concluido: true
+            const despesaRef = userRef.collection("despesas").doc(despesaId);
+            despesaRef.get().then(doc => {
+                if (doc.exists && !doc.data().concluido) {
+                    userRef.update({ planejamento: firebase.firestore.FieldValue.increment(-valor) }).then(() => {
+                        despesaRef.update({ concluido: true }).then(() => {
+                            alert("Despesa concluída e valor debitado do planejamento!");
+                            loadDespesas(); // Atualiza lista de despesas
+                            loadRelatorios(); // Atualiza gráfico
+                        });
+                    }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
+                } else alert("Despesa já concluída ou não encontrada.");
+            }).catch(error => alert("Erro ao acessar despesa: " + error.message));
+        }
+
+        function removerDespesa(despesaId) {
+            const user = auth.currentUser;
+            const despesaRef = db.collection("users").doc(user.uid).collection("despesas").doc(despesaId);
+            despesaRef.delete().then(() => {
+                alert("Despesa removida com sucesso!");
+                loadDespesas(); // Atualiza lista de despesas
+                loadRelatorios(); // Atualiza gráfico
+            }).catch(error => alert("Erro ao remover despesa: " + error.message));
+        }
+
+        function addPlanejamento() {
+            const user = auth.currentUser;
+            const valor = parseFloat(prompt("Valor do planejamento:"));
+            if (isNaN(valor) || valor <= 0) {
+                alert("Por favor, insira um valor válido.");
+                return;
+            }
+            const userRef = db.collection("users").doc(user.uid);
+            userRef.update({
+                planejamento: firebase.firestore.FieldValue.increment(valor)
             }).then(() => {
-                const novoPlanejamento = (userRef.data().planejamento || 0) - valor;
-                userRef.update({
-                    planejamento: novoPlanejamento
-                }).then(() => {
-                    loadDespesas();
-                }).catch(error => {
-                    console.error("Erro ao concluir a despesa:", error);
+                alert("Planejamento atualizado!");
+                loadDespesas();
+                loadRelatorios();
+            }).catch(error => alert("Erro ao atualizar planejamento: " + error.message));
+        }
+
+        function loadRelatorios() {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid).collection("despesas");
+            userRef.where("concluido", "==", true).get().then(querySnapshot => {
+                const despesasConcluidas = [];
+                querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
+                const ctx = document.getElementById("grafico").getContext("2d");
+                if (window.grafico) {
+                    window.grafico.destroy(); // Destrói gráfico anterior antes de criar um novo
+                }
+                window.grafico = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: despesasConcluidas.map((_, i) => `Despesa ${i + 1}`),
+                        datasets: [{
+                            label: "Despesas Concluídas",
+                            data: despesasConcluidas,
+                            backgroundColor: "rgba(75, 192, 192, 0.6)"
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: true } }
+                    }
                 });
             });
         }
 
-        function deleteDespesa(despesaId) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            userRef.collection("despesas").doc(despesaId).delete().then(() => {
-                loadDespesas();
-            }).catch(error => {
-                console.error("Erro ao excluir a despesa:", error);
-            });
-        }
-
         function logout() {
-            auth.signOut().then(() => {
-                document.getElementById("despesas-page").style.display = "none";
-                document.getElementById("login-page").style.display = "block";
-                document.getElementById("register-page").style.display = "none";
-            }).catch(error => {
-                console.error("Erro ao sair:", error);
-            });
+            auth.signOut();
         }
 
-        function loadRelatorios() {
-            // Aqui você pode adicionar a lógica para carregar os gráficos de relatórios usando Chart.js
-            console.log("Relatórios carregados.");
+        function showSignupForm() {
+            document.getElementById("login-form").style.display = "none";
+            document.getElementById("signup-form").style.display = "block";
+        }
+
+        function showLoginForm() {
+            document.getElementById("signup-form").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
         }
     </script>
 </body>
