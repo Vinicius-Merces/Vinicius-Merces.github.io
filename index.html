@@ -21,14 +21,10 @@
     <div class="container mt-4">
         <h1>Controle de Despesas</h1>
 
-        <!-- Filtro de Período -->
-        <div class="mb-4">
-            <label for="periodo" class="form-label">Selecione o Período de Análise:</label>
-            <select id="periodo" class="form-select" onchange="loadRelatorios()">
-                <option value="1">Último 1 Dia</option>
-                <option value="7">Última Semana</option>
-                <option value="30">Último Mês</option>
-            </select>
+        <!-- Tela de Login -->
+        <div id="login-page">
+            <h3>Login</h3>
+            <button onclick="login()">Login com Google</button>
         </div>
 
         <!-- Página de Despesas -->
@@ -67,13 +63,27 @@
         // Gerenciamento de autenticação
         auth.onAuthStateChanged(user => {
             if (user) {
+                // Exibe a página de despesas
                 loadDespesas();
                 loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
+                document.getElementById("login-page").style.display = "none";
             } else {
+                // Exibe a tela de login
                 document.getElementById("despesas-page").style.display = "none";
+                document.getElementById("login-page").style.display = "block";
             }
         });
+
+        // Função para login
+        function login() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then(result => {
+                console.log("Usuário logado:", result.user);
+            }).catch(error => {
+                console.error("Erro ao fazer login:", error);
+            });
+        }
 
         // Função para carregar despesas e planejamento
         function loadDespesas() {
