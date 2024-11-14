@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -91,31 +90,13 @@
         function login() {
             const email = document.getElementById("login-email").value;
             const password = document.getElementById("login-password").value;
-
-            if (!email || !password) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
-
-            auth.signInWithEmailAndPassword(email, password)
-                .catch(error => {
-                    alert(error.message);
-                });
+            auth.signInWithEmailAndPassword(email, password).catch(error => alert(error.message));
         }
 
         function signup() {
             const email = document.getElementById("signup-email").value;
             const password = document.getElementById("signup-password").value;
-
-            if (!email || !password) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
-
-            auth.createUserWithEmailAndPassword(email, password)
-                .catch(error => {
-                    alert(error.message);
-                });
+            auth.createUserWithEmailAndPassword(email, password).catch(error => alert(error.message));
         }
 
         function addDespesa() {
@@ -123,51 +104,29 @@
             const nome = prompt("Nome da Despesa:");
             const valor = parseFloat(prompt("Valor da Despesa:"));
             const categoria = prompt("Categoria:");
-
             if (!nome || isNaN(valor) || valor <= 0 || !categoria) {
                 alert("Por favor, preencha todos os campos corretamente.");
                 return;
             }
-
             const userRef = db.collection("users").doc(user.uid);
-
-            userRef.get().then(doc => {
-                const data = doc.data();
-                if (!data.planejamento) {
-                    alert("Adicione um valor de planejamento antes de registrar despesas.");
-                    return;
-                }
-            });
-
             userRef.collection("despesas").add({
-                nome: nome,
-                valor: valor,
-                categoria: categoria,
-                concluido: false
-            })
-            .then(() => {
+                nome, valor, categoria, concluido: false
+            }).then(() => {
                 alert("Despesa adicionada com sucesso!");
                 loadDespesas();
-            })
-            .catch(error => {
-                alert(error.message);
-            });
+            }).catch(error => alert(error.message));
         }
 
         function loadDespesas() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
-
             userRef.get().then(doc => {
-                const data = doc.data();
-                const planejamento = data.planejamento || 0;
+                const planejamento = doc.data().planejamento || 0;
                 document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
             });
-
-            userRef.collection("despesas").get().then(querySnapshot => {
+            userRef.collection("despesas").where("concluido", "==", false).get().then(querySnapshot => {
                 let despesasList = document.getElementById("despesas-list");
                 despesasList.innerHTML = "";
-
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
                     const despesaItem = document.createElement("div");
@@ -182,74 +141,45 @@
             });
         }
 
-      function concluirDespesa(despesaId, valor) {
-        const user = auth.currentUser;
-        const userRef = db.collection("users").doc(user.uid);
-        const despesaRef = userRef.collection("despesas").doc(despesaId);
-
-        despesaRef.get().then((doc) => {
-            if (doc.exists && !doc.data().concluido) { // Verifica se a despesa existe e não foi concluída
-                // Atualiza o valor do planejamento no Firestore
-                userRef.update({
-                    planejamento: firebase.firestore.FieldValue.increment(-valor)
-                }).then(() => {
-                    // Atualiza o status da despesa para concluído
-                    despesaRef.update({ concluido: true })
-                        .then(() => {
-                            alert("Despesa concluída e valor debitado do planejamento!");
-                            loadDespesas(); // Recarrega as despesas para atualizar a lista
-                        });
-                }).catch(error => {
-                    alert("Erro ao atualizar o planejamento: " + error.message);
-                });
-            } else {
-                alert("Despesa já concluída ou não encontrada.");
-            }
-        }).catch(error => {
-            alert("Erro ao acessar despesa: " + error.message);
-        });
-    }
-
-        // Função para remover uma despesa
-        function removerDespesa(despesaId, valor) {
+        function concluirDespesa(despesaId, valor) {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesaRef = userRef.collection("despesas").doc(despesaId);
-
-            despesaRef.get().then((doc) => {
-                if (doc.exists) {
-                    despesaRef.delete()
-                        .then(() => {
-                            alert("Despesa removida com sucesso!");
-                            loadDespesas();
+            despesaRef.get().then(doc => {
+                if (doc.exists && !doc.data().concluido) {
+                    userRef.update({ planejamento: firebase.firestore.FieldValue.increment(-valor) }).then(() => {
+                        despesaRef.update({ concluido: true }).then(() => {
+                            alert("Despesa concluída e valor debitado do planejamento!");
+                            loadDespesas(); 
+                            loadRelatorios(); // Atualiza gráfico
                         });
-                } else {
-                    alert("Despesa não encontrada.");
-                }
-            }).catch(error => {
-                alert("Erro ao acessar despesa: " + error.message);
-            });
+                    }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
+                } else alert("Despesa já concluída ou não encontrada.");
+            }).catch(error => alert("Erro ao acessar despesa: " + error.message));
+        }
+
+        function removerDespesa(despesaId) {
+            const user = auth.currentUser;
+            const despesaRef = db.collection("users").doc(user.uid).collection("despesas").doc(despesaId);
+            despesaRef.delete().then(() => {
+                alert("Despesa removida com sucesso!");
+                loadDespesas();
+                loadRelatorios(); // Atualiza gráfico
+            }).catch(error => alert("Erro ao remover despesa: " + error.message));
         }
 
         function addPlanejamento() {
             const user = auth.currentUser;
             const valor = parseFloat(prompt("Valor do planejamento:"));
-
             if (isNaN(valor) || valor <= 0) {
                 alert("Por favor, insira um valor válido.");
                 return;
             }
-
             const userRef = db.collection("users").doc(user.uid);
-
-            userRef.update({
-                planejamento: firebase.firestore.FieldValue.increment(valor)
-            }).then(() => {
+            userRef.update({ planejamento: firebase.firestore.FieldValue.increment(valor) }).then(() => {
                 alert("Planejamento atualizado com sucesso!");
                 loadDespesas();
-            }).catch(error => {
-                alert("Erro ao atualizar o planejamento: " + error.message);
-            });
+            }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
         }
 
         function logout() {
@@ -267,9 +197,25 @@
         }
 
         function loadRelatorios() {
-            // Função para carregar relatórios e gráficos (complementar)
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid).collection("despesas");
+            userRef.get().then(querySnapshot => {
+                const despesas = [];
+                querySnapshot.forEach(doc => despesas.push(doc.data().valor));
+                const ctx = document.getElementById("grafico").getContext("2d");
+                new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: despesas.map((_, i) => `Despesa ${i + 1}`),
+                        datasets: [{ label: "Despesas", data: despesas, backgroundColor: "rgba(75, 192, 192, 0.6)" }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            });
         }
     </script>
 </body>
-
 </html>
