@@ -84,34 +84,34 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-      auth.onAuthStateChanged(user => {
-        if (user) {
-            loadDespesas();  // Atualizar as despesas do usuário após login
-            loadRelatorios(); // Carregar relatórios, se necessário
-            document.getElementById("despesas-page").style.display = "block";
-            document.getElementById("login-page").style.display = "none";
-            document.getElementById("register-page").style.display = "none";
-        } else {
-            // Se o usuário não estiver logado, exibir a tela de login
-            document.getElementById("despesas-page").style.display = "none";
-            document.getElementById("login-page").style.display = "block";
-            document.getElementById("register-page").style.display = "none";
-        }
-    });
-    
-    // Função de Login
-    document.getElementById("login-form").addEventListener("submit", function(event) {
-        event.preventDefault();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-    
-        auth.signInWithEmailAndPassword(email, password).then(result => {
-            console.log("Usuário logado:", result.user);
-        }).catch(error => {
-            console.error("Erro ao fazer login:", error);
-            document.getElementById("login-error").style.display = "block";
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadDespesas();  // Atualizar as despesas do usuário após login
+                loadRelatorios(); // Carregar relatórios, se necessário
+                document.getElementById("despesas-page").style.display = "block";
+                document.getElementById("login-page").style.display = "none";
+                document.getElementById("register-page").style.display = "none";
+            } else {
+                // Se o usuário não estiver logado, exibir a tela de login
+                document.getElementById("despesas-page").style.display = "none";
+                document.getElementById("login-page").style.display = "block";
+                document.getElementById("register-page").style.display = "none";
+            }
         });
-    });
+        
+        // Função de Login
+        document.getElementById("login-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+        
+            auth.signInWithEmailAndPassword(email, password).then(result => {
+                console.log("Usuário logado:", result.user);
+            }).catch(error => {
+                console.error("Erro ao fazer login:", error);
+                document.getElementById("login-error").style.display = "block";
+            });
+        });
 
         // Registro de novo usuário
         document.getElementById("register-form").addEventListener("submit", function(event) {
@@ -149,7 +149,8 @@
 
             let query = despesasRef;
             if (filtroData) {
-                query = despesasRef.where("data", "==", new Date(filtroData));
+                const dataFiltro = new Date(filtroData);
+                query = despesasRef.where("data", "==", firebase.firestore.Timestamp.fromDate(dataFiltro));
             }
 
             query.get().then(querySnapshot => {
@@ -203,7 +204,7 @@
                 userRef.collection("despesas").add({
                     nome: nome,
                     valor: valor,
-                    data: data,
+                    data: firebase.firestore.Timestamp.fromDate(data), // Corrigido para Timestamp
                     concluido: false
                 }).then(() => {
                     loadDespesas();
@@ -263,6 +264,11 @@
             }).catch(error => {
                 console.error("Erro ao sair:", error);
             });
+        }
+
+        function loadRelatorios() {
+            // Aqui você pode adicionar a lógica para carregar os gráficos de relatórios usando Chart.js
+            console.log("Relatórios carregados.");
         }
     </script>
 </body>
