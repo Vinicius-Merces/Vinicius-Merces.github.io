@@ -187,32 +187,49 @@
         }
 
         function loadRelatorios() {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid).collection("despesas");
-            userRef.where("concluido", "==", true).get().then(querySnapshot => {
-                const despesasConcluidas = [];
-                querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
-                const ctx = document.getElementById("grafico").getContext("2d");
-                if (window.grafico) {
-                    window.grafico.destroy(); // Destrói gráfico anterior antes de criar um novo
-                }
-                window.grafico = new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                        labels: despesasConcluidas.map((_, i) => `Despesa ${i + 1}`),
-                        datasets: [{
-                            label: "Despesas Concluídas",
-                            data: despesasConcluidas,
-                            backgroundColor: "rgba(75, 192, 192, 0.6)"
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            });
+    const user = auth.currentUser;
+    const userRef = db.collection("users").doc(user.uid).collection("despesas");
+    
+    // Buscando despesas concluídas
+    userRef.where("concluido", "==", true).get().then(querySnapshot => {
+        const despesasConcluidas = [];
+        querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
+        
+        // Verifica se o gráfico já existe e o destrói antes de criar um novo
+        const ctx = document.getElementById("grafico").getContext("2d");
+        if (window.grafico) {
+            window.grafico.destroy();
         }
+
+        // Criando novo gráfico
+        window.grafico = new Chart(ctx, {
+            type: "bar", // Tipo de gráfico: barras
+            data: {
+                labels: despesasConcluidas.map((_, i) => `Despesa ${i + 1}`), // Labels para cada despesa
+                datasets: [{
+                    label: "Despesas Concluídas",
+                    data: despesasConcluidas, // Valores das despesas concluídas
+                    backgroundColor: "rgba(75, 192, 192, 0.6)", // Cor das barras
+                    borderColor: "rgba(75, 192, 192, 1)", // Cor da borda
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true, // Começa o eixo Y do zero
+                        ticks: {
+                            stepSize: 10 // Define o tamanho do incremento no eixo Y
+                        }
+                    }
+                }
+            }
+        });
+    }).catch(error => {
+        console.error("Erro ao carregar as despesas concluídas:", error);
+    });
+}
 
         function logout() {
             auth.signOut();
