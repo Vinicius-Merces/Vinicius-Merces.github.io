@@ -177,27 +177,25 @@
                 return;
             }
             const userRef = db.collection("users").doc(user.uid);
-            userRef.update({
-                planejamento: firebase.firestore.FieldValue.increment(valor)
-            }).then(() => {
+            userRef.update({ planejamento: valor }).then(() => {
                 alert("Planejamento atualizado!");
-                loadDespesas();
-                loadRelatorios();
-            }).catch(error => alert("Erro ao atualizar planejamento: " + error.message));
+                loadDespesas(); // Atualiza lista de despesas
+                loadRelatorios(); // Atualiza gráfico
+            }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
         }
 
         function loadRelatorios() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid).collection("despesas");
-            
+
             // Buscando despesas concluídas
             userRef.where("concluido", "==", true).get().then(querySnapshot => {
                 const despesasConcluidas = [];
                 querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
-                
+
                 // Verifica se o gráfico já existe e o destrói antes de criar um novo
                 const ctx = document.getElementById("grafico").getContext("2d");
-                if (window.grafico) {
+                if (window.grafico && typeof window.grafico.destroy === 'function') {
                     window.grafico.destroy(); // Destrói o gráfico antigo
                 }
 
