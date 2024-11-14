@@ -21,22 +21,14 @@
     <div class="container mt-4">
         <h1>Controle de Despesas</h1>
 
-        <!-- Área de Login -->
-        <div id="login-form" class="mb-4" style="display:none;">
-            <h3>Login</h3>
-            <input type="email" id="login-email" placeholder="Email" class="form-control mb-2">
-            <input type="password" id="login-password" placeholder="Senha" class="form-control mb-2">
-            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
-            <button onclick="showSignupForm()" class="btn btn-link w-100">Criar Conta</button>
-        </div>
-
-        <!-- Área de Cadastro -->
-        <div id="signup-form" class="mb-4" style="display:none;">
-            <h3>Criar Conta</h3>
-            <input type="email" id="signup-email" placeholder="Email" class="form-control mb-2">
-            <input type="password" id="signup-password" placeholder="Senha" class="form-control mb-2">
-            <button onclick="signup()" class="btn btn-success w-100">Criar Conta</button>
-            <button onclick="showLoginForm()" class="btn btn-link w-100">Já tem uma conta? Entrar</button>
+        <!-- Filtro de Período -->
+        <div class="mb-4">
+            <label for="periodo" class="form-label">Selecione o Período de Análise:</label>
+            <select id="periodo" class="form-select" onchange="loadRelatorios()">
+                <option value="1">Último 1 Dia</option>
+                <option value="7">Última Semana</option>
+                <option value="30">Último Mês</option>
+            </select>
         </div>
 
         <!-- Página de Despesas -->
@@ -53,7 +45,7 @@
         </div>
 
         <!-- Gráfico de Relatório -->
-        <canvas id="grafico" width="200" height="80"></canvas>
+        <canvas id="grafico" width="200" height="150"></canvas>
     </div>
 
     <script>
@@ -186,50 +178,67 @@
 
         function loadRelatorios() {
             const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid).collection("despesas");
+            const periodo = parseInt(document.getElementById("periodo").value);
+            const userRef = db.collection("users").doc(user.uid);
+            const despesasRef = userRef.collection("despesas");
 
-            // Buscando despesas concluídas
-            userRef.where("concluido", "==", true).get().then(querySnapshot => {
-                const despesasConcluidas = [];
-                querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
+            // Calcula a data de início do filtro com base no período selecionado
+            const dataInicio = new Date();
+            dataInicio.setDate(dataInicio.getDate() - periodo); // Subtrai o número de dias baseado no filtro
 
-                // Verifica se o gráfico já existe e o destrói antes de criar um novo
-                const ctx = document.getElementById("grafico").getContext("2d");
+            // Filtra as despesas com base no período
+            despesasRef.where("concluido", "==", true)
+                .where("data", ">=", dataInicio) // Só despesas depois da data de início
+                .get().then(querySnapshot => {
+                    const despesasConcluidas = [];
+                    querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
 
-                // Verifica se o gráfico existe antes de tentar destruí-lo
-                if (window.grafico instanceof Chart) {
-                    window.grafico.destroy(); // Destrói o gráfico antigo
-                }
+                    // Verifica se o gráfico já existe e o destrói antes de criar um novo
+                    const ctx = document.getElementById("grafico").getContext("2d");
 
-                // Criando novo gráfico com os dados mais recentes
-                window.grafico = new Chart(ctx, {
-                    type: "bar", // Tipo de gráfico: barras
-                    data: {
-                        labels: despesasConcluidas.map((_, i) => `Despesa ${i + 1}`), // Labels para cada despesa
-                        datasets: [{
-                            label: "Despesas Concluídas",
-                            data: despesasConcluidas, // Valores das despesas concluídas
-                            backgroundColor: "rgba(75, 192, 192, 0.6)", // Cor das barras
-                            borderColor: "rgba(75, 192, 192, 1)", // Cor da borda
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true, // Começa o eixo Y do zero
-                                ticks: {
-                                    stepSize: 10 // Define o tamanho do incremento no eixo Y
+                    // Verifica se o gráfico existe antes de tentar destruí-lo
+                    if (window.grafico instanceof Chart) {
+                        window.grafico.destroy(); // Destrói o gráfico antigo
+                    }
+
+                    // Calcula o total das despesas concluídas dentro do período
+                    const totalDespesas = despesasConcluidas.reduce((acc, valor) => acc + valor, 0);
+
+                    // Carrega o valor do planejamento
+                    userRef.get().then(doc => {
+                        const planejamento = doc.data().planejamento || 0;
+
+                        // Criando novo gráfico com as despesas e planejamento
+                        window.grafico = new Chart(ctx, {
+                            type: "bar", // Tipo de gráfico: barras
+                            data: {
+                                labels: ["Despesas", "Planejamento"], // Labels para as barras
+                                datasets: [{
+                                    label: "Valor",
+                                    data: [totalDespesas, planejamento], // Dados: total das despesas e do planejamento
+                                    backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)"], // Cores das barras
+                                    borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"], // Cor das bordas
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true, // Começa o eixo Y do zero
+                                        ticks: {
+                                            stepSize: 10 // Define o tamanho do incremento no eixo Y
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
+                        });
+                    }).catch(error => alert("Erro ao carregar o planejamento: " + error.message));
+                }).catch(error => {
+                    console.error("Erro ao carregar as despesas concluídas:", error);
                 });
-            }).catch(error => {
-                console.error("Erro ao carregar as despesas concluídas:", error);
-            });
         }
+
 
         function logout() {
             auth.signOut();
