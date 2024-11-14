@@ -84,33 +84,34 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                loadDespesas();
-                loadRelatorios();
-                document.getElementById("despesas-page").style.display = "block";
-                document.getElementById("login-page").style.display = "none";
-                document.getElementById("register-page").style.display = "none";
-            } else {
-                document.getElementById("despesas-page").style.display = "none";
-                document.getElementById("login-page").style.display = "block";
-                document.getElementById("register-page").style.display = "none";
-            }
+      auth.onAuthStateChanged(user => {
+        if (user) {
+            loadDespesas();  // Atualizar as despesas do usuário após login
+            loadRelatorios(); // Carregar relatórios, se necessário
+            document.getElementById("despesas-page").style.display = "block";
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("register-page").style.display = "none";
+        } else {
+            // Se o usuário não estiver logado, exibir a tela de login
+            document.getElementById("despesas-page").style.display = "none";
+            document.getElementById("login-page").style.display = "block";
+            document.getElementById("register-page").style.display = "none";
+        }
+    });
+    
+    // Função de Login
+    document.getElementById("login-form").addEventListener("submit", function(event) {
+        event.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+    
+        auth.signInWithEmailAndPassword(email, password).then(result => {
+            console.log("Usuário logado:", result.user);
+        }).catch(error => {
+            console.error("Erro ao fazer login:", error);
+            document.getElementById("login-error").style.display = "block";
         });
-
-        // Login
-        document.getElementById("login-form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            auth.signInWithEmailAndPassword(email, password).then(result => {
-                console.log("Usuário logado:", result.user);
-            }).catch(error => {
-                console.error("Erro ao fazer login:", error);
-                document.getElementById("login-error").style.display = "block";
-            });
-        });
+    });
 
         // Registro de novo usuário
         document.getElementById("register-form").addEventListener("submit", function(event) {
