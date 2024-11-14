@@ -73,10 +73,9 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Exemplo de uso do Firebase Auth
+        // Gerenciamento de autenticação
         auth.onAuthStateChanged(user => {
             if (user) {
-                console.log("Usuário logado:", user);
                 loadDespesas();
                 loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
@@ -147,9 +146,6 @@
                 concluido: false
             })
             .then(() => {
-                userRef.update({
-                    planejamento: firebase.firestore.FieldValue.increment(-valor)
-                });
                 alert("Despesa adicionada com sucesso!");
                 loadDespesas();
             })
@@ -178,8 +174,8 @@
                     despesaItem.classList.add("mb-2");
                     despesaItem.innerHTML = `
                         <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
-                        <button onclick="concluirDespesa('${doc.id}')" class="btn btn-success btn-sm">Concluir</button>
-                        <button onclick="removerDespesa('${doc.id}')" class="btn btn-danger btn-sm">Remover</button>
+                        <button onclick="concluirDespesa('${doc.id}', ${despesa.valor})" class="btn btn-success btn-sm">Concluir</button>
+                        <button onclick="removerDespesa('${doc.id}', ${despesa.valor})" class="btn btn-danger btn-sm">Remover</button>
                     `;
                     despesasList.appendChild(despesaItem);
                 });
@@ -187,141 +183,92 @@
         }
 
         // Função para concluir uma despesa
-function concluirDespesa(despesaId) {
-    const user = auth.currentUser;
-    const userRef = db.collection("users").doc(user.uid);
-    const despesaRef = userRef.collection("despesas").doc(despesaId);
+        function concluirDespesa(despesaId, valor) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(despesaId);
 
-    despesaRef.get().then((doc) => {
-        if (doc.exists) {
-            despesaRef.update({ concluido: true })
-                .then(() => {
-                    alert("Despesa concluída!");
-                    loadDespesas(); // Atualiza a lista após conclusão
-                })
-                .catch(error => {
-                    alert("Erro ao concluir despesa: " + error.message);
-                });
-        } else {
-            alert("Despesa não encontrada.");
+            despesaRef.get().then((doc) => {
+                if (doc.exists) {
+                    userRef.update({
+                        planejamento: firebase.firestore.FieldValue.increment(-valor)
+                    }).then(() => {
+                        despesaRef.update({ concluido: true })
+                            .then(() => {
+                                alert("Despesa concluída e valor debitado do planejamento!");
+                                loadDespesas();
+                            });
+                    }).catch(error => {
+                        alert("Erro ao atualizar o planejamento: " + error.message);
+                    });
+                } else {
+                    alert("Despesa não encontrada.");
+                }
+            }).catch(error => {
+                alert("Erro ao acessar despesa: " + error.message);
+            });
         }
-    }).catch(error => {
-        alert("Erro ao acessar despesa: " + error.message);
-    });
-}
 
-// Função para remover uma despesa
-function removerDespesa(despesaId) {
-    const user = auth.currentUser;
-    const userRef = db.collection("users").doc(user.uid);
-    const despesaRef = userRef.collection("despesas").doc(despesaId);
+        // Função para remover uma despesa
+        function removerDespesa(despesaId, valor) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(despesaId);
 
-    despesaRef.get().then((doc) => {
-        if (doc.exists) {
-            despesaRef.delete()
-                .then(() => {
-                    alert("Despesa removida!");
-                    loadDespesas(); // Atualiza a lista após remoção
-                })
-                .catch(error => {
-                    alert("Erro ao remover despesa: " + error.message);
-                });
-        } else {
-            alert("Despesa não encontrada.");
+            despesaRef.get().then((doc) => {
+                if (doc.exists) {
+                    despesaRef.delete()
+                        .then(() => {
+                            alert("Despesa removida com sucesso!");
+                            loadDespesas();
+                        });
+                } else {
+                    alert("Despesa não encontrada.");
+                }
+            }).catch(error => {
+                alert("Erro ao acessar despesa: " + error.message);
+            });
         }
-    }).catch(error => {
-        alert("Erro ao acessar despesa: " + error.message);
-    });
-}
-
 
         function addPlanejamento() {
-    const user = auth.currentUser;
-    const valor = parseFloat(prompt("Informe o valor do planejamento:"));
+            const user = auth.currentUser;
+            const valor = parseFloat(prompt("Valor do planejamento:"));
 
-    if (isNaN(valor) || valor <= 0) {
-        alert("Por favor, insira um valor válido.");
-        return;
-    }
+            if (isNaN(valor) || valor <= 0) {
+                alert("Por favor, insira um valor válido.");
+                return;
+            }
 
-    const userRef = db.collection("users").doc(user.uid);
+            const userRef = db.collection("users").doc(user.uid);
 
-    // Verifica se o documento existe
-    userRef.get().then(doc => {
-        if (!doc.exists) {
-            // Cria o documento com o valor do planejamento se ele não existir
-            userRef.set({
-                planejamento: valor
+            userRef.update({
+                planejamento: firebase.firestore.FieldValue.increment(valor)
             }).then(() => {
-                alert("Planejamento criado com sucesso!");
+                alert("Planejamento atualizado com sucesso!");
                 loadDespesas();
             }).catch(error => {
-                alert(error.message);
-            });
-        } else {
-            // Atualiza o valor do planejamento se o documento já existir
-            userRef.set({
-                planejamento: firebase.firestore.FieldValue.increment(valor)
-            }, { merge: true })
-            .then(() => {
-                alert("Planejamento atualizado!");
-                loadDespesas();
-            })
-            .catch(error => {
-                alert(error.message);
+                alert("Erro ao atualizar o planejamento: " + error.message);
             });
         }
-    }).catch(error => {
-        alert("Erro ao acessar o documento do usuário: " + error.message);
-    });
-}
-
 
         function logout() {
-            auth.signOut().then(() => {
-                alert("Você foi desconectado.");
-            });
-        }
-
-        function showLoginForm() {
-            document.getElementById("login-form").style.display = "block";
-            document.getElementById("signup-form").style.display = "none";
+            auth.signOut();
         }
 
         function showSignupForm() {
-            document.getElementById("signup-form").style.display = "block";
             document.getElementById("login-form").style.display = "none";
+            document.getElementById("signup-form").style.display = "block";
+        }
+
+        function showLoginForm() {
+            document.getElementById("signup-form").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
         }
 
         function loadRelatorios() {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            let valores = [];
-
-            userRef.collection("despesas").get().then(querySnapshot => {
-                let totalDespesas = 0;
-
-                querySnapshot.forEach(doc => {
-                    totalDespesas += doc.data().valor;
-                });
-
-                const ctx = document.getElementById('grafico').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Planejamento', 'Gasto Total'],
-                        datasets: [{
-                            label: 'Planejamento vs Gasto',
-                            data: [valores, totalDespesas],
-                            backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)'],
-                            borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
-                            borderWidth: 1
-                        }]
-                    }
-                });
-            });
+            // Função para carregar relatórios e gráficos (complementar)
         }
-
     </script>
 </body>
+
 </html>
