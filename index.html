@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    
     <!-- Biblioteca do Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -158,12 +157,6 @@
                     }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
                 } else alert("Despesa já concluída ou não encontrada.");
             }).catch(error => alert("Erro ao acessar despesa: " + error.message));
-            despesaRef.update({ concluido: true })
-                .then(() => {
-                    alert("Despesa concluída e valor debitado do planejamento!");
-                    loadDespesas(); // Atualiza a lista de despesas
-                    loadRelatorios(); // Atualiza o gráfico
-                });
         }
 
         function removerDespesa(despesaId) {
@@ -237,7 +230,6 @@
                 console.error("Erro ao carregar as despesas concluídas:", error);
             });
         }
-
 
         function logout() {
             auth.signOut();
