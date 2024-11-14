@@ -15,48 +15,46 @@
 
     <!-- Biblioteca do Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
+
 <body>
-    <!-- Seu conteúdo HTML aqui -->
     <div class="container mt-4">
         <h1>Controle de Despesas</h1>
 
-        <!-- Área de Login -->
-        <div id="login-form" class="mb-4" style="display:none;">
-            <h3>Login</h3>
-            <input type="email" id="login-email" placeholder="Email" class="form-control mb-2">
-            <input type="password" id="login-password" placeholder="Senha" class="form-control mb-2">
-            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
-            <button onclick="showSignupForm()" class="btn btn-link w-100">Criar Conta</button>
-        </div>
+        <!-- Tela de Login/Cadastro -->
+        <div id="login-page">
+            <h3>Bem-vindo!</h3>
+            <p>Por favor, faça login ou crie uma conta para continuar.</p>
 
-        <!-- Área de Cadastro -->
-        <div id="signup-form" class="mb-4" style="display:none;">
-            <h3>Criar Conta</h3>
-            <input type="email" id="signup-email" placeholder="Email" class="form-control mb-2">
-            <input type="password" id="signup-password" placeholder="Senha" class="form-control mb-2">
-            <button onclick="signup()" class="btn btn-success w-100">Criar Conta</button>
-            <button onclick="showLoginForm()" class="btn btn-link w-100">Já tem uma conta? Entrar</button>
+            <input type="email" id="email" placeholder="Email" class="form-control mb-2">
+            <input type="password" id="password" placeholder="Senha" class="form-control mb-2">
+            <button onclick="login()" class="btn btn-primary mb-2">Login</button>
+            <button onclick="signUp()" class="btn btn-secondary mb-2">Criar Conta</button>
         </div>
 
         <!-- Página de Despesas -->
         <div id="despesas-page" style="display:none;">
+            <!-- Filtro de Período -->
+            <div class="mb-4">
+                <label for="periodo" class="form-label">Selecione o Período de Análise:</label>
+                <select id="periodo" class="form-select" onchange="loadRelatorios()">
+                    <option value="1">Último 1 Dia</option>
+                    <option value="7">Última Semana</option>
+                    <option value="30">Último Mês</option>
+                </select>
+            </div>
+
             <h3>Planejamento de Despesas</h3>
             <p>Planejamento Total: <span id="planejamento">R$ 0.00</span></p>
 
-            <!-- Botões de ação -->
             <button onclick="addDespesa()" class="btn btn-warning mb-2">Adicionar Despesa</button>
             <button onclick="addPlanejamento()" class="btn btn-info mb-2">Adicionar Planejamento</button>
             <button onclick="logout()" class="btn btn-danger mb-2">Sair</button>
 
             <div id="despesas-list"></div>
+            <canvas id="grafico" width="200" height="150"></canvas>
         </div>
-
-        <!-- Gráfico de Relatório -->
-        <canvas id="grafico" width="400" height="150"></canvas>
     </div>
-
 
     <script src="script.js"></script>
 </body>
