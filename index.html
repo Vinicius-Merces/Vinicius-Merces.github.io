@@ -70,11 +70,7 @@
                 loadDespesas();
                 loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
-                document.getElementById("login-form").style.display = "none";
-                document.getElementById("signup-form").style.display = "none";
             } else {
-                document.getElementById("login-form").style.display = "block";
-                document.getElementById("signup-form").style.display = "none";
                 document.getElementById("despesas-page").style.display = "none";
             }
         });
@@ -90,11 +86,30 @@
                 let despesasList = "";
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
+                    const data = despesa.data;
+
+                    // Verificar se a data é do tipo Timestamp e pode ser convertida para Date
+                    let dataFormatada = "Data inválida";
+                    if (data && data.toDate) {
+                        try {
+                            dataFormatada = data.toDate().toLocaleDateString();
+                        } catch (error) {
+                            console.error("Erro ao formatar a data: ", error);
+                        }
+                    }
+
+                    // Adicionar o botão "Concluído" apenas se a despesa não for concluída
+                    let concluidoButton = '';
+                    if (!despesa.concluido) {
+                        concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}', ${despesa.valor})">Concluir</button>`;
+                    }
+
                     despesasList += `
                         <div class="mb-3">
                             <strong>${despesa.nome}</strong><br>
                             Valor: R$ ${despesa.valor.toFixed(2)}<br>
-                            Data: ${despesa.data.toDate().toLocaleDateString()}<br>
+                            Data: ${dataFormatada}<br>
+                            ${concluidoButton}
                             <button class="btn btn-danger" onclick="deleteDespesa('${doc.id}')">Excluir</button>
                         </div>
                     `;
@@ -103,6 +118,35 @@
             }).catch(error => {
                 console.error("Erro ao carregar as despesas:", error);
             });
+
+            // Carregar o valor do planejamento
+            userRef.get().then(doc => {
+                const planejamento = doc.data().planejamento || 0;
+                document.getElementById("planejamento").textContent = `R$ ${planejamento.toFixed(2)}`;
+            }).catch(error => {
+                console.error("Erro ao carregar o planejamento:", error);
+            });
+        }
+
+        // Função para concluir despesa
+        function concluirDespesa(id, valor) {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid);
+            const despesaRef = userRef.collection("despesas").doc(id);
+
+            // Atualizar a despesa para "concluída"
+            despesaRef.update({
+                concluido: true
+            }).then(() => {
+                // Atualizar o valor do planejamento subtraindo a despesa concluída
+                const planejamentoRef = userRef.update({
+                    planejamento: firebase.firestore.FieldValue.increment(-valor)
+                });
+
+                // Recarregar despesas e relatórios após concluir a despesa
+                loadDespesas();
+                loadRelatorios();
+            }).catch(error => alert("Erro ao concluir despesa: " + error.message));
         }
 
         // Função para carregar o gráfico de relatórios
@@ -144,28 +188,26 @@
                             data: {
                                 labels: ["Despesas", "Planejamento"], // Labels para as barras
                                 datasets: [{
-                                    label: "Valor",
-                                    data: [totalDespesas, planejamento], // Dados: total das despesas e do planejamento
-                                    backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)"], // Cores das barras
-                                    borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"], // Cor das bordas
+                                    label: "Valores",
+                                    data: [totalDespesas, planejamento], // Dados do gráfico
+                                    backgroundColor: ["#4CAF50", "#FF9800"],
+                                    borderColor: ["#388E3C", "#F57C00"],
                                     borderWidth: 1
                                 }]
                             },
                             options: {
-                                responsive: true,
                                 scales: {
                                     y: {
-                                        beginAtZero: true, // Começa o eixo Y do zero
-                                        ticks: {
-                                            stepSize: 10 // Define o tamanho do incremento no eixo Y
-                                        }
+                                        beginAtZero: true // Começa o eixo Y no valor 0
                                     }
                                 }
                             }
                         });
-                    }).catch(error => alert("Erro ao carregar o planejamento: " + error.message));
+                    }).catch(error => {
+                        console.error("Erro ao carregar o planejamento para gráfico:", error);
+                    });
                 }).catch(error => {
-                    console.error("Erro ao carregar as despesas concluídas:", error);
+                    console.error("Erro ao carregar despesas para gráfico:", error);
                 });
         }
 
@@ -181,7 +223,7 @@
                     nome,
                     valor,
                     data: new Date(),
-                    concluido: false // Defina como 'false' por padrão
+                    concluido: false // Define como 'false' por padrão
                 }).then(() => {
                     loadDespesas();
                     loadRelatorios();
