@@ -77,19 +77,18 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 console.log("Usuário logado:", user);
-                loadDespesas();  // Carregar despesas se estiver logado
-                loadRelatorios();  // Carregar relatórios se estiver logado
+                loadDespesas();
+                loadRelatorios();
                 document.getElementById("despesas-page").style.display = "block";
                 document.getElementById("login-form").style.display = "none";
                 document.getElementById("signup-form").style.display = "none";
             } else {
-                document.getElementById("login-form").style.display = "block";  // Exibe a tela de login
+                document.getElementById("login-form").style.display = "block";
                 document.getElementById("signup-form").style.display = "none";
                 document.getElementById("despesas-page").style.display = "none";
             }
         });
 
-        // Função para login
         function login() {
             const email = document.getElementById("login-email").value;
             const password = document.getElementById("login-password").value;
@@ -105,7 +104,6 @@
                 });
         }
 
-        // Função para criar uma conta
         function signup() {
             const email = document.getElementById("signup-email").value;
             const password = document.getElementById("signup-password").value;
@@ -121,7 +119,6 @@
                 });
         }
 
-        // Função para adicionar despesa
         function addDespesa() {
             const user = auth.currentUser;
             const nome = prompt("Nome da Despesa:");
@@ -135,7 +132,6 @@
 
             const userRef = db.collection("users").doc(user.uid);
 
-            // Verificar se o planejamento do usuário já existe
             userRef.get().then(doc => {
                 const data = doc.data();
                 if (!data.planejamento) {
@@ -144,7 +140,6 @@
                 }
             });
 
-            // Adicionar despesa na coleção "despesas" do usuário
             userRef.collection("despesas").add({
                 nome: nome,
                 valor: valor,
@@ -156,29 +151,26 @@
                     planejamento: firebase.firestore.FieldValue.increment(-valor)
                 });
                 alert("Despesa adicionada com sucesso!");
-                loadDespesas();  // Atualiza a lista de despesas
+                loadDespesas();
             })
             .catch(error => {
                 alert(error.message);
             });
         }
 
-        // Função para carregar despesas
         function loadDespesas() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
 
-            // Carregar valor de planejamento
             userRef.get().then(doc => {
                 const data = doc.data();
                 const planejamento = data.planejamento || 0;
                 document.getElementById("planejamento").innerText = `R$ ${planejamento.toFixed(2)}`;
             });
 
-            // Carregar despesas
             userRef.collection("despesas").get().then(querySnapshot => {
                 let despesasList = document.getElementById("despesas-list");
-                despesasList.innerHTML = "";  // Limpar lista existente
+                despesasList.innerHTML = "";
 
                 querySnapshot.forEach(doc => {
                     const despesa = doc.data();
@@ -194,40 +186,6 @@
             });
         }
 
-        // Função para marcar despesa como concluída
-        function concluirDespesa(despesaId) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesaRef = userRef.collection("despesas").doc(despesaId);
-
-            despesaRef.update({ concluido: true })
-                .then(() => {
-                    alert("Despesa concluída!");
-                    despesaRef.delete(); // Remover despesa após conclusão
-                    loadDespesas();
-                })
-                .catch(error => {
-                    alert(error.message);
-                });
-        }
-
-        // Função para remover despesa
-        function removerDespesa(despesaId) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            const despesaRef = userRef.collection("despesas").doc(despesaId);
-
-            despesaRef.delete()
-                .then(() => {
-                    alert("Despesa removida!");
-                    loadDespesas();
-                })
-                .catch(error => {
-                    alert(error.message);
-                });
-        }
-
-        // Função para adicionar planejamento
         function addPlanejamento() {
             const user = auth.currentUser;
             const valor = parseFloat(prompt("Informe o valor do planejamento:"));
@@ -238,44 +196,39 @@
             }
 
             const userRef = db.collection("users").doc(user.uid);
-            userRef.update({
+            userRef.set({
                 planejamento: valor
-            })
+            }, { merge: true })
             .then(() => {
                 alert("Planejamento atualizado!");
-                loadDespesas();  // Atualiza o planejamento na interface
+                loadDespesas();
             })
             .catch(error => {
                 alert(error.message);
             });
         }
 
-        // Função de logout
         function logout() {
             auth.signOut().then(() => {
                 alert("Você foi desconectado.");
             });
         }
 
-        // Função para exibir tela de login
         function showLoginForm() {
             document.getElementById("login-form").style.display = "block";
             document.getElementById("signup-form").style.display = "none";
         }
 
-        // Função para exibir tela de cadastro
         function showSignupForm() {
             document.getElementById("signup-form").style.display = "block";
             document.getElementById("login-form").style.display = "none";
         }
 
-        // Função para carregar gráficos de relatórios
         function loadRelatorios() {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             let valores = [];
 
-            // Carregar valores de despesas e planejamento
             userRef.collection("despesas").get().then(querySnapshot => {
                 let totalDespesas = 0;
 
@@ -283,26 +236,18 @@
                     totalDespesas += doc.data().valor;
                 });
 
-                // Carregar gráfico
                 const ctx = document.getElementById('grafico').getContext('2d');
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: ['Planejamento', 'Despesas'],
+                        labels: ['Planejamento', 'Gasto Total'],
                         datasets: [{
-                            label: 'Comparação de Despesas',
-                            data: [userRef.planejamento, totalDespesas],
-                            backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)'],
-                            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                            label: 'Planejamento vs Gasto',
+                            data: [valores, totalDespesas],
+                            backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+                            borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
                             borderWidth: 1
                         }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
                     }
                 });
             });
@@ -310,5 +255,4 @@
 
     </script>
 </body>
-
 </html>
