@@ -8,7 +8,7 @@
     <!-- Link para o Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Usar versão do Firebase com script tradicional (não módulo) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -71,13 +71,16 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Verifica o estado de autenticação do usuário ao carregar a página
         auth.onAuthStateChanged(user => {
             if (user) {
-                loadDespesas();
-                loadRelatorios();
+                // Usuário autenticado: mostra a página de despesas
                 document.getElementById("login-page").style.display = "none";
                 document.getElementById("despesas-page").style.display = "block";
+                loadDespesas();
+                loadRelatorios();
             } else {
+                // Usuário não autenticado: mostra a página de login
                 document.getElementById("login-page").style.display = "block";
                 document.getElementById("despesas-page").style.display = "none";
             }
@@ -108,6 +111,7 @@
                 })
                 .catch(error => alert("Erro ao criar conta: " + error.message));
         }
+
         // Função para carregar despesas e planejamento
         function loadDespesas() {
             const user = auth.currentUser;
@@ -121,7 +125,6 @@
                     const despesa = doc.data();
                     const data = despesa.data;
 
-                    // Verificar se a data é do tipo Timestamp e pode ser convertida para Date
                     let dataFormatada = "Data inválida";
                     if (data && data.toDate) {
                         try {
@@ -131,7 +134,6 @@
                         }
                     }
 
-                    // Adicionar o botão "Concluído" apenas se a despesa não for concluída
                     let concluidoButton = '';
                     if (!despesa.concluido) {
                         concluidoButton = `<button class="btn btn-success" onclick="concluirDespesa('${doc.id}', ${despesa.valor})">Concluir</button>`;
@@ -161,146 +163,77 @@
             });
         }
 
-
-         function logout() {
+        function logout() {
             auth.signOut().then(() => alert("Você foi desconectado!"))
                 .catch(error => alert("Erro ao deslogar: " + error.message));
         }
         
-        // Função para concluir despesa
         function concluirDespesa(id, valor) {
             const user = auth.currentUser;
             const userRef = db.collection("users").doc(user.uid);
             const despesaRef = userRef.collection("despesas").doc(id);
 
-            // Atualizar a despesa para "concluída"
             despesaRef.update({
                 concluido: true
             }).then(() => {
-                // Atualizar o valor do planejamento subtraindo a despesa concluída
-                const planejamentoRef = userRef.update({
+                userRef.update({
                     planejamento: firebase.firestore.FieldValue.increment(-valor)
                 });
-
-                // Recarregar despesas e relatórios após concluir a despesa
                 loadDespesas();
                 loadRelatorios();
             }).catch(error => alert("Erro ao concluir despesa: " + error.message));
         }
 
-        // Função para carregar o gráfico de relatórios
         function loadRelatorios() {
             const user = auth.currentUser;
             const periodo = parseInt(document.getElementById("periodo").value);
             const userRef = db.collection("users").doc(user.uid);
             const despesasRef = userRef.collection("despesas");
 
-            // Calcula a data de início do filtro com base no período selecionado
             const dataInicio = new Date();
-            dataInicio.setDate(dataInicio.getDate() - periodo); // Subtrai o número de dias baseado no filtro
+            dataInicio.setDate(dataInicio.getDate() - periodo);
 
-            // Filtra as despesas com base no período
             despesasRef.where("concluido", "==", true)
-                .where("data", ">=", dataInicio) // Só despesas depois da data de início
+                .where("data", ">=", dataInicio)
                 .get().then(querySnapshot => {
                     const despesasConcluidas = [];
                     querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
 
-                    // Verifica se o gráfico já existe e o destrói antes de criar um novo
                     const ctx = document.getElementById("grafico").getContext("2d");
 
-                    // Verifica se o gráfico existe antes de tentar destruí-lo
                     if (window.grafico instanceof Chart) {
-                        window.grafico.destroy(); // Destrói o gráfico antigo
+                        window.grafico.destroy();
                     }
 
-                    // Calcula o total das despesas concluídas dentro do período
                     const totalDespesas = despesasConcluidas.reduce((acc, valor) => acc + valor, 0);
 
-                    // Carrega o valor do planejamento
                     userRef.get().then(doc => {
                         const planejamento = doc.data().planejamento || 0;
-
-                        // Criando novo gráfico com as despesas e planejamento
                         window.grafico = new Chart(ctx, {
-                            type: "bar", // Tipo de gráfico: barras
+                            type: "bar",
                             data: {
-                                labels: ["Despesas", "Planejamento"], // Labels para as barras
+                                labels: ["Planejamento", "Despesas Concluídas"],
                                 datasets: [{
-                                    label: "Valores",
-                                    data: [totalDespesas, planejamento], // Dados do gráfico
-                                    backgroundColor: ["#4CAF50", "#FF9800"],
-                                    borderColor: ["#388E3C", "#F57C00"],
-                                    borderWidth: 1
+                                    label: "Valor em R$",
+                                    data: [planejamento, totalDespesas],
+                                    backgroundColor: ["#4CAF50", "#F44336"]
                                 }]
                             },
                             options: {
-                                scales: {
-                                    y: {
-                                        beginAtZero: true // Começa o eixo Y no valor 0
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: "top",
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: "Relatório de Despesas"
                                     }
                                 }
                             }
                         });
-                    }).catch(error => {
-                        console.error("Erro ao carregar o planejamento para gráfico:", error);
-                    });
-                }).catch(error => {
-                    console.error("Erro ao carregar despesas para gráfico:", error);
-                });
-        }
-
-        // Função para adicionar despesas
-        function addDespesa() {
-            const nome = prompt("Digite o nome da despesa:");
-            const valor = parseFloat(prompt("Digite o valor da despesa:"));
-            const user = auth.currentUser;
-
-            if (nome && valor) {
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.collection("despesas").add({
-                    nome,
-                    valor,
-                    data: new Date(),
-                    concluido: false // Define como 'false' por padrão
-                }).then(() => {
-                    loadDespesas();
-                    loadRelatorios();
-                }).catch(error => alert("Erro ao adicionar despesa: " + error.message));
-            }
-        }
-
-        // Função para adicionar planejamento
-        function addPlanejamento() {
-            const valor = parseFloat(prompt("Digite o valor do planejamento:"));
-            const user = auth.currentUser;
-
-            if (valor) {
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.update({ planejamento: valor })
-                    .then(() => {
-                        loadDespesas();
-                        loadRelatorios();
-                    })
-                    .catch(error => alert("Erro ao adicionar planejamento: " + error.message));
-            }
-        }
-
-        // Função para excluir despesa
-        function deleteDespesa(id) {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid);
-            userRef.collection("despesas").doc(id).delete().then(() => {
-                loadDespesas();
-                loadRelatorios();
-            }).catch(error => alert("Erro ao excluir despesa: " + error.message));
-        }
-
-        // Função de logout
-        function logout() {
-            auth.signOut().then(() => {
-                alert("Você foi desconectado!");
-            }).catch(error => alert("Erro ao deslogar: " + error.message));
+                    }).catch(error => alert("Erro ao carregar planejamento: " + error.message));
+                }).catch(error => alert("Erro ao carregar relatório: " + error.message));
         }
     </script>
 </body>
