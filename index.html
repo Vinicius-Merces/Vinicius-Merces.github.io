@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Despesas</title>
+    <title>Controle de Despesas</title>
 
     <!-- Link para o Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -114,6 +114,7 @@
             }).then(() => {
                 alert("Despesa adicionada com sucesso!");
                 loadDespesas();
+                loadRelatorios();
             }).catch(error => alert(error.message));
         }
 
@@ -134,7 +135,7 @@
                     despesaItem.innerHTML = `
                         <p><strong>${despesa.nome}</strong> - R$ ${despesa.valor.toFixed(2)} (${despesa.categoria})</p>
                         <button onclick="concluirDespesa('${doc.id}', ${despesa.valor})" class="btn btn-success btn-sm">Concluir</button>
-                        <button onclick="removerDespesa('${doc.id}', ${despesa.valor})" class="btn btn-danger btn-sm">Remover</button>
+                        <button onclick="removerDespesa('${doc.id}')" class="btn btn-danger btn-sm">Remover</button>
                     `;
                     despesasList.appendChild(despesaItem);
                 });
@@ -150,7 +151,7 @@
                     userRef.update({ planejamento: firebase.firestore.FieldValue.increment(-valor) }).then(() => {
                         despesaRef.update({ concluido: true }).then(() => {
                             alert("Despesa concluída e valor debitado do planejamento!");
-                            loadDespesas(); 
+                            loadDespesas(); // Atualiza lista de despesas
                             loadRelatorios(); // Atualiza gráfico
                         });
                     }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
@@ -163,7 +164,7 @@
             const despesaRef = db.collection("users").doc(user.uid).collection("despesas").doc(despesaId);
             despesaRef.delete().then(() => {
                 alert("Despesa removida com sucesso!");
-                loadDespesas();
+                loadDespesas(); // Atualiza lista de despesas
                 loadRelatorios(); // Atualiza gráfico
             }).catch(error => alert("Erro ao remover despesa: " + error.message));
         }
@@ -176,10 +177,41 @@
                 return;
             }
             const userRef = db.collection("users").doc(user.uid);
-            userRef.update({ planejamento: firebase.firestore.FieldValue.increment(valor) }).then(() => {
-                alert("Planejamento atualizado com sucesso!");
+            userRef.update({
+                planejamento: firebase.firestore.FieldValue.increment(valor)
+            }).then(() => {
+                alert("Planejamento atualizado!");
                 loadDespesas();
-            }).catch(error => alert("Erro ao atualizar o planejamento: " + error.message));
+                loadRelatorios();
+            }).catch(error => alert("Erro ao atualizar planejamento: " + error.message));
+        }
+
+        function loadRelatorios() {
+            const user = auth.currentUser;
+            const userRef = db.collection("users").doc(user.uid).collection("despesas");
+            userRef.where("concluido", "==", true).get().then(querySnapshot => {
+                const despesasConcluidas = [];
+                querySnapshot.forEach(doc => despesasConcluidas.push(doc.data().valor));
+                const ctx = document.getElementById("grafico").getContext("2d");
+                if (window.grafico) {
+                    window.grafico.destroy(); // Destrói gráfico anterior antes de criar um novo
+                }
+                window.grafico = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: despesasConcluidas.map((_, i) => `Despesa ${i + 1}`),
+                        datasets: [{
+                            label: "Despesas Concluídas",
+                            data: despesasConcluidas,
+                            backgroundColor: "rgba(75, 192, 192, 0.6)"
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            });
         }
 
         function logout() {
@@ -194,27 +226,6 @@
         function showLoginForm() {
             document.getElementById("signup-form").style.display = "none";
             document.getElementById("login-form").style.display = "block";
-        }
-
-        function loadRelatorios() {
-            const user = auth.currentUser;
-            const userRef = db.collection("users").doc(user.uid).collection("despesas");
-            userRef.get().then(querySnapshot => {
-                const despesas = [];
-                querySnapshot.forEach(doc => despesas.push(doc.data().valor));
-                const ctx = document.getElementById("grafico").getContext("2d");
-                new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                        labels: despesas.map((_, i) => `Despesa ${i + 1}`),
-                        datasets: [{ label: "Despesas", data: despesas, backgroundColor: "rgba(75, 192, 192, 0.6)" }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            });
         }
     </script>
 </body>
