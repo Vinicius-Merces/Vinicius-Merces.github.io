@@ -4,6 +4,15 @@ if (!firebase.apps.length) {
     firebase.app(); // Usa a instância já existente
 }
 
+// Verifique se o Firebase já está inicializado
+if (typeof firebase === 'undefined' || !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+// Obtenha referências explícitas para os serviços
+const db = firebase.firestore();
+const auth = firebase.auth();
+
 class AgendamentoManager {
     constructor() {
         this.form = document.getElementById("agendamentoForm");
@@ -157,18 +166,18 @@ class AgendamentoManager {
                 throw new Error("Você precisa estar logado para fazer um agendamento.");
             }
             
-            // Sanitizar dados do formulário
-            const agendamento = {
-                nome: AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
-                whatsapp: AuthUtils.sanitizeInput(document.getElementById("whatsapp").value.trim()).replace(/\D/g, ''),
-                servico: AuthUtils.sanitizeInput(document.getElementById("servico").value),
-                dataHora: document.getElementById("dataHora").value, // string temporária
-                observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
-                status: "pendente",
-                userId: this.currentUser.uid,
-                userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.Timestamp.now() // ✅ Correção aplicada
-            };
+            // Criar objeto de agendamento com tipos explícitos
+        const agendamento = {
+            nome: document.getElementById("nomeCompleto").value.trim(),
+            whatsapp: document.getElementById("whatsapp").value.replace(/\D/g, ''),
+            servico: document.getElementById("servico").value,
+            dataHora: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById("dataHora").value)), // Conversão direta para Timestamp
+            observacoes: document.getElementById("observacoes").value.trim() || "",
+            status: "pendente",
+            userId: this.currentUser.uid,
+            userEmail: this.currentUser.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() // Usar serverTimestamp
+        };
 
             // Validações adicionais
             await this.validarAgendamento(agendamento);
@@ -204,24 +213,27 @@ class AgendamentoManager {
             this.preencherDadosUsuario();
 
         } catch (error) {
-            console.error("Erro no agendamento:", error);
-            this.showMessage(`
-                <h5 class="alert-heading">Erro no agendamento</h5>
-                <p>${error.message}</p>
-            `, "danger");
-        } finally {
-            btn.disabled = false;
-            this.loadingSpinner.style.display = "none";
-        }
+        console.error("Erro detalhado:", {
+            error: error.message,
+            code: error.code,
+            stack: error.stack,
+            agendamento: agendamento ? {
+                ...agendamento,
+                dataHora: agendamento.dataHora.toString()
+            } : null
+        });
+        this.showMessage(`Erro no agendamento: ${error.message}`, "danger");
     }
+}
 
-   async salvarAgendamento(agendamento) {
+  async salvarAgendamento(agendamento) {
     return db.runTransaction(async (transaction) => {
-        // Verificar disponibilidade
+        // Converter para objetos Date
         const dataAgendamento = agendamento.dataHora.toDate();
         const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
         const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
         
+        // Verificar disponibilidade
         const query = db.collection("agendamentos")
             .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
             .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim));
@@ -232,21 +244,21 @@ class AgendamentoManager {
             throw new Error("Horário indisponível. Por favor, escolha outro horário.");
         }
         
-        // Criar objeto com todos os campos obrigatórios
-        const agendamentoCompleto = {
+        // Criar objeto com formatação explícita
+        const agendamentoParaSalvar = {
             nome: agendamento.nome,
             whatsapp: agendamento.whatsapp,
             servico: agendamento.servico,
-            dataHora: agendamento.dataHora, // Já é um Timestamp
+            dataHora: firebase.firestore.Timestamp.fromDate(dataAgendamento), // Garante que é um Timestamp
             status: "pendente",
             userId: this.currentUser.uid,
             userEmail: this.currentUser.email,
-            timestamp: firebase.firestore.Timestamp.now(), // ✅ Correção aqui
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(), // Usa serverTimestamp
             observacoes: agendamento.observacoes || ""
         };
         
         const docRef = db.collection("agendamentos").doc();
-        transaction.set(docRef, agendamentoCompleto);
+        transaction.set(docRef, agendamentoParaSalvar);
         
         return docRef;
     });
