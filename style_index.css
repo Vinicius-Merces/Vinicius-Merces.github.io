@@ -43,7 +43,8 @@ body {
 }
 
 /* Hero Section */
-.hero {
+/* Hero Section */
+.hero-section {
     height: 90vh;
     background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.9)),
                url('https://images.unsplash.com/photo-1560066984-138dadb4c035') center/cover;
@@ -52,7 +53,7 @@ body {
     text-align: center;
 }
 
-.hero h1 {
+.hero-section h1 {
     font-size: 3.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
@@ -60,7 +61,7 @@ body {
     animation: fadeIn 1s ease-in-out;
 }
 
-.hero p {
+.hero-section p {
     font-size: 1.25rem;
     max-width: 600px;
     margin: 0 auto 2rem;
