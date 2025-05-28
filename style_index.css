@@ -47,7 +47,7 @@ body {
 .hero-section {
     height: 90vh;
     background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.9)),
-               url('images/hero.jpg') center/cover;
+               url('images/hero.jpeg') center/cover;
     display: flex;
     align-items: center;
     text-align: center;
