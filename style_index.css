@@ -47,7 +47,7 @@ body {
 .hero-section {
     height: 90vh;
     background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.9)),
-               url('https://images.unsplash.com/photo-1560066984-138dadb4c035') center/cover;
+               url('images/hero.jpg') center/cover;
     display: flex;
     align-items: center;
     text-align: center;
