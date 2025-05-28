@@ -82,9 +82,7 @@
     font-size: 0.85rem;
     margin-right: 0.5rem;
     display: inline-flex;
-    align-items: center;
-    border-top-right-radius: 30px;
-    border-bottom-right-radius: 30px;   
+    align-items: center;  
 }
 
 .btn-action i {
@@ -97,12 +95,10 @@
 }
 
 .filters .btn-group .btn {
-    border-radius: 30px;
+    border-radius: 30px !important;
     margin-right: 0.25rem;
     font-size: 0.85rem;
-    padding: 0.5rem 1rem;
-    border-top-right-radius: 30px;
-    border-bottom-right-radius: 30px;    
+    padding: 0.5rem 1rem;    
 }
 
 .filters .btn-group .btn.active {
