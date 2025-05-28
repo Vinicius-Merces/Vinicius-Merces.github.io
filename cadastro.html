@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeautyLash Studio - Cadastro</title>
+    <meta name="description" content="Crie sua conta para agendar serviços no BeautyLash Studio">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Estilos Customizados -->
+    <link rel="stylesheet" href="style_auth.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF7D97">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg fixed-top py-3 bg-white">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">BeautyLash</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#servicos">Serviços</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#portfolio">Portfólio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#sobre">Sobre</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Seção de Cadastro -->
+<section id="cadastro" class="py-5 mt-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold">Criar Conta</h2>
+                            <p class="text-muted">Preencha os dados para se cadastrar</p>
+                        </div>
+                        
+                        <div id="alertMessage" class="alert d-none" role="alert"></div>
+                        
+                        <form id="cadastroForm" novalidate>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="nomeCompleto" class="form-label">Nome completo *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="nomeCompleto" 
+                                               placeholder="Seu nome completo" required
+                                               aria-describedby="nomeCompletoFeedback">
+                                    </div>
+                                    <div id="nomeCompletoFeedback" class="invalid-feedback">
+                                        Por favor, insira seu nome completo.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">E-mail *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" 
+                                               placeholder="seu@email.com" required
+                                               aria-describedby="emailFeedback">
+                                    </div>
+                                    <div id="emailFeedback" class="invalid-feedback">
+                                        Por favor, insira um e-mail válido.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="telefone" class="form-label">WhatsApp (com DDD) *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="telefone" 
+                                               placeholder="(11) 99999-9999" required
+                                               aria-describedby="telefoneFeedback">
+                                    </div>
+                                    <div id="telefoneFeedback" class="invalid-feedback">
+                                        Por favor, insira um número válido com DDD.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="senha" class="form-label">Senha *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="senha" 
+                                               placeholder="Mínimo 6 caracteres" required minlength="6"
+                                               aria-describedby="senhaFeedback">
+                                        <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="senhaFeedback" class="invalid-feedback">
+                                        A senha deve ter pelo menos 6 caracteres.
+                                    </div>
+                                    <div class="password-strength mt-2 d-none">
+                                        <div class="progress" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted strength-text">Força da senha: Fraca</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="confirmarSenha" class="form-label">Confirmar senha *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="confirmarSenha" 
+                                               placeholder="Confirme sua senha" required
+                                               aria-describedby="confirmarSenhaFeedback">
+                                        <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="confirmarSenhaFeedback" class="invalid-feedback">
+                                        As senhas não coincidem.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="aceitarTermos" required>
+                                        <label class="form-check-label" for="aceitarTermos">
+                                            Concordo com os <a href="#" data-bs-toggle="modal" data-bs-target="#termosModal">Termos de Uso</a> e <a href="#" data-bs-toggle="modal" data-bs-target="#privacidadeModal">Política de Privacidade</a> *
+                                        </label>
+                                        <div class="invalid-feedback">
+                                            Você deve concordar com os termos para continuar.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary w-100 py-3">
+                                        <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true" id="loadingSpinner"></span>
+                                        <span class="button-text">Criar Conta</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="col-12 text-center mt-2">
+                                    <p class="mb-0">Já tem uma conta? <a href="login.html" class="text-decoration-none">Faça login</a></p>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="separator my-4">
+                            <span>ou</span>
+                        </div>
+                        
+                        <button id="googleLogin" class="btn btn-outline-secondary w-100 mb-3">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18" class="me-2">
+                            Cadastrar com Google
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Termos de Uso -->
+<div class="modal fade" id="termosModal" tabindex="-1" aria-labelledby="termosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termosModalLabel">Termos de Uso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Aceitação dos Termos</h6>
+                <p>Ao acessar e usar os serviços do BeautyLash Studio, você concorda com estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não poderá usar nossos serviços.</p>
+                
+                <h6>2. Descrição dos Serviços</h6>
+                <p>O BeautyLash Studio oferece serviços de agendamento online para procedimentos estéticos, incluindo design de cílios e sobrancelhas.</p>
+                
+                <h6>3. Cadastro e Conta</h6>
+                <p>Para utilizar nossos serviços de agendamento, você precisa criar uma conta fornecendo informações precisas e completas. Você é responsável por manter a confidencialidade de sua senha e por todas as atividades que ocorrem em sua conta.</p>
+                
+                <h6>4. Agendamentos</h6>
+                <p>Ao realizar um agendamento, você se compromete a comparecer no horário marcado ou cancelar com pelo menos 24 horas de antecedência. Agendamentos não cancelados e não comparecimentos podem estar sujeitos a taxas.</p>
+                
+                <h6>5. Privacidade</h6>
+                <p>Nosso uso de suas informações pessoais é regido por nossa Política de Privacidade.</p>
+                
+                <h6>6. Limitações de Responsabilidade</h6>
+                <p>O BeautyLash Studio não será responsável por quaisquer danos indiretos, incidentais, especiais, consequenciais ou punitivos decorrentes do uso ou incapacidade de usar nossos serviços.</p>
+                
+                <h6>7. Alterações nos Termos</h6>
+                <p>Reservamo-nos o direito de modificar estes termos a qualquer momento. As alterações entrarão em vigor imediatamente após a publicação dos termos atualizados.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Política de Privacidade -->
+<div class="modal fade" id="privacidadeModal" tabindex="-1" aria-labelledby="privacidadeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacidadeModalLabel">Política de Privacidade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Informações Coletadas</h6>
+                <p>Coletamos informações que você nos fornece diretamente, como nome, endereço de e-mail, número de telefone e informações de agendamento.</p>
+                
+                <h6>2. Uso das Informações</h6>
+                <p>Utilizamos suas informações para:</p>
+                <ul>
+                    <li>Fornecer e manter nossos serviços</li>
+                    <li>Processar agendamentos</li>
+                    <li>Enviar confirmações e lembretes</li>
+                    <li>Melhorar nossos serviços</li>
+                    <li>Responder a suas solicitações</li>
+                </ul>
+                
+                <h6>3. Compartilhamento de Informações</h6>
+                <p>Não vendemos, alugamos ou compartilhamos suas informações pessoais com terceiros, exceto conforme descrito nesta política.</p>
+                
+                <h6>4. Segurança</h6>
+                <p>Implementamos medidas de segurança para proteger suas informações pessoais contra acesso não autorizado e uso indevido.</p>
+                
+                <h6>5. Seus Direitos</h6>
+                <p>Você tem o direito de acessar, corrigir ou excluir suas informações pessoais a qualquer momento.</p>
+                
+                <h6>6. Alterações na Política</h6>
+                <p>Podemos atualizar nossa Política de Privacidade periodicamente. Notificaremos sobre quaisquer alterações publicando a nova política em nosso site.</p>
+                
+                <h6>7. Contato</h6>
+                <p>Se você tiver dúvidas sobre esta Política de Privacidade, entre em contato conosco pelo e-mail: contato@beautylash.com.br</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer py-4 mt-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0">© 2024 BeautyLash Studio | <a href="index.html" class="text-white">Voltar ao site</a></p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <div class="social-links">
+                    <a href="#" class="text-white mx-2"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white mx-2"><i class="fab fa-facebook"></i></a>
+                    <a href="https://wa.me/5511912712179" class="text-white mx-2"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Scripts Customizados -->
+<script src="auth.js"></script>
+<script src="script_cadastro.js"></script>
+
+<!-- PWA -->
+<script>
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registrado:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar ServiceWorker:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>

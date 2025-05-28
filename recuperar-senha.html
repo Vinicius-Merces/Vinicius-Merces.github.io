@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeautyLash Studio - Recuperar Senha</title>
+    <meta name="description" content="Recupere sua senha para acessar sua conta no BeautyLash Studio">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Estilos Customizados -->
+    <link rel="stylesheet" href="style_auth.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF7D97">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg fixed-top py-3 bg-white">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">BeautyLash</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#servicos">Serviços</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#portfolio">Portfólio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html#sobre">Sobre</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Seção de Recuperação de Senha -->
+<section id="recuperarSenha" class="py-5 mt-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold">Recuperar Senha</h2>
+                            <p class="text-muted">Informe seu e-mail para receber instruções de recuperação</p>
+                        </div>
+                        
+                        <div id="alertMessage" class="alert d-none" role="alert"></div>
+                        
+                        <div id="resetForm">
+                            <form id="recuperarSenhaForm" novalidate>
+                                <div class="mb-4">
+                                    <label for="email" class="form-label">E-mail</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" 
+                                               placeholder="seu@email.com" required
+                                               aria-describedby="emailFeedback">
+                                    </div>
+                                    <div id="emailFeedback" class="invalid-feedback">
+                                        Por favor, insira um e-mail válido.
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 py-3 mb-3">
+                                    <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true" id="loadingSpinner"></span>
+                                    <span class="button-text">Enviar Instruções</span>
+                                </button>
+                                
+                                <div class="text-center">
+                                    <p class="mb-0">Lembrou sua senha? <a href="login.html" class="text-decoration-none">Voltar ao login</a></p>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div id="successMessage" class="text-center d-none">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-check-circle fa-4x text-success"></i>
+                            </div>
+                            <h4 class="mb-3">E-mail enviado!</h4>
+                            <p>Enviamos instruções para recuperar sua senha para o e-mail informado. Por favor, verifique sua caixa de entrada e spam.</p>
+                            <a href="login.html" class="btn btn-primary mt-3">Voltar ao Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer py-4 mt-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0">© 2024 BeautyLash Studio | <a href="index.html" class="text-white">Voltar ao site</a></p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <div class="social-links">
+                    <a href="#" class="text-white mx-2"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white mx-2"><i class="fab fa-facebook"></i></a>
+                    <a href="https://wa.me/5511912712179" class="text-white mx-2"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Scripts Customizados -->
+<script src="auth.js"></script>
+<script src="script_recuperar_senha.js"></script>
+
+<!-- PWA -->
+<script>
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registrado:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar ServiceWorker:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>
