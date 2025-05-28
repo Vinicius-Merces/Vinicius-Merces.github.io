@@ -1,9 +1,3 @@
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-} else {
-    firebase.app(); // Usa a instância já existente
-}
-
 // Verifique se o Firebase já está inicializado
 if (typeof firebase === 'undefined' || !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
