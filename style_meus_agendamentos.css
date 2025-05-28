@@ -83,6 +83,8 @@
     margin-right: 0.5rem;
     display: inline-flex;
     align-items: center;
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;   
 }
 
 .btn-action i {
