@@ -215,7 +215,7 @@ class AgendamentoManager {
         }
     }
 
-    async salvarAgendamento(agendamento) {
+   async salvarAgendamento(agendamento) {
     return db.runTransaction(async (transaction) => {
         // Verificar disponibilidade
         const dataAgendamento = agendamento.dataHora.toDate();
@@ -232,7 +232,7 @@ class AgendamentoManager {
             throw new Error("Horário indisponível. Por favor, escolha outro horário.");
         }
         
-        // Criar objeto com todos campos obrigatórios
+        // Criar objeto com todos os campos obrigatórios
         const agendamentoCompleto = {
             nome: agendamento.nome,
             whatsapp: agendamento.whatsapp,
@@ -241,7 +241,7 @@ class AgendamentoManager {
             status: "pendente",
             userId: this.currentUser.uid,
             userEmail: this.currentUser.email,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            timestamp: firebase.firestore.Timestamp.now(), // ✅ Correção aqui
             observacoes: agendamento.observacoes || ""
         };
         
