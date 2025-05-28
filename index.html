@@ -212,18 +212,14 @@
 
 <!-- PWA -->
 <script>
-    // Registrar Service Worker
-    if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-            navigator.serviceWorker.register("/sw.js")
-                .then(registration => {
-                    console.log("ServiceWorker registrado:", registration.scope);
-                })
-                .catch(error => {
-                    console.log("Falha ao registrar ServiceWorker:", error);
-                });
-        });
-    }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registrado:', reg.scope))
+            .catch(err => console.error('Erro ao registrar SW:', err));
+    });
+}
 </script>
+
 </body>
 </html>
