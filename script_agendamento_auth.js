@@ -1,5 +1,7 @@
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
+} else {
+    firebase.app(); // Usa a instância já existente
 }
 
 class AgendamentoManager {
@@ -160,31 +162,38 @@ class AgendamentoManager {
                 nome: AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
                 whatsapp: AuthUtils.sanitizeInput(document.getElementById("whatsapp").value.trim()).replace(/\D/g, ''),
                 servico: AuthUtils.sanitizeInput(document.getElementById("servico").value),
-                dataHoraISO: document.getElementById("dataHora").value,
+                dataHora: document.getElementById("dataHora").value, // Mantemos como string temporariamente
                 observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
                 status: "pendente",
                 userId: this.currentUser.uid,
                 userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.Timestamp.now()
-                };
-
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
 
             // Validações adicionais
             await this.validarAgendamento(agendamento);
 
+            // Converter data para formato Firestore
+            const dataAgendamento = new Date(agendamento.dataHora);
+            agendamento.dataHora = firebase.firestore.Timestamp.fromDate(dataAgendamento);
+            
             // Verificar disponibilidade antes de agendar
-            await this.verificarDisponibilidade(agendamento.dataHoraISO);
-
-            agendamento.dataHoraISO = new Date(agendamento.dataHoraISO).toISOString().slice(0, 16);
+            await this.verificarDisponibilidade(dataAgendamento);
 
             // Salvar no Firestore usando transação
             const docRef = await this.salvarAgendamento(agendamento);
             
-            // Enviar para WhatsApp
-            await this.enviarWhatsApp(agendamento, docRef.id);
+            // Enviar para WhatsApp (usando a string original para formatação)
+            await this.enviarWhatsApp({
+                ...agendamento,
+                dataHoraISO: document.getElementById("dataHora").value
+            }, docRef.id);
 
             // Feedback ao usuário
-            this.showConfirmacao(agendamento, docRef.id);
+            this.showConfirmacao({
+                ...agendamento,
+                dataHoraISO: document.getElementById("dataHora").value
+            }, docRef.id);
             
             // Resetar formulário
             this.form.reset();
@@ -207,19 +216,15 @@ class AgendamentoManager {
     }
 
     async salvarAgendamento(agendamento) {
-        // Usar transação para garantir consistência
         return db.runTransaction(async (transaction) => {
             // Verificar disponibilidade novamente dentro da transação
-            const dataAgendamento = new Date(agendamento.dataHoraISO);
+            const dataAgendamento = agendamento.dataHora.toDate();
             const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
             const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
             
-            const inicioFormatado = inicio.toISOString().slice(0, 16);
-            const fimFormatado = fim.toISOString().slice(0, 16);
-            
             const query = db.collection("agendamentos")
-                .where("dataHoraISO", ">=", inicioFormatado)
-                .where("dataHoraISO", "<=", fimFormatado);
+                .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
+                .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim));
             
             const snapshot = await transaction.get(query);
             
@@ -239,7 +244,7 @@ class AgendamentoManager {
                 details: {
                     agendamentoId: docRef.id,
                     servico: agendamento.servico,
-                    dataHora: agendamento.dataHoraISO
+                    dataHora: agendamento.dataHora
                 },
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -248,27 +253,15 @@ class AgendamentoManager {
         });
     }
 
-    async verificarDisponibilidade(dataHoraISO) {
-        // Converter a string ISO para objeto Date
-        const dataAgendamento = new Date(dataHoraISO);
-        
+    async verificarDisponibilidade(dataAgendamento) {
         // Definir janela de 1 hora (30 minutos antes e depois)
         const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
         const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
         
-        // Formatando as datas no mesmo formato que está no Firebase (ISO string sem timezone)
-        const formatarParaFirebase = (date) => {
-            return date.toISOString().slice(0, 16); // Formato "YYYY-MM-DDTHH:MM"
-        };
-        
-        const inicioFormatado = formatarParaFirebase(inicio);
-        const fimFormatado = formatarParaFirebase(fim);
-        const dataAgendamentoFormatada = formatarParaFirebase(dataAgendamento);
-        
         try {
             // Verificar agendamento no horário exato
             const snapshotExato = await db.collection("agendamentos")
-                .where("dataHoraISO", "==", dataAgendamentoFormatada)
+                .where("dataHora", "==", firebase.firestore.Timestamp.fromDate(dataAgendamento))
                 .get();
                 
             if (!snapshotExato.empty) {
@@ -277,8 +270,8 @@ class AgendamentoManager {
             
             // Verificar agendamentos na janela de 30 minutos antes/depois
             const snapshotProximos = await db.collection("agendamentos")
-                .where("dataHoraISO", ">=", inicioFormatado)
-                .where("dataHoraISO", "<=", fimFormatado)
+                .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
+                .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim))
                 .get();
                 
             if (!snapshotProximos.empty) {
@@ -292,12 +285,12 @@ class AgendamentoManager {
 
     async validarAgendamento(agendamento) {
         // Verificar campos obrigatórios
-        if (!agendamento.nome || !agendamento.whatsapp || !agendamento.servico || !agendamento.dataHoraISO) {
+        if (!agendamento.nome || !agendamento.whatsapp || !agendamento.servico || !agendamento.dataHora) {
             throw new Error("Por favor, preencha todos os campos obrigatórios.");
         }
 
         // Validar data/hora
-        const dataAgendamento = new Date(agendamento.dataHoraISO);
+        const dataAgendamento = new Date(agendamento.dataHora);
         const agora = new Date();
         
         if (isNaN(dataAgendamento.getTime())) {
