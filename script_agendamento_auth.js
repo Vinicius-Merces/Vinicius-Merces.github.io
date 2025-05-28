@@ -216,42 +216,41 @@ class AgendamentoManager {
     }
 
     async salvarAgendamento(agendamento) {
-        return db.runTransaction(async (transaction) => {
-            // Verificar disponibilidade novamente dentro da transação
-            const dataAgendamento = agendamento.dataHora.toDate();
-            const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
-            const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
-            
-            const query = db.collection("agendamentos")
-                .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
-                .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim));
-            
-            const snapshot = await transaction.get(query);
-            
-            if (!snapshot.empty) {
-                throw new Error("Horário indisponível. Por favor, escolha outro horário.");
-            }
-            
-            // Se disponível, criar o agendamento
-            const docRef = db.collection("agendamentos").doc();
-            transaction.set(docRef, agendamento);
-            
-            // Registrar log de atividade
-            const logRef = db.collection("logs").doc();
-            transaction.set(logRef, {
-                userId: this.currentUser.uid,
-                action: "agendamento_criado",
-                details: {
-                    agendamentoId: docRef.id,
-                    servico: agendamento.servico,
-                    dataHora: agendamento.dataHora
-                },
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            return docRef;
-        });
-    }
+    return db.runTransaction(async (transaction) => {
+        // Verificar disponibilidade
+        const dataAgendamento = agendamento.dataHora.toDate();
+        const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
+        const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
+        
+        const query = db.collection("agendamentos")
+            .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
+            .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim));
+        
+        const snapshot = await transaction.get(query);
+        
+        if (!snapshot.empty) {
+            throw new Error("Horário indisponível. Por favor, escolha outro horário.");
+        }
+        
+        // Criar objeto com todos campos obrigatórios
+        const agendamentoCompleto = {
+            nome: agendamento.nome,
+            whatsapp: agendamento.whatsapp,
+            servico: agendamento.servico,
+            dataHora: agendamento.dataHora, // Já é um Timestamp
+            status: "pendente",
+            userId: this.currentUser.uid,
+            userEmail: this.currentUser.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            observacoes: agendamento.observacoes || ""
+        };
+        
+        const docRef = db.collection("agendamentos").doc();
+        transaction.set(docRef, agendamentoCompleto);
+        
+        return docRef;
+    });
+}
 
     async verificarDisponibilidade(dataAgendamento) {
         // Definir janela de 1 hora (30 minutos antes e depois)
