@@ -47,10 +47,17 @@ body {
     height: 90vh;
     background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.9)),
                 url('images/hero.jpeg') center/cover no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    position: relative;
+}
+
+.hero-section .container {
+    height: 100%;
+}
+
+.hero-content {
+    max-width: 700px;
+    margin: 0 auto;
+    animation: fadeIn 1s ease-in-out;
 }
 
 .hero-section h1 {
