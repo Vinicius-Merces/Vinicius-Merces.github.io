@@ -163,10 +163,11 @@ class AgendamentoManager {
                 dataHoraISO: document.getElementById("dataHora").value,
                 observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
                 status: "pendente",
-                userId: this.currentUser.uid, // Associar ao usuário logado
+                userId: this.currentUser.uid,
                 userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
+                timestamp: firebase.firestore.Timestamp.now()
+                };
+
 
             // Validações adicionais
             await this.validarAgendamento(agendamento);
