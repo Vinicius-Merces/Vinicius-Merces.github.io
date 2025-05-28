@@ -162,12 +162,12 @@ class AgendamentoManager {
                 nome: AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
                 whatsapp: AuthUtils.sanitizeInput(document.getElementById("whatsapp").value.trim()).replace(/\D/g, ''),
                 servico: AuthUtils.sanitizeInput(document.getElementById("servico").value),
-                dataHora: document.getElementById("dataHora").value, // Mantemos como string temporariamente
+                dataHora: document.getElementById("dataHora").value, // string temporária
                 observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
                 status: "pendente",
                 userId: this.currentUser.uid,
                 userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: firebase.firestore.Timestamp.now() // ✅ Correção aplicada
             };
 
             // Validações adicionais
