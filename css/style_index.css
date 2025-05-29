@@ -1,0 +1,322 @@
+:root {
+    --primary: #FF7D97;
+    --secondary: #4A4A4A;
+    --light: #FFF5F7;
+    --dark: #2B2B2B;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--dark);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--secondary) !important;
+    font-size: 1.8rem;
+}
+
+.navbar.scrolled {
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    padding: 10px 0;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 8px 15px !important;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
+/* Hero Section */
+.hero-section {
+    height: 90vh;
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.9)),
+               url('../images/hero.jpeg') center/cover;
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    animation: fadeIn 1s ease-in-out;
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    background-color: rgba(255,255,255,0.7);
+    padding: 15px 25px;
+    border-radius: 30px;
+    display: inline-block;
+}
+
+.btn-beauty {
+    /* mantém todas as propriedades atuais */
+    font-size: 1.1rem; /* Aumenta um pouco o tamanho da fonte */
+    padding: 15px 35px; /* Aumenta o padding para um botão maior */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Serviços */
+.service-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.service-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.service-card img {
+    height: 250px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.service-card .card-body {
+    padding: 1.5rem;
+}
+
+.badge.bg-primary {
+    background: var(--primary) !important;
+    padding: 8px 15px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Portfólio */
+.portfolio-carousel {
+    max-width: 1200px;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.carousel-item {
+    height: 600px;
+    background: #000;
+}
+
+.carousel-item img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+}
+
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 2rem;
+    border-radius: 15px;
+    bottom: 30px;
+}
+
+.carousel-indicators {
+    bottom: 10px;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary) !important;
+    opacity: 0.7;
+}
+
+.carousel-indicators .active {
+    opacity: 1;
+}
+
+/* Sobre */
+.about-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+/* Contato */
+.contact-card {
+    background: var(--light);
+    border-radius: 15px;
+    padding: 2rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.contact-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.contact-card h5 {
+    margin: 1rem 0;
+    color: var(--primary);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary);
+    color: var(--primary);
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* Botões */
+.btn-beauty {
+    background: var(--primary);
+    color: white !important;
+    padding: 12px 30px;
+    border-radius: 30px;
+    border: none;
+    transition: all 0.3s;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+.btn-beauty:hover {
+    background: #ff6b8b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,125,151,0.3);
+}
+
+/* Footer */
+.footer {
+    background: var(--secondary);
+    color: white;
+    padding: 2rem 0;
+}
+
+.social-links a {
+    color: white;
+    font-size: 1.2rem;
+    margin: 0 10px;
+    transition: color 0.3s;
+}
+
+.social-links a:hover {
+    color: var(--primary);
+}
+
+/* WhatsApp */
+.whatsapp-float {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: #25D366;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    transition: transform 0.3s;
+    z-index: 1000;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .hero h1 {
+        font-size: 2.8rem;
+    }
+    
+    .hero p {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        height: 70vh;
+    }
+    
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+    
+    .carousel-item {
+        height: 300px;
+    }
+    
+    .service-card {
+        margin-bottom: 30px;
+    }
+    
+    .navbar-brand {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero p {
+        padding: 10px 15px;
+        font-size: 1rem;
+    }
+    
+    .carousel-caption {
+        padding: 1rem;
+        bottom: 10px;
+    }
+    
+    .carousel-caption h5 {
+        font-size: 1rem;
+    }
+    
+    .carousel-caption p {
+        font-size: 0.8rem;
+        display: none;
+    }
+}
