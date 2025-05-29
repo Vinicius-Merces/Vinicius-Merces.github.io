@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar autenticação com Google
     window.AuthUtils.initGoogleAuth("googleLogin");
     
+    // Configurar toggle de visibilidade de senha
+    window.AuthUtils.initPasswordToggles();
+    
     // Manipular envio do formulário de login
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
@@ -24,28 +27,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Obter dados do formulário
-            const email = window.AuthUtils.sanitizeInput(document.getElementById("email").value);
+            const email = document.getElementById("email").value;
             const senha = document.getElementById('senha').value;
             const lembrar = document.getElementById('lembrarLogin').checked;
+            const submitButton = loginForm.querySelector('button[type="submit"]');
             
-            // Configurar persistência
+            // Definir persistência
             const persistence = lembrar 
                 ? firebase.auth.Auth.Persistence.LOCAL 
                 : firebase.auth.Auth.Persistence.SESSION;
             
             try {
                 // Mostrar loading
-                const submitButton = loginForm.querySelector('button[type="submit"]');
-                window.AuthUtils.toggleLoading(true, submitButton);
-                
-                // Definir persistência
-                await firebase.auth().setPersistence(persistence);
+                window.AuthUtils.toggleLoading(true, submitButton, 'Entrando...');
                 
                 // Fazer login
-                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, senha);
-                
-                // Atualizar último login
-                await window.AuthUtils.updateLastLogin(userCredential.user.uid);
+                await window.AuthUtils.loginWithEmail(email, senha, persistence);
                 
                 // Verificar redirecionamento
                 const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
