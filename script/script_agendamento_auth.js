@@ -18,7 +18,6 @@ class AgendamentoManager {
             this.currentUser = await AuthUtils.getCurrentUser();
             
             if (this.currentUser) {
-                // Forçar atualização do token de autenticação
                 await this.currentUser.getIdToken(true);
                 
                 this.userData = await AuthUtils.getUserData(this.currentUser.uid);
@@ -144,6 +143,7 @@ class AgendamentoManager {
             // Forçar atualização do token antes da operação crítica
             await this.currentUser.getIdToken(true);
             
+            // Criar objeto agendamento sem o timestamp inicialmente
             const agendamento = {
                 nome: AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
                 whatsapp: AuthUtils.sanitizeInput(document.getElementById("whatsapp").value.trim()).replace(/\D/g, ''),
@@ -152,15 +152,16 @@ class AgendamentoManager {
                 observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
                 status: "pendente",
                 userId: this.currentUser.uid,
-                userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.Timestamp.now() // CORREÇÃO: Usando Timestamp.now()
+                userEmail: this.currentUser.email
             };
 
             await this.validarAgendamento(agendamento);
             await this.verificarDisponibilidade(agendamento.dataHoraISO);
 
+            // Formatamos a data para armazenamento
             agendamento.dataHoraISO = new Date(agendamento.dataHoraISO).toISOString().slice(0, 16);
 
+            // Adicionar o timestamp apenas na operação de salvamento
             const docRef = await this.salvarAgendamento(agendamento);
             await this.enviarWhatsApp(agendamento, docRef.id);
 
@@ -208,7 +209,12 @@ class AgendamentoManager {
             }
             
             const docRef = firebase.firestore().collection("agendamentos").doc();
-            transaction.set(docRef, agendamento);
+            
+            // Adicionar o timestamp como FieldValue no momento da transação
+            transaction.set(docRef, {
+                ...agendamento,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
             
             return docRef;
         });
