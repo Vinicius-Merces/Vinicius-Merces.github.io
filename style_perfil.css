@@ -1,0 +1,203 @@
+/* ===== PADRÃO PARA TODOS OS BOTÕES ===== */
+.btn {
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    padding: 12px 30px;
+}
+
+/* Botão Primário (Rosa) */
+.btn-beauty, .btn-primary {
+    background: var(--primary);
+    color: white !important;
+    border: none;
+}
+
+.btn-beauty:hover, .btn-primary:hover {
+    background: #ff6b8b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,125,151,0.3);
+}
+
+/* Botão Outline (Rosa) */
+.btn-outline-beauty, .btn-outline-primary {
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+}
+
+.btn-outline-beauty:hover, .btn-outline-primary:hover {
+    background: var(--primary);
+    color: white !important;
+}
+
+/* Botão Secundário (Cinza) */
+.btn-secondary {
+    background: var(--secondary);
+    color: white !important;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background: #3a3a3a;
+    transform: translateY(-2px);
+}
+
+/* Botão Perigo (Vermelho) */
+.btn-danger {
+    background: #dc3545;
+    color: white !important;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #bb2d3b;
+    transform: translateY(-2px);
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA A PÁGINA DE PERFIL ===== */
+.profile-section {
+    padding-top: 100px;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.profile-header {
+    background: linear-gradient(to right, var(--primary), #ff9db4);
+    color: white;
+    padding: 1.5rem;
+}
+
+.profile-photo-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1.5rem;
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.change-photo-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.change-photo-btn:hover {
+    transform: scale(1.1);
+    background: #ff6b8b;
+}
+
+.appointment-item {
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--light);
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+    border-left: 4px solid var(--primary);
+}
+
+.appointment-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-pendente {
+    background: rgba(255, 193, 7, 0.2);
+    color: #d39e00;
+}
+
+.badge-confirmado {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.badge-cancelado {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.badge-concluido {
+    background: rgba(23, 162, 184, 0.2);
+    color: #17a2b8;
+}
+
+/* Toggle password */
+.toggle-password {
+    border-top-right-radius: 30px !important;
+    border-bottom-right-radius: 30px !important;
+    border-left: 1px solid #dee2e6 !important;
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .profile-section {
+        padding-top: 90px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-section {
+        padding-top: 80px;
+    }
+    
+    .profile-photo-container {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .change-photo-btn {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
+    
+    .profile-header h5 {
+        font-size: 1.1rem;
+    }
+}
