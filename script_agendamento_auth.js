@@ -1,4 +1,4 @@
-// Dependência do auth.js (que inicializa o Firebase e FirebaseServices)
+// Gerenciador de Agendamentos - Versão Integrada e Melhorada
 
 class AgendamentoManager {
     constructor() {
@@ -8,37 +8,39 @@ class AgendamentoManager {
         this.dataInput = document.getElementById("dataHora");
         this.currentUser = null;
         this.userData = null;
-        this.authUtils = window.AuthUtils; // Usar a instância global
-        this.db = FirebaseServices().db; // Obter instância do Firestore
-        this.auth = FirebaseServices().auth; // Obter instância do Auth
+        this.authUtils = window.AuthUtils; // Usar a instância global do AuthUtils
+        this.services = FirebaseServices(); // Obter instância dos serviços
+        this.db = this.services.db; // Firestore
+        this.auth = this.services.auth; // Auth
 
-        // Verificar autenticação antes de inicializar
-        this.checkAuth();
+        this.init();
     }
 
-    async checkAuth() {
+    async init() {
         try {
-            // Verificar se usuário está autenticado usando a instância de AuthUtils
-            const isAuthenticated = await this.authUtils.requireAuth();
-            if (!isAuthenticated) return;
-
-            // Obter usuário atual usando a instância de AuthUtils
+            // Verificar autenticação
+            await this.authUtils.requireAuth('login.html', 'Você precisa estar logado para agendar.');
+            
+            // Obter usuário atual
             this.currentUser = await this.authUtils.getCurrentUser();
-
-            // Obter dados do usuário do Firestore usando a instância de AuthUtils
+            
             if (this.currentUser) {
-                this.userData = await this.authUtils.getUserData(this.currentUser.uid);
-
-                // Preencher campos do formulário com dados do usuário
+                // Obter dados do usuário usando o método cacheado
+                this.userData = await this.authUtils.getCurrentUserData();
+                
+                // Configurar UI
                 this.preencherDadosUsuario();
-
-                // Inicializar eventos após autenticação
                 this.initEventListeners();
                 this.configurarDataMinima();
+                
+                // Inicializar máscaras
+                if (document.getElementById('whatsapp')) {
+                    this.authUtils.initPhoneMask('whatsapp');
+                }
             }
         } catch (error) {
-            console.error("Erro ao verificar autenticação:", error);
-            this.showMessage("Erro ao carregar dados do usuário. Tente novamente mais tarde.", "danger");
+            console.error("Erro na inicialização:", error);
+            this.authUtils.showAlert(`Erro: ${error.message}`, 'danger');
         }
     }
 
@@ -47,24 +49,15 @@ class AgendamentoManager {
             // Preencher nome
             const nomeInput = document.getElementById("nomeCompleto");
             if (nomeInput && this.userData.nome) {
-                nomeInput.value = this.userData.nome;
-                nomeInput.classList.add("is-valid");
+                nomeInput.value = this.authUtils.sanitizeInput(this.userData.nome);
+                this.authUtils.validateField(nomeInput);
             }
 
             // Preencher WhatsApp
             const whatsappInput = document.getElementById("whatsapp");
             if (whatsappInput && this.userData.telefone) {
-                // Formatar telefone se necessário
-                let telefone = this.userData.telefone.replace(/\D/g, '');
-                if (telefone.length > 2) {
-                    telefone = `(${telefone.slice(0, 2)}) ${telefone.slice(2)}`;
-                }
-                if (telefone.length > 10) {
-                    telefone = `${telefone.slice(0, 10)}-${telefone.slice(10)}`;
-                }
-
-                whatsappInput.value = telefone;
-                whatsappInput.classList.add("is-valid");
+                whatsappInput.value = this.userData.telefone;
+                this.authUtils.validateField(whatsappInput);
             }
         }
     }
@@ -73,156 +66,98 @@ class AgendamentoManager {
         if (this.form) {
             this.form.addEventListener("submit", async (e) => await this.handleSubmit(e));
 
-            // Validação em tempo real
+            // Validação em tempo real usando AuthUtils
             this.form.querySelectorAll("input, select, textarea").forEach(element => {
-                element.addEventListener("input", () => {
-                    if (element.checkValidity()) {
-                        element.classList.remove("is-invalid");
-                        element.classList.add("is-valid");
-                    } else {
-                        element.classList.remove("is-valid");
-                        element.classList.add("is-invalid");
-                    }
-                });
-
-                element.addEventListener("blur", () => {
-                    if (element.value) {
-                        if (element.checkValidity()) {
-                            element.classList.remove("is-invalid");
-                            element.classList.add("is-valid");
-                        } else {
-                            element.classList.remove("is-valid");
-                            element.classList.add("is-invalid");
-                        }
-                    }
-                });
+                element.addEventListener("input", () => this.authUtils.validateField(element));
+                element.addEventListener("blur", () => this.authUtils.validateField(element));
             });
-
-            // Máscara para WhatsApp
-            const whatsappInput = document.getElementById("whatsapp");
-            if (whatsappInput) {
-                whatsappInput.addEventListener("input", function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length > 11) value = value.slice(0, 11);
-
-                    // Formatar como (XX) XXXXX-XXXX
-                    if (value.length > 2) {
-                        value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-                    }
-                    if (value.length > 10) {
-                        value = `${value.slice(0, 10)}-${value.slice(10)}`;
-                    }
-
-                    e.target.value = value;
-                });
-            }
         }
     }
 
     configurarDataMinima() {
         if (this.dataInput) {
             const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const minDate = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 horas adiante
 
-            this.dataInput.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+            this.dataInput.min = minDate.toISOString().slice(0, 16);
         }
     }
 
     async handleSubmit(e) {
         e.preventDefault();
 
-        // Validar formulário
-        if (!this.form.checkValidity()) {
-            this.form.querySelectorAll(":invalid").forEach(element => {
-                element.classList.add("is-invalid");
-            });
-
-            this.showMessage("Por favor, preencha todos os campos obrigatórios corretamente.", "danger");
+        // Validar formulário usando AuthUtils
+        const isValid = this.authUtils.validateForm(this.form);
+        if (!isValid) {
+            this.authUtils.showAlert("Por favor, preencha todos os campos obrigatórios corretamente.", "danger");
             return;
         }
 
         const btn = this.form.querySelector("button[type='submit']");
-        btn.disabled = true;
-        this.loadingSpinner.style.display = "inline-block";
-        this.clearMessage();
-
-        let agendamentoData = null;
-
+        
         try {
-            // Verificar autenticação novamente
-            if (!this.currentUser) {
-                throw new Error("Você precisa estar logado para fazer um agendamento.");
-            }
+            // Usar o utilitário de feedback do AuthUtils
+            await this.authUtils.executeWithFeedback(
+                async () => {
+                    const dataHoraString = document.getElementById("dataHora").value;
+                    const dataHoraDate = new Date(dataHoraString);
 
-            const dataHoraString = document.getElementById("dataHora").value;
-            const dataHoraDate = new Date(dataHoraString);
+                    // Criar objeto de agendamento
+                    const agendamentoData = {
+                        nome: this.authUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
+                        whatsapp: document.getElementById("whatsapp").value.replace(/\D/g, ''),
+                        servico: document.getElementById("servico").value,
+                        dataHora: firebase.firestore.Timestamp.fromDate(dataHoraDate),
+                        observacoes: this.authUtils.sanitizeInput(document.getElementById("observacoes").value.trim()) || "",
+                        status: "pendente",
+                        userId: this.currentUser.uid,
+                        userEmail: this.currentUser.email,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
 
-            // Criar objeto de agendamento com Timestamp
-            agendamentoData = {
-                nome: document.getElementById("nomeCompleto").value.trim(),
-                whatsapp: document.getElementById("whatsapp").value.replace(/\D/g, ''),
-                servico: document.getElementById("servico").value,
-                dataHora: firebase.firestore.Timestamp.fromDate(dataHoraDate),
-                observacoes: document.getElementById("observacoes").value.trim() || "",
-                status: "pendente",
-                userId: this.currentUser.uid,
-                userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
+                    // Validações
+                    await this.validarAgendamento(agendamentoData, dataHoraDate);
 
-            // Validações adicionais
-            await this.validarAgendamento(agendamentoData, dataHoraDate);
+                    // Salvar com transação
+                    const docRef = await this.salvarAgendamento(agendamentoData, dataHoraDate);
 
-            // Verificar disponibilidade
-            await this.verificarDisponibilidade(dataHoraDate);
+                    // Enviar WhatsApp
+                    await this.enviarWhatsApp({
+                        ...agendamentoData,
+                        dataHoraISO: dataHoraString
+                    }, docRef.id);
 
-            // Salvar no Firestore
-            const docRef = await this.salvarAgendamento(agendamentoData);
+                    // Mostrar confirmação
+                    this.showConfirmacao({
+                        ...agendamentoData,
+                        dataHoraISO: dataHoraString
+                    }, docRef.id);
 
-            // Enviar para WhatsApp
-            await this.enviarWhatsApp({
-                ...agendamentoData,
-                dataHoraISO: dataHoraString
-            }, docRef.id);
-
-            // Feedback ao usuário
-            this.showConfirmacao({
-                ...agendamentoData,
-                dataHoraISO: dataHoraString
-            }, docRef.id);
-
-            // Resetar formulário
-            this.form.reset();
-            this.form.classList.remove("was-validated");
-            this.configurarDataMinima();
-
-            // Preencher dados do usuário novamente
-            this.preencherDadosUsuario();
-
+                    // Resetar formulário
+                    this.form.reset();
+                    this.form.classList.remove("was-validated");
+                    this.configurarDataMinima();
+                    this.preencherDadosUsuario();
+                },
+                btn,
+                "Agendamento realizado com sucesso!",
+                "Erro no agendamento"
+            );
         } catch (error) {
-            console.error("Erro detalhado:", {
-                error: error.message,
-                code: error.code,
-                stack: error.stack,
-                agendamento: agendamentoData ? {
-                    ...agendamentoData,
-                    dataHora: agendamentoData.dataHora ? agendamentoData.dataHora.toDate().toISOString() : 'N/A'
-                } : null
-            });
-            this.showMessage(`Erro no agendamento: ${error.message}`, "danger");
-        } finally {
-            btn.disabled = false;
-            this.loadingSpinner.style.display = "none";
+            console.error("Erro no processo de agendamento:", error);
+        }
+        if (error.code === 'permission-denied') {
+        console.error("Permissão negada:", error.message);
+        this.showMessage("Você não tem permissão para realizar esta ação.", "danger");
+        } else if (error.code === 'invalid-argument') {
+        console.error("Argumento inválido:", error.message);
+        this.showMessage("Dados inválidos enviados. Por favor, verifique os campos.", "danger");
         }
     }
 
-    async salvarAgendamento(agendamentoParaSalvar) {
+    async salvarAgendamento(agendamentoParaSalvar, dataAgendamentoDate) {
         return this.db.runTransaction(async (transaction) => {
-            const dataAgendamentoDate = agendamentoParaSalvar.dataHora.toDate();
+            // Verificar disponibilidade dentro da transação
             const inicio = new Date(dataAgendamentoDate.getTime() - 30 * 60 * 1000);
             const fim = new Date(dataAgendamentoDate.getTime() + 30 * 60 * 1000);
 
@@ -243,40 +178,14 @@ class AgendamentoManager {
         });
     }
 
-    async verificarDisponibilidade(dataAgendamentoDate) {
-        const inicio = new Date(dataAgendamentoDate.getTime() - 30 * 60 * 1000);
-        const fim = new Date(dataAgendamentoDate.getTime() + 30 * 60 * 1000);
-
-        try {
-            const snapshotExato = await this.db.collection("agendamentos")
-                .where("dataHora", "==", firebase.firestore.Timestamp.fromDate(dataAgendamentoDate))
-                .get();
-
-            if (!snapshotExato.empty) {
-                throw new Error("Já existe um agendamento para este horário exato. Por favor, escolha outro horário.");
-            }
-
-            const snapshotProximos = await this.db.collection("agendamentos")
-                .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
-                .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim))
-                .get();
-
-            if (!snapshotProximos.empty) {
-                throw new Error("Existe um agendamento muito próximo a este horário (30 minutos antes ou depois). Por favor, escolha outro horário.");
-            }
-        } catch (error) {
-            console.error("Erro ao verificar disponibilidade:", error);
-            throw error;
-        }
-    }
-
     async validarAgendamento(agendamento, dataAgendamentoDate) {
+        // Validação básica
         if (!agendamento.nome || !agendamento.whatsapp || !agendamento.servico || !agendamento.dataHora) {
             throw new Error("Por favor, preencha todos os campos obrigatórios.");
         }
 
+        // Validação de data
         const agora = new Date();
-
         if (isNaN(dataAgendamentoDate.getTime())) {
             throw new Error("Data ou hora inválida.");
         }
@@ -286,27 +195,39 @@ class AgendamentoManager {
             throw new Error("O agendamento deve ser feito com pelo menos 2 horas de antecedência.");
         }
 
+        // Horário de funcionamento
         const hora = dataAgendamentoDate.getHours();
         if (hora < 9 || hora >= 19) {
             throw new Error("Horário fora do nosso funcionamento (9h às 19h)");
         }
 
+        // Dias não úteis
         if (dataAgendamentoDate.getDay() === 0 || dataAgendamentoDate.getDay() === 6) {
             throw new Error("Não trabalhamos aos finais de semana");
         }
 
+        // Validação de telefone
         if (!/^\d{11}$/.test(agendamento.whatsapp)) {
             throw new Error("Número de WhatsApp inválido. Use 11 dígitos (DDD + número).");
         }
 
+        // Limite de agendamentos
         const agendamentosAtivos = await this.db.collection("agendamentos")
             .where("userId", "==", this.currentUser.uid)
             .where("status", "in", ["pendente", "confirmado"])
             .get();
 
         if (agendamentosAtivos.size >= 3) {
-            throw new Error("Você já possui o máximo de 3 agendamentos ativos. Cancele um agendamento existente para criar um novo.");
+            throw new Error("Você já possui o máximo de 3 agendamentos ativos.");
         }
+        if (agendamento.observacoes && agendamento.observacoes.length > 500) {
+        throw new Error("As observações não podem exceder 500 caracteres.");
+    }
+
+    // Ao atualizar dados do usuário:
+        if (data.telefone && !/^\d{10,11}$/.test(data.telefone)) {
+        throw new Error("Telefone inválido. Use 10 ou 11 dígitos.");
+    }
     }
 
     async enviarWhatsApp(agendamento, id) {
@@ -331,6 +252,7 @@ class AgendamentoManager {
 
         const linkWhatsApp = `https://wa.me/5511912712179?text=${encodeURIComponent(mensagem)}`;
 
+        // Abrir em nova aba após pequeno delay
         setTimeout(() => {
             window.open(linkWhatsApp, "_blank");
         }, 500);
@@ -357,11 +279,11 @@ class AgendamentoManager {
                 <div class="confirmation-details p-4 mb-4">
                     <div class="row mb-2">
                         <div class="col-5 text-end fw-bold">Nome:</div>
-                        <div class="col-7 text-start">${agendamento.nome}</div>
+                        <div class="col-7 text-start">${this.authUtils.sanitizeInput(agendamento.nome)}</div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-5 text-end fw-bold">Serviço:</div>
-                        <div class="col-7 text-start">${agendamento.servico}</div>
+                        <div class="col-7 text-start">${this.authUtils.sanitizeInput(agendamento.servico)}</div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-5 text-end fw-bold">Data/Hora:</div>
@@ -393,21 +315,9 @@ class AgendamentoManager {
             this.preencherDadosUsuario();
         });
     }
-
-    showMessage(message, type) {
-        this.statusMessageDiv.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>`;
-    }
-
-    clearMessage() {
-        this.statusMessageDiv.innerHTML = "";
-    }
 }
 
-// Inicializar quando o DOM estiver pronto
+// Inicialização quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
     // Inicializar navbar com estado de autenticação
     if (window.AuthUtils && typeof window.AuthUtils.initAuthNavbar === 'function') {
@@ -415,7 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Inicializar gerenciador de agendamento
-    const agendamentoManager = new AgendamentoManager();
+    if (document.getElementById("agendamentoForm")) {
+        const agendamentoManager = new AgendamentoManager();
+    }
     
     // Adicionar classe de validação ao formulário
     const forms = document.querySelectorAll('.needs-validation');

@@ -9,435 +9,842 @@ const firebaseConfig = {
     measurementId: "G-GD2V0K5TF4"
 };
 
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Inicialização segura do Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-// Configurações de autenticação
-auth.languageCode = 'pt-BR';
+// Serviços Firebase (singleton pattern com tratamento de erro melhorado)
+const FirebaseServices = (function() {
+    let instance = null;
+    
+    return function() {
+        if (!instance) {
+            try {
+                instance = {
+                    auth: firebase.auth(),
+                    db: firebase.firestore(),
+                    storage: firebase.storage(),
+                    functions: firebase.functions()
+                };
+                
+                // Configurações padrão
+                instance.auth.languageCode = 'pt-BR';
+                instance.auth.useDeviceLanguage();
+                
+                // Persistência de autenticação
+                instance.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                    .catch(error => {
+                        console.error("Erro ao configurar persistência:", error);
+                    });
 
-// Funções de utilidade para autenticação
-const AuthUtils = {
-    // Mostrar mensagem de alerta
-    showAlert: function(message, type, elementId = 'alertMessage') {
-        const alertElement = document.getElementById(elementId);
-        if (alertElement) {
-            alertElement.textContent = message;
-            alertElement.className = `alert alert-${type} d-block`;
-            
-            // Rolar para o alerta
-            alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Esconder após 5 segundos para alertas de sucesso
-            if (type === 'success') {
-                setTimeout(() => {
-                    alertElement.classList.add('d-none');
-                }, 5000);
+                // Configuração do Firestore para desenvolvimento (remover em produção)
+                if (window.location.hostname === "localhost") {
+                    instance.db.settings({
+                        host: "localhost:8080",
+                        ssl: false
+                    });
+                    console.log("Firestore em modo de desenvolvimento local");
+                }
+                
+            } catch (error) {
+                console.error("Falha crítica na inicialização do Firebase:", error);
+                throw new Error("Falha na inicialização dos serviços Firebase");
             }
         }
-    },
+        return instance;
+    };
+})();
+
+// Classe principal de utilitários de autenticação (versão melhorada)
+class AuthUtils {
+    constructor() {
+        this.services = FirebaseServices();
+        this._currentUser = null;
+        this._userData = null;
+    }
+
+    // ========== MÉTODOS DE INTERFACE DO USUÁRIO (melhorados) ==========
     
-    // Limpar mensagem de alerta
-    clearAlert: function(elementId = 'alertMessage') {
+    /**
+     * Exibe um alerta para o usuário com mais opções
+     * @param {string} message - Mensagem a ser exibida
+     * @param {string} type - Tipo de alerta (success, danger, warning, info)
+     * @param {string} elementId - ID do elemento de alerta (opcional)
+     * @param {number} timeout - Tempo em ms para fechar automaticamente (0 para não fechar)
+     */
+    showAlert(message, type = 'info', elementId = 'alertMessage', timeout = 5000) {
         const alertElement = document.getElementById(elementId);
-        if (alertElement) {
-            alertElement.textContent = '';
-            alertElement.className = 'alert d-none';
+        if (!alertElement) {
+            console.warn(`Elemento de alerta #${elementId} não encontrado`);
+            return;
         }
-    },
-    
-    // Mostrar/esconder spinner de carregamento
-    toggleLoading: function(isLoading, buttonElement) {
-        const spinner = buttonElement.querySelector('.loading-spinner');
-        const buttonText = buttonElement.querySelector('.button-text');
+        
+        // Remove alertas anteriores
+        alertElement.innerHTML = '';
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        alertElement.appendChild(alertDiv);
+        alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        if (timeout > 0 && type === 'success') {
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                bsAlert.close();
+            }, timeout);
+        }
+    }
+
+    /**
+     * Controla o estado de carregamento de um botão com mais opções
+     * @param {boolean} isLoading - Se está carregando
+     * @param {HTMLElement} buttonElement - Elemento do botão
+     * @param {string} loadingText - Texto alternativo durante carregamento
+     */
+    toggleLoading(isLoading, buttonElement, loadingText = 'Processando...') {
+        if (!buttonElement) return;
+        
+        const spinner = buttonElement.querySelector('.loading-spinner') || 
+                       buttonElement.querySelector('.spinner-border');
+        const buttonText = buttonElement.querySelector('.button-text') || 
+                          buttonElement.querySelector('.btn-text');
         
         if (isLoading) {
-            spinner.style.display = 'inline-block';
             buttonElement.disabled = true;
-            buttonText.style.opacity = '0.7';
+            if (spinner) {
+                spinner.style.display = 'inline-block';
+                spinner.setAttribute('aria-busy', 'true');
+            }
+            if (buttonText) {
+                buttonText.dataset.originalText = buttonText.textContent;
+                buttonText.textContent = loadingText;
+            }
         } else {
-            spinner.style.display = 'none';
             buttonElement.disabled = false;
-            buttonText.style.opacity = '1';
+            if (spinner) {
+                spinner.style.display = 'none';
+                spinner.setAttribute('aria-busy', 'false');
+            }
+            if (buttonText && buttonText.dataset.originalText) {
+                buttonText.textContent = buttonText.dataset.originalText;
+            }
         }
-    },
+    }
+
+    // ========== VALIDAÇÃO DE FORMULÁRIOS (melhorada) ==========
     
-    // Validar campo de formulário
-    validateField: function(field) {
-        const isValid = field.checkValidity();
+    /**
+     * Valida um campo individual do formulário com mais critérios
+     * @param {HTMLInputElement} field - Campo a ser validado
+     * @returns {boolean} - Se o campo é válido
+     */
+    validateField(field) {
+        if (!field) return false;
         
-        if (isValid) {
-            field.classList.remove('is-invalid');
-            field.classList.add('is-valid');
-        } else {
-            field.classList.remove('is-valid');
-            field.classList.add('is-invalid');
+        let isValid = field.checkValidity();
+        const feedbackElement = field.nextElementSibling;
+        
+        // Validações adicionais para tipos específicos
+        if (field.type === 'email' && field.value) {
+            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value);
+            if (!isValid) field.setCustomValidity('Por favor, insira um e-mail válido');
+        }
+        
+        if (field.type === 'tel' && field.value) {
+            const digits = field.value.replace(/\D/g, '').length;
+            isValid = digits >= 10 && digits <= 11;
+            if (!isValid) field.setCustomValidity('Por favor, insira um telefone válido (10 ou 11 dígitos)');
+        }
+        
+        field.classList.toggle('is-valid', isValid);
+        field.classList.toggle('is-invalid', !isValid);
+        
+        if (feedbackElement && feedbackElement.classList.contains('invalid-feedback')) {
+            feedbackElement.textContent = isValid ? '' : field.validationMessage;
         }
         
         return isValid;
-    },
-    
-    // Validar formulário inteiro
-    validateForm: function(form) {
-        let isValid = form.checkValidity();
+    }
+
+    /**
+     * Valida um formulário completo com suporte a campos customizados
+     * @param {HTMLFormElement} form - Formulário a ser validado
+     * @param {Array} customValidators - Array de funções de validação customizada
+     * @returns {boolean} - Se o formulário é válido
+     */
+    validateForm(form, customValidators = []) {
+        if (!form) return false;
         
-        // Validar cada campo e mostrar feedback
+        let isValid = true;
         Array.from(form.elements).forEach(field => {
-            if (field.nodeName !== 'BUTTON' && field.nodeName !== 'FIELDSET') {
-                if (!this.validateField(field)) {
-                    isValid = false;
-                }
+            if (field.willValidate && !this.validateField(field)) {
+                isValid = false;
             }
         });
         
-        return isValid;
-    },
-    
-    // Sanitizar input para prevenir XSS
-    sanitizeInput: function(input) {
-        if (!input) return '';
+        // Validações customizadas
+        customValidators.forEach(validator => {
+            if (!validator()) isValid = false;
+        });
         
-        return input
+        form.classList.add('was-validated');
+        return isValid;
+    }
+
+    // ========== SEGURANÇA E SANITIZAÇÃO (melhorada) ==========
+    
+    /**
+     * Sanitiza entrada de dados para prevenir XSS (versão mais robusta)
+     * @param {string} input - Texto a ser sanitizado
+     * @param {boolean} allowBasicFormatting - Permite quebras de linha e espaços
+     * @returns {string} - Texto sanitizado
+     */
+    sanitizeInput(input, allowBasicFormatting = false) {
+        if (typeof input !== 'string') return '';
+        
+        const div = document.createElement('div');
+        div.textContent = input;
+        let sanitized = div.innerHTML
+            .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;')
-            .trim();
-    },
+            .replace(/'/g, '&#x27;');
+        
+        if (allowBasicFormatting) {
+            sanitized = sanitized
+                .replace(/\n/g, '<br>')
+                .replace(/  /g, ' &nbsp;');
+        }
+        
+        return sanitized.trim();
+    }
+
+    // ========== AUTENTICAÇÃO BÁSICA (melhorada) ==========
     
-    // Verificar se usuário está autenticado
-    isUserLoggedIn: function() {
-        return new Promise((resolve) => {
-            auth.onAuthStateChanged(user => {
+    /**
+     * Verifica se há um usuário autenticado (com cache)
+     * @returns {Promise<boolean>} - Resolve com true se autenticado
+     */
+    async isUserLoggedIn() {
+        if (this._currentUser !== null) return !!this._currentUser;
+        
+        return new Promise(resolve => {
+            const unsubscribe = this.services.auth.onAuthStateChanged(user => {
+                unsubscribe();
+                this._currentUser = user;
                 resolve(!!user);
+            }, error => {
+                console.error("Erro ao verificar estado de autenticação:", error);
+                resolve(false);
             });
         });
-    },
-    
-    // Obter usuário atual
-    getCurrentUser: function() {
-        return new Promise((resolve) => {
-            auth.onAuthStateChanged(user => {
+    }
+
+    /**
+     * Obtém o usuário atual (com cache)
+     * @returns {Promise<firebase.User|null>} - Usuário atual ou null
+     */
+    async getCurrentUser() {
+        if (this._currentUser !== null) return this._currentUser;
+        
+        return new Promise(resolve => {
+            const unsubscribe = this.services.auth.onAuthStateChanged(user => {
+                unsubscribe();
+                this._currentUser = user;
                 resolve(user);
+            }, error => {
+                console.error("Erro ao obter usuário atual:", error);
+                resolve(null);
             });
         });
-    },
-    
-    // Obter dados do usuário do Firestore
-    getUserData: async function(userId) {
+    }
+
+    /**
+     * Obtém os dados do usuário atual (com cache)
+     * @returns {Promise<object|null>} - Dados do usuário ou null
+     */
+    async getCurrentUserData() {
+        if (this._userData !== null) return this._userData;
+        
+        const user = await this.getCurrentUser();
+        if (!user) return null;
+        
         try {
-            const doc = await db.collection('usuarios').doc(userId).get();
-            if (doc.exists) {
-                return doc.data();
-            } else {
-                console.log('Nenhum documento de usuário encontrado');
-                return null;
-            }
+            const userDoc = await this.services.db.collection('usuarios').doc(user.uid).get();
+            this._userData = userDoc.exists ? userDoc.data() : null;
+            return this._userData;
         } catch (error) {
-            console.error('Erro ao obter dados do usuário:', error);
+            console.error("Erro ao obter dados do usuário:", error);
             return null;
         }
-    },
+    }
+
+    /**
+     * Requer autenticação, redirecionando se necessário (versão melhorada)
+     * @param {string} redirectUrl - URL para redirecionar se não autenticado
+     * @param {string} customMessage - Mensagem customizada para exibir
+     * @returns {Promise<boolean>} - Resolve com true se autenticado
+     */
+    async requireAuth(redirectUrl = 'login.html', customMessage = null) {
+        const isLoggedIn = await this.isUserLoggedIn();
+        if (!isLoggedIn) {
+            if (customMessage) {
+                sessionStorage.setItem('authMessage', JSON.stringify({
+                    message: customMessage,
+                    type: 'warning'
+                }));
+            }
+            sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+            window.location.href = redirectUrl;
+        }
+        return isLoggedIn;
+    }
+
+    /**
+     * Redireciona se já estiver autenticado (versão melhorada)
+     * @param {string} redirectUrl - URL para redirecionar
+     * @param {boolean} ignoreRedirectAfterLogin - Ignora a URL armazenada
+     * @returns {Promise<boolean>} - Resolve com true se redirecionado
+     */
+    async redirectIfAuthenticated(redirectUrl = 'index.html', ignoreRedirectAfterLogin = false) {
+        const isLoggedIn = await this.isUserLoggedIn();
+        if (isLoggedIn) {
+            const redirectAfterLogin = ignoreRedirectAfterLogin ? null : sessionStorage.getItem('redirectAfterLogin');
+            window.location.href = redirectAfterLogin || redirectUrl;
+            return true;
+        }
+        return false;
+    }
+
+    // ========== OPERAÇÕES COM FIRESTORE (melhoradas) ==========
     
-    // Atualizar dados do usuário no Firestore
-    updateUserData: async function(userId, data) {
+    /**
+     * Obtém dados do usuário no Firestore com tratamento de erro melhorado
+     * @param {string} userId - ID do usuário
+     * @returns {Promise<object|null>} - Dados do usuário ou null
+     */
+    async getUserData(userId) {
+        if (!userId) {
+            console.error("ID do usuário não fornecido");
+            return null;
+        }
+        
         try {
-            await db.collection('usuarios').doc(userId).update({
-                ...data,
-                atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            const doc = await this.services.db.collection('usuarios').doc(userId).get();
+            
+            if (!doc.exists) {
+                console.warn(`Dados do usuário ${userId} não encontrados`);
+                return null;
+            }
+            
+            return doc.data();
+        } catch (error) {
+            console.error('Erro ao obter dados do usuário:', error);
+            throw new Error('Não foi possível carregar os dados do usuário');
+        }
+    }
+
+    /**
+     * Cria ou atualiza dados do usuário no Firestore com transação
+     * @param {string} userId - ID do usuário
+     * @param {object} data - Dados a serem salvos
+     * @param {boolean} useTransaction - Usar transação para garantir consistência
+     * @returns {Promise<boolean>} - Resolve com true se bem-sucedido
+     */
+    async updateUserData(userId, data, useTransaction = true) {
+        if (!userId || !data) {
+            console.error("Dados insuficientes para atualização");
+            return false;
+        }
+        
+        try {
+            if (useTransaction) {
+                await this.services.db.runTransaction(async (transaction) => {
+                    const userRef = this.services.db.collection('usuarios').doc(userId);
+                    transaction.set(userRef, {
+                        ...data,
+                        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                });
+            } else {
+                await this.services.db.collection('usuarios').doc(userId).set({
+                    ...data,
+                    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            }
+            
+            // Limpa o cache de dados do usuário
+            if (userId === this._currentUser?.uid) {
+                this._userData = null;
+            }
+            
             return true;
         } catch (error) {
             console.error('Erro ao atualizar dados do usuário:', error);
-            return false;
+            throw new Error('Não foi possível salvar os dados do usuário');
         }
-    },
-    
-    // Criar documento de usuário no Firestore
-    createUserDocument: async function(userId, userData) {
+    }
+
+    /**
+     * Atualiza o timestamp de último login com transação
+     * @param {string} userId - ID do usuário
+     * @returns {Promise<void>}
+     */
+    async updateLastLogin(userId) {
+        if (!userId) return;
+        
         try {
-            await db.collection('usuarios').doc(userId).set({
-                ...userData,
-                perfil: 'cliente',
-                dataCadastro: firebase.firestore.FieldValue.serverTimestamp(),
-                ultimoLogin: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return true;
-        } catch (error) {
-            console.error('Erro ao criar documento de usuário:', error);
-            return false;
-        }
-    },
-    
-    // Atualizar timestamp de último login
-    updateLastLogin: async function(userId) {
-        try {
-            await db.collection('usuarios').doc(userId).update({
-                ultimoLogin: firebase.firestore.FieldValue.serverTimestamp()
+            await this.services.db.runTransaction(async (transaction) => {
+                const userRef = this.services.db.collection('usuarios').doc(userId);
+                transaction.update(userRef, {
+                    ultimoLogin: firebase.firestore.FieldValue.serverTimestamp()
+                });
             });
         } catch (error) {
             console.error('Erro ao atualizar último login:', error);
         }
-    },
+    }
+
+    // ========== AUTENTICAÇÃO COM E-MAIL/SENHA (melhorada) ==========
     
-    // Redirecionar para página de login se não estiver autenticado
-    requireAuth: async function(redirectUrl = 'login.html') {
-        const isLoggedIn = await this.isUserLoggedIn();
-        if (!isLoggedIn) {
-            // Salvar URL atual para redirecionamento após login
-            sessionStorage.setItem('redirectAfterLogin', window.location.href);
-            window.location.href = redirectUrl;
-            return false;
+    /**
+     * Realiza login com e-mail e senha (versão melhorada)
+     * @param {string} email - E-mail do usuário
+     * @param {string} password - Senha do usuário
+     * @returns {Promise<firebase.auth.UserCredential>}
+     */
+    async loginWithEmail(email, password) {
+        try {
+            // Validação básica antes de tentar login
+            if (!email || !password) {
+                throw new Error('E-mail e senha são obrigatórios');
+            }
+            
+            const userCredential = await this.services.auth.signInWithEmailAndPassword(email, password);
+            
+            // Atualiza último login em uma transação separada
+            await this.updateLastLogin(userCredential.user.uid);
+            
+            // Limpa cache
+            this._currentUser = userCredential.user;
+            this._userData = null;
+            
+            return userCredential;
+        } catch (error) {
+            console.error('Erro no login:', error);
+            throw this.translateAuthError(error);
         }
-        return true;
-    },
+    }
+
+    /**
+     * Cadastra novo usuário com e-mail e senha (versão melhorada)
+     * @param {string} email - E-mail do usuário
+     * @param {string} password - Senha do usuário
+     * @param {object} userData - Dados adicionais do usuário
+     * @returns {Promise<firebase.auth.UserCredential>}
+     */
+    async registerWithEmail(email, password, userData = {}) {
+        try {
+            // Validação básica
+            if (!email || !password) {
+                throw new Error('E-mail e senha são obrigatórios');
+            }
+            
+            // Sanitiza dados do usuário
+            const sanitizedData = {
+                nome: this.sanitizeInput(userData.nome || ''),
+                email: email,
+                telefone: this.sanitizeInput(userData.telefone || ''),
+                perfil: 'cliente',
+                dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            const userCredential = await this.services.auth.createUserWithEmailAndPassword(email, password);
+            
+            // Usa transação para garantir que ambos os passos sejam completados
+            await this.updateUserData(userCredential.user.uid, sanitizedData);
+            
+            // Limpa cache
+            this._currentUser = userCredential.user;
+            this._userData = sanitizedData;
+            
+            return userCredential;
+        } catch (error) {
+            console.error('Erro no cadastro:', error);
+            
+            // Tenta limpar usuário criado parcialmente
+            if (error.code === 'auth/email-already-in-use') {
+                try {
+                    const user = await this.services.auth.signInWithEmailAndPassword(email, password);
+                    await this.services.auth.signOut();
+                } catch { /* Ignora erros secundários */ }
+            }
+            
+            throw this.translateAuthError(error);
+        }
+    }
+
+    /**
+     * Envia e-mail de redefinição de senha (versão melhorada)
+     * @param {string} email - E-mail do usuário
+     * @returns {Promise<void>}
+     */
+    async sendPasswordResetEmail(email) {
+        try {
+            if (!email) {
+                throw new Error('E-mail é obrigatório');
+            }
+            
+            await this.services.auth.sendPasswordResetEmail(email, {
+                url: window.location.origin + '/login.html',
+                handleCodeInApp: false
+            });
+        } catch (error) {
+            console.error('Erro ao enviar e-mail de redefinição:', error);
+            throw this.translateAuthError(error);
+        }
+    }
+
+    // ========== AUTENTICAÇÃO SOCIAL (melhorada) ==========
     
-    // Redirecionar para página inicial se já estiver autenticado
-    redirectIfAuthenticated: async function(redirectUrl = 'index.html') {
-        const isLoggedIn = await this.isUserLoggedIn();
-        if (isLoggedIn) {
-            // Verificar se há URL de redirecionamento salva
-            const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
-            if (redirectAfterLogin) {
-                sessionStorage.removeItem('redirectAfterLogin');
-                window.location.href = redirectAfterLogin;
+    /**
+     * Realiza login com provedor Google (versão melhorada)
+     * @returns {Promise<firebase.auth.UserCredential>}
+     */
+    async loginWithGoogle() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
+            const userCredential = await this.services.auth.signInWithPopup(provider);
+            
+            // Verifica se é um novo usuário
+            if (userCredential.additionalUserInfo.isNewUser) {
+                const userData = {
+                    nome: this.sanitizeInput(userCredential.user.displayName || ''),
+                    email: userCredential.user.email || '',
+                    perfil: 'cliente',
+                    dataCadastro: firebase.firestore.FieldValue.serverTimestamp(),
+                    providerData: {
+                        google: true
+                    }
+                };
+                
+                await this.updateUserData(userCredential.user.uid, userData);
             } else {
+                await this.updateLastLogin(userCredential.user.uid);
+            }
+            
+            // Limpa cache
+            this._currentUser = userCredential.user;
+            this._userData = null;
+            
+            return userCredential;
+        } catch (error) {
+            console.error('Erro no login com Google:', error);
+            
+            // Tratamento especial para erro de popup bloqueado
+            if (error.code === 'auth/popup-blocked') {
+                throw new Error('A janela de login foi bloqueada. Por favor, permita popups para este site e tente novamente.');
+            }
+            
+            throw this.translateAuthError(error);
+        }
+    }
+
+    // ========== LOGOUT (melhorado) ==========
+    
+    /**
+     * Realiza logout do usuário (versão melhorada)
+     * @param {boolean} redirect - Se deve redirecionar após logout
+     * @param {string} redirectUrl - URL para redirecionar
+     * @returns {Promise<boolean>} - Resolve com true se bem-sucedido
+     */
+    async logout(redirect = true, redirectUrl = 'index.html') {
+        try {
+            await this.services.auth.signOut();
+            
+            // Limpa cache
+            this._currentUser = null;
+            this._userData = null;
+            
+            if (redirect) {
                 window.location.href = redirectUrl;
             }
-            return true;
-        }
-        return false;
-    },
-    
-    // Fazer logout
-    logout: async function() {
-        try {
-            await auth.signOut();
+            
             return true;
         } catch (error) {
             console.error('Erro ao fazer logout:', error);
             return false;
         }
-    },
+    }
+
+    // ========== INICIALIZAÇÃO DE COMPONENTES (melhorada) ==========
     
-    // Inicializar elementos de toggle de senha
-    initPasswordToggles: function() {
+    /**
+     * Inicializa toggles de visibilidade de senha (versão melhorada)
+     */
+    initPasswordToggles() {
         document.querySelectorAll('.toggle-password').forEach(button => {
-            button.addEventListener('click', function() {
-                const input = this.previousElementSibling;
-                const icon = this.querySelector('i');
+            // Evita duplicação de event listeners
+            if (button.dataset.listenerAdded !== 'true') {
+                button.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    if (!input || input.type !== 'password' && input.type !== 'text') return;
+                    
+                    const icon = this.querySelector('i');
+                    const isPassword = input.type === 'password';
+                    
+                    input.type = isPassword ? 'text' : 'password';
+                    
+                    if (icon) {
+                        icon.classList.toggle('fa-eye', !isPassword);
+                        icon.classList.toggle('fa-eye-slash', isPassword);
+                        icon.setAttribute('aria-label', isPassword ? 'Mostrar senha' : 'Ocultar senha');
+                    }
+                });
                 
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
+                button.dataset.listenerAdded = 'true';
+            }
         });
-    },
-    
-    // Inicializar validação em tempo real
-    initRealtimeValidation: function(formId) {
-        const form = document.getElementById(formId);
-        if (form) {
-            form.querySelectorAll('input, select, textarea').forEach(field => {
-                field.addEventListener('blur', () => {
-                    this.validateField(field);
-                });
-                
-                field.addEventListener('input', () => {
-                    if (field.classList.contains('is-invalid')) {
-                        this.validateField(field);
-                    }
-                });
-            });
-        }
-    },
-    
-    // Inicializar medidor de força de senha
-    initPasswordStrengthMeter: function(passwordId) {
-        const passwordInput = document.getElementById(passwordId);
-        if (passwordInput) {
-            const strengthMeter = passwordInput.parentElement.nextElementSibling;
-            if (strengthMeter && strengthMeter.classList.contains('password-strength')) {
-                const progressBar = strengthMeter.querySelector('.progress-bar');
-                const strengthText = strengthMeter.querySelector('.strength-text');
-                
-                passwordInput.addEventListener('input', function() {
-                    const password = this.value;
-                    let strength = 0;
-                    let feedback = 'Fraca';
-                    let color = 'danger';
-                    
-                    if (password.length >= 6) strength += 20;
-                    if (password.length >= 8) strength += 10;
-                    if (/[A-Z]/.test(password)) strength += 20;
-                    if (/[a-z]/.test(password)) strength += 10;
-                    if (/[0-9]/.test(password)) strength += 20;
-                    if (/[^A-Za-z0-9]/.test(password)) strength += 20;
-                    
-                    if (strength > 80) {
-                        feedback = 'Muito forte';
-                        color = 'success';
-                    } else if (strength > 60) {
-                        feedback = 'Forte';
-                        color = 'success';
-                    } else if (strength > 40) {
-                        feedback = 'Média';
-                        color = 'warning';
-                    } else if (strength > 20) {
-                        feedback = 'Fraca';
-                        color = 'danger';
-                    } else {
-                        feedback = 'Muito fraca';
-                        color = 'danger';
-                    }
-                    
-                    strengthMeter.classList.remove('d-none');
-                    progressBar.style.width = `${strength}%`;
-                    progressBar.className = `progress-bar bg-${color}`;
-                    strengthText.textContent = `Força da senha: ${feedback}`;
-                });
+    }
+
+    /**
+     * Inicializa máscara para campo de telefone (versão melhorada)
+     * @param {string} inputId - ID do input de telefone
+     */
+    initPhoneMask(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        // Evita duplicação de event listeners
+        if (input.dataset.phoneMaskInitialized === 'true') return;
+        
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            // Formatar como (XX) XXXXX-XXXX
+            let formattedValue = '';
+            
+            if (value.length > 0) {
+                formattedValue = `(${value.slice(0, 2)}`;
             }
-        }
-    },
-    
-    // Inicializar máscara para telefone
-    initPhoneMask: function(phoneId) {
-        const phoneInput = document.getElementById(phoneId);
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length > 11) value = value.slice(0, 11);
-                
-                // Formatar como (XX) XXXXX-XXXX
-                if (value.length > 2) {
-                    value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-                }
-                if (value.length > 10) {
-                    value = `${value.slice(0, 10)}-${value.slice(10)}`;
-                }
-                
-                e.target.value = value;
-            });
-        }
-    },
-    
-    // Inicializar autenticação com Google
-    initGoogleAuth: function(buttonId, redirectUrl = null) {
-        const googleButton = document.getElementById(buttonId);
-        if (googleButton) {
-            googleButton.addEventListener('click', async () => {
-                try {
-                    this.toggleLoading(true, googleButton);
-                    
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    const result = await auth.signInWithPopup(provider);
-                    
-                    // Verificar se é um novo usuário
-                    if (result.additionalUserInfo.isNewUser) {
-                        // Criar documento de usuário no Firestore
-                        const user = result.user;
-                        await this.createUserDocument(user.uid, {
-                            nome: user.displayName || '',
-                            email: user.email || '',
-                            telefone: user.phoneNumber || '',
-                            fotoUrl: user.photoURL || ''
-                        });
-                    } else {
-                        // Atualizar último login
-                        await this.updateLastLogin(result.user.uid);
-                    }
-                    
-                    // Redirecionar após login
-                    const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
-                    if (redirectAfterLogin) {
-                        sessionStorage.removeItem('redirectAfterLogin');
-                        window.location.href = redirectAfterLogin;
-                    } else if (redirectUrl) {
-                        window.location.href = redirectUrl;
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                } catch (error) {
-                    console.error('Erro na autenticação com Google:', error);
-                    this.showAlert(`Erro na autenticação com Google: ${error.message}`, 'danger');
-                    this.toggleLoading(false, googleButton);
-                }
-            });
-        }
-    },
-    
-    // Inicializar navbar com estado de autenticação
-    initAuthNavbar: async function() {
-        const navbarNav = document.getElementById('navbarNav');
-        if (navbarNav) {
+            if (value.length > 2) {
+                formattedValue += ` ${value.slice(2, 7)}`;
+            }
+            if (value.length > 7) {
+                formattedValue += `-${value.slice(7, 11)}`;
+            }
+            
+            e.target.value = formattedValue;
+        });
+        
+        input.dataset.phoneMaskInitialized = 'true';
+    }
+
+    /**
+     * Inicializa navbar com estado de autenticação (versão melhorada)
+     */
+    async initAuthNavbar() {
+        const navbar = document.getElementById('navbarNav');
+        if (!navbar) return;
+        
+        // Verifica se já foi inicializada
+        if (navbar.dataset.authInitialized === 'true') return;
+        
+        const authContainer = navbar.querySelector('.auth-container') || document.createElement('div');
+        authContainer.className = 'auth-container ms-auto';
+        
+        try {
             const isLoggedIn = await this.isUserLoggedIn();
-            const user = isLoggedIn ? await this.getCurrentUser() : null;
             
-            // Elemento para itens de autenticação
-            let authItems = navbarNav.querySelector('.auth-items');
-            
-            if (!authItems) {
-                authItems = document.createElement('ul');
-                authItems.className = 'navbar-nav ms-auto auth-items';
-                navbarNav.appendChild(authItems);
-            }
-            
-            if (isLoggedIn && user) {
-                // Obter dados do usuário
+            if (isLoggedIn) {
+                const user = await this.getCurrentUser();
                 const userData = await this.getUserData(user.uid);
                 const displayName = userData?.nome || user.displayName || user.email.split('@')[0];
                 
-                // Itens para usuário logado
-                authItems.innerHTML = `
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle me-1"></i> ${displayName}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-user me-2"></i>Meu Perfil</a></li>
-                            <li><a class="dropdown-item" href="meus-agendamentos.html"><i class="fas fa-calendar-check me-2"></i>Meus Agendamentos</a></li>
+                authContainer.innerHTML = `
+                    <div class="dropdown">
+                        <button class="btn btn-link nav-link dropdown-toggle d-flex align-items-center" 
+                                type="button" id="userDropdown" data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <span class="d-none d-md-inline">${this.sanitizeInput(displayName)}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil.html"><i class="fas fa-user me-2"></i> Perfil</a></li>
+                            <li><a class="dropdown-item" href="meus-agendamentos.html"><i class="fas fa-calendar-alt me-2"></i> Agendamentos</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logoutButton"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                            <li><button class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i> Sair</button></li>
                         </ul>
-                    </li>
+                    </div>
                 `;
                 
-                // Adicionar evento de logout
-                const logoutButton = authItems.querySelector('#logoutButton');
-                if (logoutButton) {
-                    logoutButton.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        await this.logout();
-                        window.location.href = 'index.html';
-                    });
-                }
+                document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+                    await this.logout(true, 'index.html');
+                });
             } else {
-                // Itens para usuário não logado
-                authItems.innerHTML = `
-                    <li class="nav-item">
-                        <a class="nav-link" href="login.html">Entrar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="cadastro.html">Cadastrar</a>
-                    </li>
+                authContainer.innerHTML = `
+                    <div class="d-flex gap-2">
+                        <a href="login.html" class="btn btn-outline-light">Entrar</a>
+                        <a href="cadastro.html" class="btn btn-primary">Cadastrar</a>
+                    </div>
                 `;
+            }
+            
+            if (!navbar.contains(authContainer)) {
+                navbar.appendChild(authContainer);
+            }
+            
+            navbar.dataset.authInitialized = 'true';
+        } catch (error) {
+            console.error('Erro ao inicializar navbar de autenticação:', error);
+            // Fallback básico
+            authContainer.innerHTML = `
+                <div class="d-flex gap-2">
+                    <a href="login.html" class="btn btn-outline-light">Entrar</a>
+                    <a href="cadastro.html" class="btn btn-primary">Cadastrar</a>
+                </div>
+            `;
+            
+            if (!navbar.contains(authContainer)) {
+                navbar.appendChild(authContainer);
             }
         }
     }
-};
 
-// Inicializar elementos comuns de autenticação
-document.addEventListener('DOMContentLoaded', () => {
-    // Inicializar toggles de senha
-    AuthUtils.initPasswordToggles();
+    // ========== UTILITÁRIOS (melhorados) ==========
     
-    // Inicializar navbar com estado de autenticação
-    AuthUtils.initAuthNavbar();
+    /**
+     * Traduz erros de autenticação para mensagens amigáveis (versão expandida)
+     * @param {Error} error - Erro original
+     * @returns {Error} - Erro com mensagem traduzida
+     */
+    translateAuthError(error) {
+        const messages = {
+            // Erros de autenticação por e-mail/senha
+            'auth/invalid-email': 'E-mail inválido. Por favor, verifique o formato.',
+            'auth/user-disabled': 'Esta conta foi desativada. Entre em contato com o suporte.',
+            'auth/user-not-found': 'Nenhuma conta encontrada com este e-mail.',
+            'auth/wrong-password': 'Senha incorreta. Tente novamente ou redefina sua senha.',
+            'auth/email-already-in-use': 'Este e-mail já está em uso. Tente fazer login.',
+            'auth/operation-not-allowed': 'Método de autenticação não permitido.',
+            'auth/weak-password': 'Senha muito fraca. Use pelo menos 6 caracteres.',
+            'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+            
+            // Erros de provedores sociais
+            'auth/account-exists-with-different-credential': 'Conta já existe com outro método de login.',
+            'auth/popup-closed-by-user': 'Janela de autenticação fechada antes de completar.',
+            'auth/cancelled-popup-request': 'Autenticação cancelada pelo usuário.',
+            'auth/popup-blocked': 'A janela de login foi bloqueada. Permita popups para este site.',
+            'auth/unauthorized-domain': 'Domínio não autorizado para autenticação.',
+            
+            // Erros do Firestore
+            'permission-denied': 'Você não tem permissão para executar esta ação.',
+            'not-found': 'Recurso não encontrado.',
+            'unavailable': 'Serviço indisponível no momento. Tente novamente mais tarde.',
+            
+            // Erros genéricos
+            'network-request-failed': 'Falha na conexão. Verifique sua internet.',
+            'internal-error': 'Erro interno no servidor. Tente novamente mais tarde.'
+        };
+        
+        // Verifica se é um erro do Firestore
+        if (error.code && error.code.startsWith('firestore/')) {
+            const code = error.code.replace('firestore/', '');
+            return new Error(messages[code] || error.message || 'Erro no banco de dados');
+        }
+        
+        // Verifica se é um erro de autenticação
+        if (error.code && error.code.startsWith('auth/')) {
+            return new Error(messages[error.code] || error.message || 'Erro na autenticação');
+        }
+        
+        // Verifica mensagens genéricas
+        return new Error(messages[error.code] || error.message || 'Ocorreu um erro inesperado');
+    }
+
+    /**
+     * Executa uma operação com tratamento de erro e feedback visual
+     * @param {Function} operation - Função assíncrona a ser executada
+     * @param {HTMLElement} buttonElement - Elemento do botão (opcional)
+     * @param {string} successMessage - Mensagem de sucesso (opcional)
+     * @param {string} errorMessage - Mensagem de erro customizada (opcional)
+     * @returns {Promise<any>} - Resultado da operação
+     */
+    async executeWithFeedback(operation, buttonElement = null, successMessage = null, errorMessage = null) {
+        this.toggleLoading(true, buttonElement);
+        
+        try {
+            const result = await operation();
+            
+            if (successMessage) {
+                this.showAlert(successMessage, 'success');
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Operação falhou:', error);
+            
+            const message = errorMessage || 
+                           (error instanceof Error ? error.message : 'Ocorreu um erro');
+            
+            this.showAlert(message, 'danger');
+            throw error;
+        } finally {
+            this.toggleLoading(false, buttonElement);
+        }
+    }
+}
+
+// Instância singleton do AuthUtils
+const authUtilsInstance = new AuthUtils();
+
+// Inicialização quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa componentes com tratamento de erro
+    try {
+        authUtilsInstance.initPasswordToggles();
+        authUtilsInstance.initAuthNavbar();
+        
+        // Inicializa máscara de telefone se existir
+        if (document.getElementById('telefone')) {
+            authUtilsInstance.initPhoneMask('telefone');
+        }
+        
+        // Exibe mensagens armazenadas (útil para redirecionamentos)
+        const authMessage = sessionStorage.getItem('authMessage');
+        if (authMessage) {
+            try {
+                const { message, type } = JSON.parse(authMessage);
+                authUtilsInstance.showAlert(message, type);
+            } catch (e) {
+                console.error('Erro ao processar mensagem:', e);
+            }
+            sessionStorage.removeItem('authMessage');
+        }
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+    }
 });
+
+// Exportação para módulos (se necessário)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = authUtilsInstance;
+}
+
+// Disponibiliza globalmente (opcional)
+window.AuthUtils = authUtilsInstance;
