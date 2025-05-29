@@ -1,16 +1,11 @@
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyAmrAtNIsd7Bp-tRAmavI-wwlLgd4_zkEc",
-    authDomain: "julianabeauty.firebaseapp.com",
-    projectId: "julianabeauty",
-    storageBucket: "julianabeauty.firebasestorage.app",
-    messagingSenderId: "881281165323",
-    appId: "1:881281165323:web:4c8e5a1e7ca37272a27f0e",
-    measurementId: "G-GD2V0K5TF4"
-};
+// Verificar se o Firebase já foi inicializado
+if (!firebase.apps.length) {
+    console.error("Firebase não foi inicializado!");
+} else {
+    console.log("Firebase já inicializado, usando instância existente");
+}
 
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
+// Obter instâncias do auth e firestore
 const auth = firebase.auth();
 const db = firebase.firestore();
 
