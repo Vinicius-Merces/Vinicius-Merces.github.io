@@ -140,7 +140,7 @@ class AgendamentoManager {
                 throw new Error("Você precisa estar logado para fazer um agendamento.");
             }
             
-            await this.currentUser.getIdToken(true);
+            const token = await this.currentUser.getIdToken();
             
             // Criar objeto com dados básicos
             const agendamento = {
@@ -154,9 +154,9 @@ class AgendamentoManager {
             };
 
             await this.validarAgendamento(agendamento);
-            await this.verificarDisponibilidade(agendamento.dataHoraISO);
+            await this.verificarDisponibilidade(agendamento.dataHoraISO, token);
 
-            const docRef = await this.salvarAgendamento(agendamento);
+            const docRef = await this.salvarAgendamentoViaREST(agendamento, token);
             await this.enviarWhatsApp(agendamento, docRef.id);
 
             this.showConfirmacao(agendamento, docRef.id);
@@ -183,47 +183,57 @@ class AgendamentoManager {
         }
     }
 
-    async salvarAgendamento(agendamento) {
-        return firebase.firestore().runTransaction(async (transaction) => {
-            const dataAgendamento = new Date(agendamento.dataHoraISO);
-            const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
-            const fim = new Date(dataAgendamento.getTime() + 30 * 60 * 1000);
+    async salvarAgendamentoViaREST(agendamento, token) {
+        try {
+            // Formatando a data para o padrão ISO (apenas data e hora, sem segundos e timezone)
+            const dataHoraISO = new Date(agendamento.dataHoraISO).toISOString().slice(0, 16);
             
-            const inicioFormatado = inicio.toISOString().slice(0, 16);
-            const fimFormatado = fim.toISOString().slice(0, 16);
-            
-            const query = firebase.firestore().collection("agendamentos")
-                .where("dataHoraISO", ">=", inicioFormatado)
-                .where("dataHoraISO", "<=", fimFormatado);
-            
-            const snapshot = await transaction.get(query);
-            
-            if (!snapshot.empty) {
-                throw new Error("Horário indisponível. Por favor, escolha outro horário.");
-            }
-            
-            const docRef = firebase.firestore().collection("agendamentos").doc();
-            
-            // Converter para tipos primitivos e Firestore-safe
-            const agendamentoParaSalvar = {
-                nome: String(agendamento.nome),
-                whatsapp: String(agendamento.whatsapp),
-                servico: String(agendamento.servico),
-                dataHoraISO: new Date(agendamento.dataHoraISO).toISOString().slice(0, 16),
-                observacoes: String(agendamento.observacoes || ''),
-                status: "pendente",
-                userId: String(agendamento.userId),
-                userEmail: String(agendamento.userEmail),
-                timestamp: firebase.firestore.Timestamp.now()
+            // Construir o objeto no formato esperado pela API REST do Firestore
+            const fields = {
+                nome: { stringValue: agendamento.nome },
+                whatsapp: { stringValue: agendamento.whatsapp },
+                servico: { stringValue: agendamento.servico },
+                dataHoraISO: { stringValue: dataHoraISO },
+                observacoes: { stringValue: agendamento.observacoes || '' },
+                status: { stringValue: "pendente" },
+                userId: { stringValue: agendamento.userId },
+                userEmail: { stringValue: agendamento.userEmail },
+                timestamp: { timestampValue: new Date().toISOString() } // Formato ISO string
             };
 
-            transaction.set(docRef, agendamentoParaSalvar);
+            const response = await fetch(
+                `https://firestore.googleapis.com/v1/projects/julianabeauty/databases/(default)/documents/agendamentos`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fields: fields
+                    })
+                }
+            );
             
-            return docRef;
-        });
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Erro na resposta da API:", errorData);
+                throw new Error(`Erro ao salvar agendamento: ${errorData.error.message}`);
+            }
+            
+            const data = await response.json();
+            // Extrair o ID do documento do caminho retornado
+            const docId = data.name.split('/').pop();
+            
+            return { id: docId };
+            
+        } catch (error) {
+            console.error("Erro ao salvar agendamento via REST:", error);
+            throw error;
+        }
     }
 
-    async verificarDisponibilidade(dataHoraISO) {
+    async verificarDisponibilidade(dataHoraISO, token) {
         try {
             const dataAgendamento = new Date(dataHoraISO);
             const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
@@ -235,33 +245,54 @@ class AgendamentoManager {
             const fimFormatado = formatarParaFirebase(fim);
             const dataAgendamentoFormatada = formatarParaFirebase(dataAgendamento);
             
-            // Verificar agendamento no horário exato
-            const snapshotExato = await firebase.firestore().collection("agendamentos")
-                .where("dataHoraISO", "==", dataAgendamentoFormatada)
-                .limit(1)
-                .get();
-                
-            if (!snapshotExato.empty) {
+            // Construir a consulta no formato da API REST
+            const structuredQuery = {
+                from: [{ collectionId: "agendamentos" }],
+                where: {
+                    compositeFilter: {
+                        op: "AND",
+                        filters: [
+                            {
+                                fieldFilter: {
+                                    field: { fieldPath: "dataHoraISO" },
+                                    op: "EQUAL",
+                                    value: { stringValue: dataAgendamentoFormatada }
+                                }
+                            }
+                        ]
+                    }
+                },
+                limit: 1
+            };
+            
+            const response = await fetch(
+                `https://firestore.googleapis.com/v1/projects/julianabeauty/databases/(default)/documents:runQuery`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        structuredQuery: structuredQuery
+                    })
+                }
+            );
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Erro ao verificar disponibilidade: ${errorData.error.message}`);
+            }
+            
+            const data = await response.json();
+            
+            // Se houver documentos na resposta, significa que o horário está ocupado
+            if (data.length > 0 && data[0].document) {
                 throw new Error("Já existe um agendamento para este horário exato. Por favor, escolha outro horário.");
             }
             
-            // Verificar agendamentos próximos
-            const snapshotProximos = await firebase.firestore().collection("agendamentos")
-                .where("dataHoraISO", ">=", inicioFormatado)
-                .where("dataHoraISO", "<=", fimFormatado)
-                .limit(1)
-                .get();
-                
-            if (!snapshotProximos.empty) {
-                throw new Error("Existe um agendamento muito próximo a este horário (30 minutos antes ou depois). Por favor, escolha outro horário.");
-            }
         } catch (error) {
             console.error("Erro ao verificar disponibilidade:", error);
-            
-            if (error.code === 'permission-denied') {
-                throw new Error("Permissões insuficientes para verificar disponibilidade. Faça login novamente.");
-            }
-            
             throw error;
         }
     }
@@ -298,26 +329,6 @@ class AgendamentoManager {
         // Validar WhatsApp
         if (!/^\d{11}$/.test(agendamento.whatsapp)) {
             throw new Error("Número de WhatsApp inválido. Use 11 dígitos (DDD + número).");
-        }
-        
-        // Verificar limite de agendamentos
-        try {
-            const agendamentosAtivos = await firebase.firestore().collection("agendamentos")
-                .where("userId", "==", this.currentUser.uid)
-                .where("status", "in", ["pendente", "confirmado"])
-                .get();
-                
-            if (agendamentosAtivos.size >= 3) {
-                throw new Error("Você já possui o máximo de 3 agendamentos ativos. Cancele um agendamento existente para criar um novo.");
-            }
-        } catch (error) {
-            console.error("Erro ao verificar agendamentos ativos:", error);
-            
-            if (error.code === 'permission-denied') {
-                throw new Error("Permissões insuficientes para verificar seus agendamentos. Faça login novamente.");
-            }
-            
-            throw new Error("Erro ao verificar seus agendamentos existentes.");
         }
     }
 
