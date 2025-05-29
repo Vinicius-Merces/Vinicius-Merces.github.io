@@ -145,13 +145,15 @@ class AgendamentoManager {
             );
         } catch (error) {
             console.error("Erro no processo de agendamento:", error);
-        }
-        if (error.code === 'permission-denied') {
-        console.error("Permissão negada:", error.message);
-        this.showMessage("Você não tem permissão para realizar esta ação.", "danger");
-        } else if (error.code === 'invalid-argument') {
-        console.error("Argumento inválido:", error.message);
-        this.showMessage("Dados inválidos enviados. Por favor, verifique os campos.", "danger");
+            // Tratamento específico de erros movido para dentro do catch
+            if (error.code === 'permission-denied') {
+                console.error("Permissão negada:", error.message);
+                this.authUtils.showAlert("Você não tem permissão para realizar esta ação.", "danger");
+            } else if (error.code === 'invalid-argument') {
+                console.error("Argumento inválido:", error.message);
+                this.authUtils.showAlert("Dados inválidos enviados. Por favor, verifique os campos.", "danger");
+            }
+            // A função executeWithFeedback já deve tratar erros genéricos.
         }
     }
 
