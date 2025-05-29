@@ -8,7 +8,7 @@ class AgendamentoManager {
         this.dataInput = document.getElementById("dataHora");
         this.currentUser = null;
         this.userData = null;
-        this.authUtils = new AuthUtils(); // Instanciar AuthUtils
+        this.authUtils = window.AuthUtils; // Usar a instância global
         this.db = FirebaseServices().db; // Obter instância do Firestore
         this.auth = FirebaseServices().auth; // Obter instância do Auth
 
@@ -145,12 +145,12 @@ class AgendamentoManager {
             return;
         }
 
-        const btn = this.form.querySelector("button[type=\"submit\"]");
+        const btn = this.form.querySelector("button[type='submit']");
         btn.disabled = true;
         this.loadingSpinner.style.display = "inline-block";
         this.clearMessage();
 
-        let agendamentoData = null; // Variável para armazenar os dados antes de salvar
+        let agendamentoData = null;
 
         try {
             // Verificar autenticação novamente
@@ -166,33 +166,33 @@ class AgendamentoManager {
                 nome: document.getElementById("nomeCompleto").value.trim(),
                 whatsapp: document.getElementById("whatsapp").value.replace(/\D/g, ''),
                 servico: document.getElementById("servico").value,
-                dataHora: firebase.firestore.Timestamp.fromDate(dataHoraDate), // Conversão única para Timestamp
+                dataHora: firebase.firestore.Timestamp.fromDate(dataHoraDate),
                 observacoes: document.getElementById("observacoes").value.trim() || "",
                 status: "pendente",
                 userId: this.currentUser.uid,
                 userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp() // Usar serverTimestamp
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Validações adicionais (passando o objeto Date)
+            // Validações adicionais
             await this.validarAgendamento(agendamentoData, dataHoraDate);
 
-            // Verificar disponibilidade antes de agendar (passando o objeto Date)
+            // Verificar disponibilidade
             await this.verificarDisponibilidade(dataHoraDate);
 
-            // Salvar no Firestore usando transação (passando o objeto com Timestamp)
+            // Salvar no Firestore
             const docRef = await this.salvarAgendamento(agendamentoData);
 
-            // Enviar para WhatsApp (usando a string original para formatação)
+            // Enviar para WhatsApp
             await this.enviarWhatsApp({
                 ...agendamentoData,
-                dataHoraISO: dataHoraString // Passar a string original
+                dataHoraISO: dataHoraString
             }, docRef.id);
 
             // Feedback ao usuário
             this.showConfirmacao({
                 ...agendamentoData,
-                dataHoraISO: dataHoraString // Passar a string original
+                dataHoraISO: dataHoraString
             }, docRef.id);
 
             // Resetar formulário
@@ -210,27 +210,22 @@ class AgendamentoManager {
                 stack: error.stack,
                 agendamento: agendamentoData ? {
                     ...agendamentoData,
-                    // Converta Timestamp para string apenas para log, se existir
                     dataHora: agendamentoData.dataHora ? agendamentoData.dataHora.toDate().toISOString() : 'N/A'
                 } : null
             });
             this.showMessage(`Erro no agendamento: ${error.message}`, "danger");
         } finally {
-            // Reabilitar botão e esconder spinner
             btn.disabled = false;
             this.loadingSpinner.style.display = "none";
         }
     }
 
     async salvarAgendamento(agendamentoParaSalvar) {
-        // Usa a instância db da classe
         return this.db.runTransaction(async (transaction) => {
-            // dataHora já é um Timestamp, converte para Date para cálculos
             const dataAgendamentoDate = agendamentoParaSalvar.dataHora.toDate();
             const inicio = new Date(dataAgendamentoDate.getTime() - 30 * 60 * 1000);
             const fim = new Date(dataAgendamentoDate.getTime() + 30 * 60 * 1000);
 
-            // Verificar disponibilidade usando Timestamps
             const query = this.db.collection("agendamentos")
                 .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
                 .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim));
@@ -241,8 +236,6 @@ class AgendamentoManager {
                 throw new Error("Horário indisponível. Por favor, escolha outro horário.");
             }
 
-            // O objeto agendamentoParaSalvar já está pronto para ser salvo
-            // (dataHora já é Timestamp, timestamp já é FieldValue.serverTimestamp)
             const docRef = this.db.collection("agendamentos").doc();
             transaction.set(docRef, agendamentoParaSalvar);
 
@@ -251,12 +244,10 @@ class AgendamentoManager {
     }
 
     async verificarDisponibilidade(dataAgendamentoDate) {
-        // Recebe um objeto Date
         const inicio = new Date(dataAgendamentoDate.getTime() - 30 * 60 * 1000);
         const fim = new Date(dataAgendamentoDate.getTime() + 30 * 60 * 1000);
 
         try {
-            // Verificar agendamento no horário exato (usando Timestamp)
             const snapshotExato = await this.db.collection("agendamentos")
                 .where("dataHora", "==", firebase.firestore.Timestamp.fromDate(dataAgendamentoDate))
                 .get();
@@ -265,7 +256,6 @@ class AgendamentoManager {
                 throw new Error("Já existe um agendamento para este horário exato. Por favor, escolha outro horário.");
             }
 
-            // Verificar agendamentos na janela de 30 minutos antes/depois (usando Timestamp)
             const snapshotProximos = await this.db.collection("agendamentos")
                 .where("dataHora", ">=", firebase.firestore.Timestamp.fromDate(inicio))
                 .where("dataHora", "<=", firebase.firestore.Timestamp.fromDate(fim))
@@ -276,48 +266,39 @@ class AgendamentoManager {
             }
         } catch (error) {
             console.error("Erro ao verificar disponibilidade:", error);
-            throw error; // Re-lança o erro para ser tratado no handleSubmit
+            throw error;
         }
     }
 
     async validarAgendamento(agendamento, dataAgendamentoDate) {
-        // Recebe o objeto agendamento (com Timestamp) e o objeto Date
-
-        // Verificar campos obrigatórios
         if (!agendamento.nome || !agendamento.whatsapp || !agendamento.servico || !agendamento.dataHora) {
             throw new Error("Por favor, preencha todos os campos obrigatórios.");
         }
 
-        // Validar data/hora usando o objeto Date
         const agora = new Date();
 
         if (isNaN(dataAgendamentoDate.getTime())) {
             throw new Error("Data ou hora inválida.");
         }
 
-        // Verificar antecedência mínima (2 horas)
         const horaMinima = new Date(agora.getTime() + 2 * 60 * 60 * 1000);
         if (dataAgendamentoDate < horaMinima) {
             throw new Error("O agendamento deve ser feito com pelo menos 2 horas de antecedência.");
         }
 
-        // Verificar horário comercial (9h-19h)
         const hora = dataAgendamentoDate.getHours();
         if (hora < 9 || hora >= 19) {
             throw new Error("Horário fora do nosso funcionamento (9h às 19h)");
         }
 
-        // Verificar se não é final de semana
         if (dataAgendamentoDate.getDay() === 0 || dataAgendamentoDate.getDay() === 6) {
             throw new Error("Não trabalhamos aos finais de semana");
         }
 
-        // Validar WhatsApp (11 dígitos)
         if (!/^\d{11}$/.test(agendamento.whatsapp)) {
             throw new Error("Número de WhatsApp inválido. Use 11 dígitos (DDD + número).");
         }
 
-        // Verificar limite de agendamentos por usuário (máximo 3 agendamentos ativos)
         const agendamentosAtivos = await this.db.collection("agendamentos")
             .where("userId", "==", this.currentUser.uid)
             .where("status", "in", ["pendente", "confirmado"])
@@ -329,7 +310,6 @@ class AgendamentoManager {
     }
 
     async enviarWhatsApp(agendamento, id) {
-        // Usa dataHoraISO (string original) para formatação
         const dataAgendamento = new Date(agendamento.dataHoraISO);
         const dataFormatada = dataAgendamento.toLocaleString("pt-BR", {
             day: '2-digit',
@@ -339,29 +319,26 @@ class AgendamentoManager {
             minute: '2-digit'
         });
 
-        const mensagem = `✅ *Agendamento Confirmado - BeautyLash Studio* ✅\n\n`
-            + `*Código:* ${id.substring(0, 8)}\n`
-            + `*Nome:* ${agendamento.nome}\n`
-            + `*Serviço:* ${agendamento.servico}\n`
-            + `*Data/Hora:* ${dataFormatada}\n`
-            + `*Observações:* ${agendamento.observacoes || 'Nenhuma'}\n\n`
-            + `_Aguardamos você no studio! Qualquer alteração, por favor, entre em contato._\n\n`
-            + `📍 *Localização:* Rua da Beleza, 123 - São Paulo/SP\n`
-            + `📞 *Telefone:* (11) 91271-2179`;
+        const mensagem = `✅ *Agendamento Confirmado - BeautyLash Studio* ✅\n\n` +
+            `*Código:* ${id.substring(0, 8)}\n` +
+            `*Nome:* ${agendamento.nome}\n` +
+            `*Serviço:* ${agendamento.servico}\n` +
+            `*Data/Hora:* ${dataFormatada}\n` +
+            `*Observações:* ${agendamento.observacoes || 'Nenhuma'}\n\n` +
+            `_Aguardamos você no studio! Qualquer alteração, por favor, entre em contato._\n\n` +
+            `📍 *Localização:* Rua da Beleza, 123 - São Paulo/SP\n` +
+            `📞 *Telefone:* (11) 91271-2179`;
 
         const linkWhatsApp = `https://wa.me/5511912712179?text=${encodeURIComponent(mensagem)}`;
 
-        // Abrir em nova aba após um pequeno delay
         setTimeout(() => {
             window.open(linkWhatsApp, "_blank");
         }, 500);
     }
 
     showConfirmacao(agendamento, id) {
-        // Esconder formulário
         this.form.classList.add('d-none');
 
-        // Criar elemento de confirmação usando dataHoraISO (string original)
         const dataAgendamento = new Date(agendamento.dataHoraISO);
         const dataFormatada = dataAgendamento.toLocaleString("pt-BR", {
             day: '2-digit',
@@ -408,7 +385,6 @@ class AgendamentoManager {
         confirmationDiv.classList.add('confirmation-container', 'mt-4', 'mb-4');
         this.form.parentNode.insertBefore(confirmationDiv, this.statusMessageDiv);
 
-        // Adicionar evento para o botão de novo agendamento
         document.getElementById('newAppointmentBtn').addEventListener('click', () => {
             confirmationDiv.remove();
             this.form.classList.remove('d-none');
@@ -433,15 +409,14 @@ class AgendamentoManager {
 
 // Inicializar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
-    // Instanciar AuthUtils para usar seus métodos estáticos/de instância
-    const authUtils = new AuthUtils();
-
     // Inicializar navbar com estado de autenticação
-    authUtils.initAuthNavbar(); // Assumindo que initAuthNavbar pode ser chamado na instância
-
+    if (window.AuthUtils && typeof window.AuthUtils.initAuthNavbar === 'function') {
+        window.AuthUtils.initAuthNavbar();
+    }
+    
     // Inicializar gerenciador de agendamento
     const agendamentoManager = new AgendamentoManager();
-
+    
     // Adicionar classe de validação ao formulário
     const forms = document.querySelectorAll('.needs-validation');
     Array.from(forms).forEach(form => {
@@ -450,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 event.stopPropagation();
             }
-
             form.classList.add('was-validated');
         }, false);
     });
