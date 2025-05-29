@@ -153,7 +153,7 @@ class AgendamentoManager {
                 status: "pendente",
                 userId: this.currentUser.uid,
                 userEmail: this.currentUser.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: firebase.firestore.Timestamp.now() // CORREÇÃO: Usando Timestamp.now()
             };
 
             await this.validarAgendamento(agendamento);
