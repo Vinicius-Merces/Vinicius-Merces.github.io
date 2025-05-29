@@ -1,19 +1,19 @@
 // Scripts específicos para a página de cadastro
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar se usuário já está autenticado
-    AuthUtils.redirectIfAuthenticated();
+    window.AuthUtils.redirectIfAuthenticated();
     
     // Inicializar validação em tempo real
-    AuthUtils.initRealtimeValidation('cadastroForm');
+    window.AuthUtils.initRealtimeValidation("cadastroForm");
     
     // Inicializar medidor de força de senha
-    AuthUtils.initPasswordStrengthMeter('senha');
+    window.AuthUtils.initPasswordStrengthMeter("senha");
     
     // Inicializar máscara para telefone
-    AuthUtils.initPhoneMask('telefone');
+    window.AuthUtils.initPhoneMask("telefone");
     
     // Inicializar autenticação com Google
-    AuthUtils.initGoogleAuth('googleLogin');
+    window.AuthUtils.initGoogleAuth("googleLogin");
     
     // Manipular envio do formulário de cadastro
     const cadastroForm = document.getElementById('cadastroForm');
@@ -22,10 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             // Limpar alertas anteriores
-            AuthUtils.clearAlert();
+            window.AuthUtils.clearAlert();
             
             // Validar formulário
-            if (!AuthUtils.validateForm(cadastroForm)) {
+            if (!window.AuthUtils.validateForm(cadastroForm)) {
                 return;
             }
             
@@ -35,26 +35,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (senha !== confirmarSenha) {
                 document.getElementById('confirmarSenha').classList.add('is-invalid');
-                AuthUtils.showAlert('As senhas não coincidem.', 'danger');
+                window.AuthUtils.showAlert("As senhas não coincidem.", "danger");
                 return;
             }
             
             // Obter dados do formulário
-            const nomeCompleto = AuthUtils.sanitizeInput(document.getElementById('nomeCompleto').value);
-            const email = AuthUtils.sanitizeInput(document.getElementById('email').value);
-            const telefone = AuthUtils.sanitizeInput(document.getElementById('telefone').value).replace(/\D/g, '');
+            const nomeCompleto = window.AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value);
+            const email = window.AuthUtils.sanitizeInput(document.getElementById("email").value);
+            const telefone = window.AuthUtils.sanitizeInput(document.getElementById("telefone").value).replace(/\D/g, "");
             const aceitarTermos = document.getElementById('aceitarTermos').checked;
             
             if (!aceitarTermos) {
                 document.getElementById('aceitarTermos').classList.add('is-invalid');
-                AuthUtils.showAlert('Você deve aceitar os termos de uso e política de privacidade.', 'danger');
+                window.AuthUtils.showAlert("Você deve aceitar os termos de uso e política de privacidade.", "danger");
                 return;
             }
             
             try {
                 // Mostrar loading
                 const submitButton = cadastroForm.querySelector('button[type="submit"]');
-                AuthUtils.toggleLoading(true, submitButton);
+                window.AuthUtils.toggleLoading(true, submitButton);
                 
                 // Criar usuário
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, senha);
@@ -69,14 +69,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 await user.sendEmailVerification();
                 
                 // Criar documento do usuário no Firestore
-                await AuthUtils.createUserDocument(user.uid, {
+                await window.AuthUtils.createUserDocument(user.uid, {
                     nome: nomeCompleto,
                     email: email,
                     telefone: telefone
                 });
                 
                 // Mostrar mensagem de sucesso
-                AuthUtils.showAlert('Conta criada com sucesso! Enviamos um e-mail de verificação para o seu endereço.', 'success');
+                window.AuthUtils.showAlert("Conta criada com sucesso! Enviamos um e-mail de verificação para o seu endereço.", "success");
                 
                 // Redirecionar após 2 segundos
                 setTimeout(() => {
@@ -105,10 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Mostrar erro
-                AuthUtils.showAlert(errorMessage, 'danger');
+                window.AuthUtils.showAlert(errorMessage, "danger");
                 
                 // Esconder loading
-                AuthUtils.toggleLoading(false, submitButton);
+                window.AuthUtils.toggleLoading(false, submitButton);
             }
         });
     }

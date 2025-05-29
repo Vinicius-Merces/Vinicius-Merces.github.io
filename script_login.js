@@ -1,13 +1,13 @@
 // Scripts específicos para a página de login
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar se usuário já está autenticado
-    AuthUtils.redirectIfAuthenticated();
+    window.AuthUtils.redirectIfAuthenticated();
     
     // Inicializar validação em tempo real
-    AuthUtils.initRealtimeValidation('loginForm');
+    window.AuthUtils.initRealtimeValidation("loginForm");
     
     // Inicializar autenticação com Google
-    AuthUtils.initGoogleAuth('googleLogin');
+    window.AuthUtils.initGoogleAuth("googleLogin");
     
     // Manipular envio do formulário de login
     const loginForm = document.getElementById('loginForm');
@@ -16,15 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             // Limpar alertas anteriores
-            AuthUtils.clearAlert();
+            window.AuthUtils.clearAlert();
             
             // Validar formulário
-            if (!AuthUtils.validateForm(loginForm)) {
+            if (!window.AuthUtils.validateForm(loginForm)) {
                 return;
             }
             
             // Obter dados do formulário
-            const email = AuthUtils.sanitizeInput(document.getElementById('email').value);
+            const email = window.AuthUtils.sanitizeInput(document.getElementById("email").value);
             const senha = document.getElementById('senha').value;
             const lembrar = document.getElementById('lembrarLogin').checked;
             
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Mostrar loading
                 const submitButton = loginForm.querySelector('button[type="submit"]');
-                AuthUtils.toggleLoading(true, submitButton);
+                window.AuthUtils.toggleLoading(true, submitButton);
                 
                 // Definir persistência
                 await firebase.auth().setPersistence(persistence);
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, senha);
                 
                 // Atualizar último login
-                await AuthUtils.updateLastLogin(userCredential.user.uid);
+                await window.AuthUtils.updateLastLogin(userCredential.user.uid);
                 
                 // Verificar redirecionamento
                 const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
@@ -80,10 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Mostrar erro
-                AuthUtils.showAlert(errorMessage, 'danger');
+                window.AuthUtils.showAlert(errorMessage, "danger");
                 
                 // Esconder loading
-                AuthUtils.toggleLoading(false, submitButton);
+                window.AuthUtils.toggleLoading(false, submitButton);
             }
         });
     }

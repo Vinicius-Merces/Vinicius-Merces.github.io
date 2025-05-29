@@ -1,10 +1,10 @@
 // Scripts específicos para a página de recuperação de senha
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar se usuário já está autenticado
-    AuthUtils.redirectIfAuthenticated();
+    window.AuthUtils.redirectIfAuthenticated();
     
     // Inicializar validação em tempo real
-    AuthUtils.initRealtimeValidation('recuperarSenhaForm');
+    window.AuthUtils.initRealtimeValidation("recuperarSenhaForm");
     
     // Manipular envio do formulário de recuperação de senha
     const recuperarSenhaForm = document.getElementById('recuperarSenhaForm');
@@ -13,20 +13,20 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             // Limpar alertas anteriores
-            AuthUtils.clearAlert();
+            window.AuthUtils.clearAlert();
             
             // Validar formulário
-            if (!AuthUtils.validateForm(recuperarSenhaForm)) {
+            if (!window.AuthUtils.validateForm(recuperarSenhaForm)) {
                 return;
             }
             
             // Obter e-mail do formulário
-            const email = AuthUtils.sanitizeInput(document.getElementById('email').value);
+            const email = window.AuthUtils.sanitizeInput(document.getElementById("email").value);
             
             try {
                 // Mostrar loading
                 const submitButton = recuperarSenhaForm.querySelector('button[type="submit"]');
-                AuthUtils.toggleLoading(true, submitButton);
+                window.AuthUtils.toggleLoading(true, submitButton);
                 
                 // Enviar e-mail de recuperação de senha
                 await firebase.auth().sendPasswordResetEmail(email);
@@ -54,10 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Mostrar erro
-                AuthUtils.showAlert(errorMessage, 'danger');
+                window.AuthUtils.showAlert(errorMessage, "danger");
                 
                 // Esconder loading
-                AuthUtils.toggleLoading(false, submitButton);
+                window.AuthUtils.toggleLoading(false, submitButton);
             }
         });
     }

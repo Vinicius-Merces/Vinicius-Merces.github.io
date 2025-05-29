@@ -848,3 +848,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Disponibiliza globalmente (opcional)
 window.AuthUtils = authUtilsInstance;
+
+
+// Instanciar globalmente para que outros scripts possam usar
+window.AuthUtils = new AuthUtils();

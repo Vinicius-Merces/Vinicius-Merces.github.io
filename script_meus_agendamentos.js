@@ -1,11 +1,11 @@
 // Scripts específicos para a página de Meus Agendamentos
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar autenticação
-    const isAuthenticated = await AuthUtils.requireAuth();
+    const isAuthenticated = await window.AuthUtils.requireAuth();
     if (!isAuthenticated) return;
     
     // Inicializar navbar com estado de autenticação
-    AuthUtils.initAuthNavbar();
+    window.AuthUtils.initAuthNavbar();
     
     // Inicializar gerenciador de agendamentos
     const agendamentosManager = new AgendamentosManager();
@@ -34,7 +34,7 @@ class AgendamentosManager {
     async init() {
         try {
             // Obter usuário atual
-            this.currentUser = await AuthUtils.getCurrentUser();
+            this.currentUser = await window.AuthUtils.getCurrentUser();
             if (!this.currentUser) {
                 throw new Error('Usuário não autenticado');
             }
