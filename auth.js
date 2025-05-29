@@ -23,9 +23,9 @@ const FirebaseServices = (function() {
             try {
                 instance = {
                     auth: firebase.auth(),
-                    db: firebase.firestore(),
-                    storage: firebase.storage(),
-                    functions: firebase.functions()
+                    db: firebase.firestore()
+                    // Removido: storage: firebase.storage(),
+                    // Removido: functions: firebase.functions()
                 };
                 
                 // Configurações padrão
