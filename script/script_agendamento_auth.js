@@ -140,17 +140,15 @@ class AgendamentoManager {
                 throw new Error("Você precisa estar logado para fazer um agendamento.");
             }
             
-            // Forçar atualização do token antes da operação crítica
             await this.currentUser.getIdToken(true);
             
-            // Criar objeto agendamento sem o timestamp inicialmente
+            // Criar objeto com dados básicos
             const agendamento = {
-                nome: AuthUtils.sanitizeInput(document.getElementById("nomeCompleto").value.trim()),
-                whatsapp: AuthUtils.sanitizeInput(document.getElementById("whatsapp").value.trim()).replace(/\D/g, ''),
-                servico: AuthUtils.sanitizeInput(document.getElementById("servico").value),
+                nome: document.getElementById("nomeCompleto").value.trim(),
+                whatsapp: document.getElementById("whatsapp").value.trim().replace(/\D/g, ''),
+                servico: document.getElementById("servico").value,
                 dataHoraISO: document.getElementById("dataHora").value,
-                observacoes: AuthUtils.sanitizeInput(document.getElementById("observacoes").value.trim()),
-                status: "pendente",
+                observacoes: document.getElementById("observacoes").value.trim(),
                 userId: this.currentUser.uid,
                 userEmail: this.currentUser.email
             };
@@ -158,10 +156,6 @@ class AgendamentoManager {
             await this.validarAgendamento(agendamento);
             await this.verificarDisponibilidade(agendamento.dataHoraISO);
 
-            // Formatamos a data para armazenamento
-            agendamento.dataHoraISO = new Date(agendamento.dataHoraISO).toISOString().slice(0, 16);
-
-            // Adicionar o timestamp apenas na operação de salvamento
             const docRef = await this.salvarAgendamento(agendamento);
             await this.enviarWhatsApp(agendamento, docRef.id);
 
@@ -210,11 +204,20 @@ class AgendamentoManager {
             
             const docRef = firebase.firestore().collection("agendamentos").doc();
             
-            // Adicionar o timestamp como FieldValue no momento da transação
-            transaction.set(docRef, {
-                ...agendamento,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Converter para tipos primitivos e Firestore-safe
+            const agendamentoParaSalvar = {
+                nome: String(agendamento.nome),
+                whatsapp: String(agendamento.whatsapp),
+                servico: String(agendamento.servico),
+                dataHoraISO: new Date(agendamento.dataHoraISO).toISOString().slice(0, 16),
+                observacoes: String(agendamento.observacoes || ''),
+                status: "pendente",
+                userId: String(agendamento.userId),
+                userEmail: String(agendamento.userEmail),
+                timestamp: firebase.firestore.Timestamp.now()
+            };
+
+            transaction.set(docRef, agendamentoParaSalvar);
             
             return docRef;
         });
@@ -346,7 +349,6 @@ class AgendamentoManager {
             }, 500);
         } catch (error) {
             console.error("Erro ao enviar para WhatsApp:", error);
-            // Não interrompe o fluxo principal
         }
     }
 
