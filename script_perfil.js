@@ -94,13 +94,18 @@ async function loadUserAppointments(userId) {
         const noAppointments = document.getElementById('noAppointments');
         const loading = document.getElementById('appointmentsLoading');
         
-        loading.classList.add('d-none');
+        // Mostrar loading enquanto carrega
+        loading.classList.remove('d-none');
+        appointmentsList.classList.add('d-none');
+        noAppointments.classList.add('d-none');
         
         if (snapshot.empty) {
+            loading.classList.add('d-none');
             noAppointments.classList.remove('d-none');
             return;
         }
         
+        loading.classList.add('d-none');
         appointmentsList.classList.remove('d-none');
         appointmentsList.innerHTML = '';
         
@@ -115,26 +120,41 @@ async function loadUserAppointments(userId) {
                 minute: '2-digit'
             });
 
+            // Determinar a classe do badge com base no status
+            let statusClass;
+            switch(appointment.status) {
+                case 'pendente':
+                    statusClass = 'badge-pendente';
+                    break;
+                case 'confirmado':
+                    statusClass = 'badge-confirmado';
+                    break;
+                case 'cancelado':
+                    statusClass = 'badge-cancelado';
+                    break;
+                case 'concluido':
+                    statusClass = 'badge-concluido';
+                    break;
+                default:
+                    statusClass = 'badge-pendente';
+            }
             
-            
-            const statusBadge = appointment.status === 'cancelado' ? 
-                'badge bg-danger' : 
-                (appointment.status === 'concluido' ? 'badge bg-success' : 'badge bg-primary');
-            
-             appointmentsList.innerHTML += `
+            appointmentsList.innerHTML += `
                 <div class="appointment-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">${appointment.servico}</h6>
-                        <span class="status-badge badge-${appointment.status}">${appointment.status}</span>
+                    <div class="appointment-details">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-medium">${appointment.servico}</h6>
+                            <span class="status-badge ${statusClass}">${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
+                        </div>
+                        <p class="mb-1"><i class="far fa-calendar-alt me-2 text-primary"></i>${formattedDate}</p>
+                        <p class="mb-0"><i class="fas fa-user me-2 text-primary"></i>Profissional: ${appointment.profissional || 'A definir'}</p>
                     </div>
-                    <div class="text-muted small">${formattedDate}</div>
-                    <div class="mt-2">
-                        <span class="fw-bold">Código:</span> ${doc.id.substring(0, 8)}
-                    </div>
-                    ${appointment.observacoes ? `<div class="mt-1"><span class="fw-bold">Observações:</span> ${appointment.observacoes}</div>` : ''}
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-beauty ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
+                    <div class="appointment-actions mt-3">
+                        <button class="btn btn-outline-beauty btn-sm ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
                             <i class="fas fa-times me-1"></i> Cancelar
+                        </button>
+                        <button class="btn btn-outline-beauty btn-sm ms-2" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#appointmentDetailsModal">
+                            <i class="fas fa-info-circle me-1"></i> Detalhes
                         </button>
                     </div>
                 </div>
@@ -142,12 +162,14 @@ async function loadUserAppointments(userId) {
         });
         
         // Adicionar eventos para cancelamento
-        document.querySelectorAll('.btn-outline-danger').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const appointmentId = this.getAttribute('data-id');
-                cancelAppointment(appointmentId);
-            });
+        document.querySelectorAll('.appointment-actions .btn-outline-beauty').forEach(btn => {
+            if (btn.innerHTML.includes('Cancelar')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const appointmentId = this.getAttribute('data-id');
+                    cancelAppointment(appointmentId);
+                });
+            }
         });
         
     } catch (error) {
@@ -160,7 +182,13 @@ async function updateProfile(e) {
     e.preventDefault();
     
     const btn = e.target.querySelector('button[type="submit"]');
-    AuthUtils.toggleLoading(true, btn);
+    const buttonText = btn.querySelector('.button-text');
+    const spinner = btn.querySelector('.loading-spinner');
+    
+    // Mostrar estado de carregamento
+    buttonText.textContent = 'Salvando...';
+    spinner.classList.remove('d-none');
+    btn.disabled = true;
     
     try {
         const user = await AuthUtils.getCurrentUser();
@@ -179,9 +207,15 @@ async function updateProfile(e) {
         }
         
         // Validar telefone
-        if (!/^\d{11}$/.test(userData.telefone.replace(/\D/g, ''))) {
-            throw new Error('Número de WhatsApp inválido. Use 11 dígitos (DDD + número).');
+        const phoneDigits = userData.telefone.replace(/\D/g, '');
+        if (!/^\d{10,11}$/.test(phoneDigits)) {
+            throw new Error('Número de WhatsApp inválido. Use DDD + número (10 ou 11 dígitos).');
         }
+        
+        // Formatar telefone para exibição
+        const formattedPhone = phoneDigits.length === 11 ? 
+            `(${phoneDigits.substring(0, 2)}) ${phoneDigits.substring(2, 7)}-${phoneDigits.substring(7)}` :
+            `(${phoneDigits.substring(0, 2)}) ${phoneDigits.substring(2, 6)}-${phoneDigits.substring(6)}`;
         
         // Atualizar senha se fornecida
         const newPassword = document.getElementById('profilePassword').value.trim();
@@ -197,7 +231,7 @@ async function updateProfile(e) {
         
         // Atualizar exibição
         document.getElementById('profileName').textContent = userData.nome;
-        document.getElementById('profilePhone').textContent = userData.telefone;
+        document.getElementById('profilePhone').textContent = formattedPhone;
         
         showAlert('Perfil atualizado com sucesso!', 'success');
         
@@ -205,7 +239,10 @@ async function updateProfile(e) {
         console.error('Erro ao atualizar perfil:', error);
         showAlert(`Erro ao atualizar perfil: ${error.message}`, 'danger');
     } finally {
-        AuthUtils.toggleLoading(false, btn);
+        // Restaurar estado normal do botão
+        buttonText.textContent = 'Atualizar Perfil';
+        spinner.classList.add('d-none');
+        btn.disabled = false;
     }
 }
 
@@ -275,8 +312,20 @@ function logout() {
 
 function showAlert(message, type) {
     const alertDiv = document.getElementById('profileAlert');
-    alertDiv.textContent = message;
-    alertDiv.className = `alert alert-${type} d-block`;
+    const alertMessage = alertDiv.querySelector('.alert-message');
+    
+    alertMessage.textContent = message;
+    alertDiv.className = `alert alert-${type} d-block alert-dismissible fade show`;
+    
+    // Adicionar botão de fechar se não existir
+    if (!alertDiv.querySelector('.btn-close')) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+        alertDiv.appendChild(closeButton);
+    }
     
     // Esconder após 5 segundos para sucesso
     if (type === 'success') {
