@@ -1,14 +1,3 @@
-// Verificar se o Firebase já foi inicializado
-if (!firebase.apps.length) {
-    console.error("Firebase não foi inicializado!");
-} else {
-    console.log("Firebase já inicializado, usando instância existente");
-}
-
-// Obter instâncias do auth e firestore
-const auth = firebase.auth();
-const db = firebase.firestore();
-
 class AgendamentoManager {
     constructor() {
         this.form = document.getElementById("agendamentoForm");
@@ -181,6 +170,7 @@ class AgendamentoManager {
             // Verificar disponibilidade antes de agendar
             await this.verificarDisponibilidade(agendamento.dataHoraISO);
 
+            // Formatar data para armazenamento
             agendamento.dataHoraISO = new Date(agendamento.dataHoraISO).toISOString().slice(0, 16);
 
             // Salvar no Firestore usando transação
@@ -214,7 +204,7 @@ class AgendamentoManager {
 
     async salvarAgendamento(agendamento) {
         // Usar transação para garantir consistência
-        return db.runTransaction(async (transaction) => {
+        return firebase.firestore().runTransaction(async (transaction) => {
             // Verificar disponibilidade novamente dentro da transação
             const dataAgendamento = new Date(agendamento.dataHoraISO);
             const inicio = new Date(dataAgendamento.getTime() - 30 * 60 * 1000);
@@ -223,7 +213,7 @@ class AgendamentoManager {
             const inicioFormatado = inicio.toISOString().slice(0, 16);
             const fimFormatado = fim.toISOString().slice(0, 16);
             
-            const query = db.collection("agendamentos")
+            const query = firebase.firestore().collection("agendamentos")
                 .where("dataHoraISO", ">=", inicioFormatado)
                 .where("dataHoraISO", "<=", fimFormatado);
             
@@ -234,11 +224,11 @@ class AgendamentoManager {
             }
             
             // Se disponível, criar o agendamento
-            const docRef = db.collection("agendamentos").doc();
+            const docRef = firebase.firestore().collection("agendamentos").doc();
             transaction.set(docRef, agendamento);
             
             // Registrar log de atividade
-            const logRef = db.collection("logs").doc();
+            const logRef = firebase.firestore().collection("logs").doc();
             transaction.set(logRef, {
                 userId: this.currentUser.uid,
                 action: "agendamento_criado",
@@ -273,7 +263,7 @@ class AgendamentoManager {
         
         try {
             // Verificar agendamento no horário exato
-            const snapshotExato = await db.collection("agendamentos")
+            const snapshotExato = await firebase.firestore().collection("agendamentos")
                 .where("dataHoraISO", "==", dataAgendamentoFormatada)
                 .get();
                 
@@ -282,7 +272,7 @@ class AgendamentoManager {
             }
             
             // Verificar agendamentos na janela de 30 minutos antes/depois
-            const snapshotProximos = await db.collection("agendamentos")
+            const snapshotProximos = await firebase.firestore().collection("agendamentos")
                 .where("dataHoraISO", ">=", inicioFormatado)
                 .where("dataHoraISO", "<=", fimFormatado)
                 .get();
@@ -333,7 +323,7 @@ class AgendamentoManager {
         }
         
         // Verificar limite de agendamentos por usuário (máximo 3 agendamentos ativos)
-        const agendamentosAtivos = await db.collection("agendamentos")
+        const agendamentosAtivos = await firebase.firestore().collection("agendamentos")
             .where("userId", "==", this.currentUser.uid)
             .where("status", "in", ["pendente", "confirmado"])
             .get();
