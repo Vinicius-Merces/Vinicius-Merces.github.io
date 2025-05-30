@@ -259,33 +259,17 @@ async function handlePhotoUpload(e) {
         const profilePhoto = document.getElementById('profilePhoto');
         profilePhoto.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
         
-        // Fazer upload para Firebase Storage
-        const storage = firebase.storage();
-        const storageRef = storage.ref();
+        // Referência do Storage
+        const storageRef = firebase.storage().ref();
         
-        // Criar referência única para a foto
-        const fileExtension = file.name.split('.').pop();
-        const photoRef = storageRef.child(`profile_photos/${user.uid}/profile_${Date.now()}.${fileExtension}`);
+        // Criar referência para a foto
+        const photoRef = storageRef.child(`profile_photos/${user.uid}/profile_${Date.now()}.jpg`);
         
-        // Obter token de acesso para autenticação
-        const token = await user.getIdToken();
+        // Fazer upload básico sem metadados extras
+        const uploadTask = photoRef.put(file);
         
-        // Configurar metadados para o upload
-        const metadata = {
-            contentType: file.type,
-            customMetadata: {
-                'uploadedBy': user.uid,
-                'firebaseStorageDownloadTokens': token
-            }
-        };
-        
-        // Fazer upload com metadados e token
-        const uploadTask = photoRef.put(file, metadata);
-        
-        // Monitorar progresso do upload
         uploadTask.on('state_changed',
             (snapshot) => {
-                // Progresso do upload
                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 console.log('Upload progress: ' + progress + '%');
             },
@@ -296,15 +280,9 @@ async function handlePhotoUpload(e) {
             },
             async () => {
                 try {
-                    // Upload completo, obter URL
                     const photoUrl = await uploadTask.snapshot.ref.getDownloadURL();
-                    
-                    // Atualizar perfil com a nova URL
                     await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
-                    
-                    // Atualizar exibição
                     profilePhoto.innerHTML = `<img src="${photoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">`;
-                    
                     showAlert('Foto de perfil atualizada com sucesso!', 'success');
                 } catch (error) {
                     console.error('Erro ao obter URL:', error);
