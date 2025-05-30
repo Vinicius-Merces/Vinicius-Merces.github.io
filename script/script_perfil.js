@@ -260,17 +260,32 @@ async function handlePhotoUpload(e) {
         profilePhoto.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
         
         // Fazer upload para Firebase Storage
-        const storageRef = firebase.storage().ref();
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        
+        // Criar referência única para a foto
         const fileExtension = file.name.split('.').pop();
         const photoRef = storageRef.child(`profile_photos/${user.uid}/profile_${Date.now()}.${fileExtension}`);
         
-        // Fazer upload do arquivo
-        const uploadTask = photoRef.put(file);
+        // Obter token de acesso para autenticação
+        const token = await user.getIdToken();
+        
+        // Configurar metadados para o upload
+        const metadata = {
+            contentType: file.type,
+            customMetadata: {
+                'uploadedBy': user.uid,
+                'firebaseStorageDownloadTokens': token
+            }
+        };
+        
+        // Fazer upload com metadados e token
+        const uploadTask = photoRef.put(file, metadata);
         
         // Monitorar progresso do upload
         uploadTask.on('state_changed',
             (snapshot) => {
-                // Progresso do upload (opcional)
+                // Progresso do upload
                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 console.log('Upload progress: ' + progress + '%');
             },
@@ -280,25 +295,22 @@ async function handlePhotoUpload(e) {
                 resetProfilePhoto(user.uid);
             },
             async () => {
-                // Upload completo, obter URL
-                const photoUrl = await uploadTask.snapshot.ref.getDownloadURL();
-                
-                // Atualizar perfil com a nova URL
-                await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
-                
-                // Atualizar exibição com transição suave
-                profilePhoto.innerHTML = `
-                    <img src="${photoUrl}" alt="Foto de perfil" 
-                         style="opacity: 0; transition: opacity 0.5s ease-in-out;"
-                         class="w-100 h-100 object-fit-cover">
-                `;
-                
-                // Forçar repaint para a transição funcionar
-                setTimeout(() => {
-                    profilePhoto.querySelector('img').style.opacity = '1';
-                }, 10);
-                
-                showAlert('Foto de perfil atualizada com sucesso!', 'success');
+                try {
+                    // Upload completo, obter URL
+                    const photoUrl = await uploadTask.snapshot.ref.getDownloadURL();
+                    
+                    // Atualizar perfil com a nova URL
+                    await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
+                    
+                    // Atualizar exibição
+                    profilePhoto.innerHTML = `<img src="${photoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">`;
+                    
+                    showAlert('Foto de perfil atualizada com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao obter URL:', error);
+                    showAlert('Erro ao processar a foto. Tente novamente.', 'danger');
+                    resetProfilePhoto(user.uid);
+                }
             }
         );
         
@@ -310,15 +322,17 @@ async function handlePhotoUpload(e) {
 }
 
 async function resetProfilePhoto(userId) {
-    const userData = await AuthUtils.getUserData(userId);
-    const profilePhoto = document.getElementById('profilePhoto');
-    
-    if (userData?.fotoUrl) {
-        profilePhoto.innerHTML = `
-            <img src="${userData.fotoUrl}" alt="Foto de perfil" 
-                 class="w-100 h-100 object-fit-cover">
-        `;
-    } else {
+    try {
+        const userData = await AuthUtils.getUserData(userId);
+        const profilePhoto = document.getElementById('profilePhoto');
+        
+        if (userData?.fotoUrl) {
+            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">`;
+        } else {
+            profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
+        }
+    } catch (error) {
+        console.error('Erro ao resetar foto:', error);
         profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
     }
 }
