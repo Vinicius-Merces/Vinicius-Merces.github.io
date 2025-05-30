@@ -67,10 +67,11 @@ async function initProfilePage() {
         }
         
         // Carregar foto de perfil se existir
+        const profilePhoto = document.getElementById('profilePhoto');
         if (userData?.fotoUrl) {
-            document.getElementById('profilePhoto').innerHTML = `
-                <img src="${userData.fotoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">
-            `;
+            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
+        } else {
+            profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
         }
         
         // Carregar agendamentos
@@ -114,16 +115,31 @@ async function loadUserAppointments(userId) {
                 hour: '2-digit',
                 minute: '2-digit'
             });
-            
-            const statusBadge = appointment.status === 'cancelado' ? 
-                'badge bg-danger' : 
-                (appointment.status === 'concluido' ? 'badge bg-success' : 'badge bg-primary');
+
+            // Determinar a classe do badge com base no status
+            let statusClass;
+            switch(appointment.status) {
+                case 'pendente':
+                    statusClass = 'badge-pendente';
+                    break;
+                case 'confirmado':
+                    statusClass = 'badge-confirmado';
+                    break;
+                case 'cancelado':
+                    statusClass = 'badge-cancelado';
+                    break;
+                case 'concluido':
+                    statusClass = 'badge-concluido';
+                    break;
+                default:
+                    statusClass = 'badge-pendente';
+            }
             
             appointmentsList.innerHTML += `
-                <div class="appointment-item border-bottom pb-3 mb-3">
+                <div class="appointment-item">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">${appointment.servico}</h6>
-                        <span class="${statusBadge}">${appointment.status}</span>
+                        <span class="status-badge ${statusClass}">${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
                     </div>
                     <div class="text-muted small">${formattedDate}</div>
                     <div class="mt-2">
@@ -131,16 +147,16 @@ async function loadUserAppointments(userId) {
                     </div>
                     ${appointment.observacoes ? `<div class="mt-1"><span class="fw-bold">Observações:</span> ${appointment.observacoes}</div>` : ''}
                     <div class="mt-2">
-                        <a href="#" class="btn btn-sm btn-outline-danger ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
+                        <button class="btn btn-sm btn-outline-beauty ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
                             <i class="fas fa-times me-1"></i> Cancelar
-                        </a>
+                        </button>
                     </div>
                 </div>
             `;
         });
         
         // Adicionar eventos para cancelamento
-        document.querySelectorAll('.btn-outline-danger').forEach(btn => {
+        document.querySelectorAll('.btn-outline-beauty').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const appointmentId = this.getAttribute('data-id');
@@ -158,7 +174,13 @@ async function updateProfile(e) {
     e.preventDefault();
     
     const btn = e.target.querySelector('button[type="submit"]');
-    AuthUtils.toggleLoading(true, btn);
+    const buttonText = btn.querySelector('.button-text');
+    const spinner = btn.querySelector('.loading-spinner');
+    
+    // Mostrar estado de carregamento
+    buttonText.textContent = 'Salvando...';
+    spinner.classList.remove('d-none');
+    btn.disabled = true;
     
     try {
         const user = await AuthUtils.getCurrentUser();
@@ -177,9 +199,15 @@ async function updateProfile(e) {
         }
         
         // Validar telefone
-        if (!/^\d{11}$/.test(userData.telefone.replace(/\D/g, ''))) {
-            throw new Error('Número de WhatsApp inválido. Use 11 dígitos (DDD + número).');
+        const phoneDigits = userData.telefone.replace(/\D/g, '');
+        if (!/^\d{10,11}$/.test(phoneDigits)) {
+            throw new Error('Número de WhatsApp inválido. Use DDD + número (10 ou 11 dígitos).');
         }
+        
+        // Formatar telefone para exibição
+        const formattedPhone = phoneDigits.length === 11 ? 
+            `(${phoneDigits.substring(0, 2)}) ${phoneDigits.substring(2, 7)}-${phoneDigits.substring(7)}` :
+            `(${phoneDigits.substring(0, 2)}) ${phoneDigits.substring(2, 6)}-${phoneDigits.substring(6)}`;
         
         // Atualizar senha se fornecida
         const newPassword = document.getElementById('profilePassword').value.trim();
@@ -195,7 +223,7 @@ async function updateProfile(e) {
         
         // Atualizar exibição
         document.getElementById('profileName').textContent = userData.nome;
-        document.getElementById('profilePhone').textContent = userData.telefone;
+        document.getElementById('profilePhone').textContent = formattedPhone;
         
         showAlert('Perfil atualizado com sucesso!', 'success');
         
@@ -203,7 +231,10 @@ async function updateProfile(e) {
         console.error('Erro ao atualizar perfil:', error);
         showAlert(`Erro ao atualizar perfil: ${error.message}`, 'danger');
     } finally {
-        AuthUtils.toggleLoading(false, btn);
+        // Restaurar estado normal do botão
+        buttonText.textContent = 'Atualizar Perfil';
+        spinner.classList.add('d-none');
+        btn.disabled = false;
     }
 }
 
@@ -221,7 +252,7 @@ async function handlePhotoUpload(e) {
         
         // Fazer upload para Firebase Storage
         const storageRef = firebase.storage().ref();
-        const photoRef = storageRef.child(`profile_photos/${user.uid}`);
+        const photoRef = storageRef.child(`profile_photos/${user.uid}/${Date.now()}_${file.name}`);
         const snapshot = await photoRef.put(file);
         
         // Obter URL da imagem
@@ -231,12 +262,24 @@ async function handlePhotoUpload(e) {
         await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
         
         // Atualizar exibição
-        profilePhoto.innerHTML = `<img src="${photoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">`;
+        profilePhoto.innerHTML = `<img src="${photoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
         
         showAlert('Foto de perfil atualizada com sucesso!', 'success');
         
     } catch (error) {
         console.error('Erro ao atualizar foto de perfil:', error);
+        
+        // Restaurar a foto anterior ou o ícone padrão
+        const user = await AuthUtils.getCurrentUser();
+        const userData = await AuthUtils.getUserData(user.uid);
+        const profilePhoto = document.getElementById('profilePhoto');
+        
+        if (userData?.fotoUrl) {
+            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
+        } else {
+            profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
+        }
+        
         showAlert('Erro ao atualizar foto de perfil. Tente novamente.', 'danger');
     }
 }
@@ -273,8 +316,23 @@ function logout() {
 
 function showAlert(message, type) {
     const alertDiv = document.getElementById('profileAlert');
-    alertDiv.textContent = message;
+    const alertMessage = alertDiv.querySelector('.alert-message') || document.createElement('span');
+    
+    alertMessage.textContent = message;
+    alertMessage.className = 'alert-message';
+    
+    alertDiv.innerHTML = '';
+    alertDiv.appendChild(alertMessage);
+    
     alertDiv.className = `alert alert-${type} d-block`;
+    
+    // Adicionar botão de fechar
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close';
+    closeButton.setAttribute('data-bs-dismiss', 'alert');
+    closeButton.setAttribute('aria-label', 'Close');
+    alertDiv.appendChild(closeButton);
     
     // Esconder após 5 segundos para sucesso
     if (type === 'success') {
