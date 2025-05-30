@@ -69,7 +69,7 @@ async function initProfilePage() {
         // Carregar foto de perfil se existir
         const profilePhoto = document.getElementById('profilePhoto');
         if (userData?.fotoUrl) {
-            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
+            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" class="rounded-circle w-100 h-100 object-fit-cover" alt="Foto de perfil">`;
         } else {
             profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
         }
@@ -95,13 +95,18 @@ async function loadUserAppointments(userId) {
         const noAppointments = document.getElementById('noAppointments');
         const loading = document.getElementById('appointmentsLoading');
         
-        loading.classList.add('d-none');
+        // Mostrar loading enquanto carrega
+        loading.classList.remove('d-none');
+        appointmentsList.classList.add('d-none');
+        noAppointments.classList.add('d-none');
         
         if (snapshot.empty) {
+            loading.classList.add('d-none');
             noAppointments.classList.remove('d-none');
             return;
         }
         
+        loading.classList.add('d-none');
         appointmentsList.classList.remove('d-none');
         appointmentsList.innerHTML = '';
         
@@ -137,18 +142,20 @@ async function loadUserAppointments(userId) {
             
             appointmentsList.innerHTML += `
                 <div class="appointment-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">${appointment.servico}</h6>
-                        <span class="status-badge ${statusClass}">${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
+                    <div class="appointment-details">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-medium">${appointment.servico}</h6>
+                            <span class="status-badge ${statusClass}">${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
+                        </div>
+                        <p class="mb-1"><i class="far fa-calendar-alt me-2 text-primary"></i>${formattedDate}</p>
+                        <p class="mb-0"><i class="fas fa-user me-2 text-primary"></i>Profissional: ${appointment.profissional || 'A definir'}</p>
                     </div>
-                    <div class="text-muted small">${formattedDate}</div>
-                    <div class="mt-2">
-                        <span class="fw-bold">Código:</span> ${doc.id.substring(0, 8)}
-                    </div>
-                    ${appointment.observacoes ? `<div class="mt-1"><span class="fw-bold">Observações:</span> ${appointment.observacoes}</div>` : ''}
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-beauty ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
+                    <div class="appointment-actions mt-3">
+                        <button class="btn btn-outline-beauty btn-sm ${appointment.status === 'cancelado' || appointment.status === 'concluido' ? 'd-none' : ''}" data-id="${doc.id}">
                             <i class="fas fa-times me-1"></i> Cancelar
+                        </button>
+                        <button class="btn btn-outline-beauty btn-sm ms-2" data-id="${doc.id}" data-bs-toggle="modal" data-bs-target="#appointmentDetailsModal">
+                            <i class="fas fa-info-circle me-1"></i> Detalhes
                         </button>
                     </div>
                 </div>
@@ -156,12 +163,14 @@ async function loadUserAppointments(userId) {
         });
         
         // Adicionar eventos para cancelamento
-        document.querySelectorAll('.btn-outline-beauty').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const appointmentId = this.getAttribute('data-id');
-                cancelAppointment(appointmentId);
-            });
+        document.querySelectorAll('.appointment-actions .btn-outline-beauty').forEach(btn => {
+            if (btn.innerHTML.includes('Cancelar')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const appointmentId = this.getAttribute('data-id');
+                    cancelAppointment(appointmentId);
+                });
+            }
         });
         
     } catch (error) {
@@ -252,35 +261,65 @@ async function handlePhotoUpload(e) {
         
         // Fazer upload para Firebase Storage
         const storageRef = firebase.storage().ref();
-        const photoRef = storageRef.child(`profile_photos/${user.uid}/${Date.now()}_${file.name}`);
-        const snapshot = await photoRef.put(file);
+        const fileExtension = file.name.split('.').pop();
+        const photoRef = storageRef.child(`profile_photos/${user.uid}/profile_${Date.now()}.${fileExtension}`);
         
-        // Obter URL da imagem
-        const photoUrl = await snapshot.ref.getDownloadURL();
+        // Fazer upload do arquivo
+        const uploadTask = photoRef.put(file);
         
-        // Atualizar perfil com a nova URL
-        await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
-        
-        // Atualizar exibição
-        profilePhoto.innerHTML = `<img src="${photoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
-        
-        showAlert('Foto de perfil atualizada com sucesso!', 'success');
+        // Monitorar progresso do upload
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // Progresso do upload (opcional)
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload progress: ' + progress + '%');
+            },
+            (error) => {
+                console.error('Erro no upload:', error);
+                showAlert('Erro ao enviar a foto. Tente novamente.', 'danger');
+                resetProfilePhoto(user.uid);
+            },
+            async () => {
+                // Upload completo, obter URL
+                const photoUrl = await uploadTask.snapshot.ref.getDownloadURL();
+                
+                // Atualizar perfil com a nova URL
+                await AuthUtils.updateUserData(user.uid, { fotoUrl: photoUrl });
+                
+                // Atualizar exibição com transição suave
+                profilePhoto.innerHTML = `
+                    <img src="${photoUrl}" alt="Foto de perfil" 
+                         style="opacity: 0; transition: opacity 0.5s ease-in-out;"
+                         class="w-100 h-100 object-fit-cover">
+                `;
+                
+                // Forçar repaint para a transição funcionar
+                setTimeout(() => {
+                    profilePhoto.querySelector('img').style.opacity = '1';
+                }, 10);
+                
+                showAlert('Foto de perfil atualizada com sucesso!', 'success');
+            }
+        );
         
     } catch (error) {
         console.error('Erro ao atualizar foto de perfil:', error);
-        
-        // Restaurar a foto anterior ou o ícone padrão
-        const user = await AuthUtils.getCurrentUser();
-        const userData = await AuthUtils.getUserData(user.uid);
-        const profilePhoto = document.getElementById('profilePhoto');
-        
-        if (userData?.fotoUrl) {
-            profilePhoto.innerHTML = `<img src="${userData.fotoUrl}" alt="Foto de perfil" class="w-100 h-100">`;
-        } else {
-            profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
-        }
-        
         showAlert('Erro ao atualizar foto de perfil. Tente novamente.', 'danger');
+        resetProfilePhoto(user.uid);
+    }
+}
+
+async function resetProfilePhoto(userId) {
+    const userData = await AuthUtils.getUserData(userId);
+    const profilePhoto = document.getElementById('profilePhoto');
+    
+    if (userData?.fotoUrl) {
+        profilePhoto.innerHTML = `
+            <img src="${userData.fotoUrl}" alt="Foto de perfil" 
+                 class="w-100 h-100 object-fit-cover">
+        `;
+    } else {
+        profilePhoto.innerHTML = '<i class="fas fa-user fa-3x text-muted"></i>';
     }
 }
 
@@ -324,7 +363,7 @@ function showAlert(message, type) {
     alertDiv.innerHTML = '';
     alertDiv.appendChild(alertMessage);
     
-    alertDiv.className = `alert alert-${type} d-block`;
+    alertDiv.className = `alert alert-${type} d-block alert-dismissible fade show`;
     
     // Adicionar botão de fechar
     const closeButton = document.createElement('button');
